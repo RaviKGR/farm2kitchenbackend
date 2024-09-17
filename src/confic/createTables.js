@@ -59,6 +59,7 @@ const Product = `CREATE TABLE IF NOT EXISTS Product (
     category_id BIGINT NOT NULL,
     packaging_id BIGINT NOT NULL,
 	barcode VARCHAR(100) NOT NULL, 
+    status BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (category_id) REFERENCES Category(category_id),
     FOREIGN KEY (packaging_id) REFERENCES Packaging(packaging_id)
 ); `
@@ -219,54 +220,6 @@ CREATE TABLE IF NOT EXISTS otps (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );`
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
