@@ -309,9 +309,7 @@ async function createTables() {
         console.log("All tables created successfully.");
     } catch (error) {
         console.error("Error creating tables:", error.message);
-    } finally {
-        db.end();
-    }
+    } 
 }
 
 // Run the function to create tables
