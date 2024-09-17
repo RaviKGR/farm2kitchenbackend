@@ -1,10 +1,5 @@
-const {
-  getCategoryService,
-  AddNewCategoryService,
-  getCategoryByIdService,
-  getChildByCategoryIdService,
-  updateCategoryService,
-} = require("../../services/CategoriesServices/categoriesServices");
+const { AddNewCategoryService, getCategoryService, getCategoryByIdService, getChildByCategoryIdService, updateCategoryService } = require("../../services/categoriesServices/categoriesServices");
+
 
 const AddNewCategoryController = async (req, res) => {
   const { categoryName, description, parentCategoryId } = req.body;
@@ -36,13 +31,13 @@ const GetCategoryController = async (req, res) => {
 
 const GetCategoryByIdConteroller = async (req, res) => {
   const CategoryId = req.query.CategoryId;
-  
+
   try {
     if (!CategoryId) {
-       res.status(400).send({ message: "Check the data" });
+      res.status(400).send({ message: "Check the data" });
     } else {
       await getCategoryByIdService(req.query, (err, data) => {
-        if(err) res.status(400).send(err.error);
+        if (err) res.status(400).send(err.error);
         else res.send(data);
       });
     }
@@ -55,35 +50,35 @@ const GetChildByCategoryIdController = async (req, res) => {
   const CategoryId = req.query.CategoryId;
 
   try {
-    if(!CategoryId) {
-      res.status(400).send({message: "Check the data"});
+    if (!CategoryId) {
+      res.status(400).send({ message: "Check the data" });
     } else {
       await getChildByCategoryIdService(req.query, (err, data) => {
-        if(err) res.status(400).send(err.error);
+        if (err) res.status(400).send(err.error);
         else res.send(data);
       });
     }
-  } catch(e) {
+  } catch (e) {
     throw e;
   }
 }
 
 const updateCategoryConteroller = async (req, res) => {
-    const {CategoryId, name, description} = req.body;
+  const { CategoryId, name, description } = req.body;
 
-    try {
-      if(!CategoryId, !name, !description) {
-        res.status(400).send({message: "Check the data"});
-      } else {
-       await updateCategoryService(req.body, (err, data) => {
-          if(err) res.status(400).send(err.error);
-          else res.send(data);
-        });
-      }
-
-    } catch (e) {
-      throw e;
+  try {
+    if (!CategoryId, !name, !description) {
+      res.status(400).send({ message: "Check the data" });
+    } else {
+      await updateCategoryService(req.body, (err, data) => {
+        if (err) res.status(400).send(err.error);
+        else res.send(data);
+      });
     }
+
+  } catch (e) {
+    throw e;
+  }
 }
 
 module.exports = {
