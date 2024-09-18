@@ -1,5 +1,5 @@
 const express = require("express");
-const categoryRoutes = require("./categoriesroutes");
+const categoryRoutes = require("./categoriesRoutes");
 const ProductRoutes = require("./productRoutes");
 const favoritesRoutes = require("./favoritesRoutes");
 const routes = express.Router();
