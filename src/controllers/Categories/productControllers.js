@@ -1,7 +1,6 @@
 const { SearchProduct, GetCategoryIdProdect } = require("../../services/CategoriesServices/productServices");
 
 const GetSearchProducts = async (req, res) => {
-
     try {
         await SearchProduct(req, (err, data) => {
             if (err) {
