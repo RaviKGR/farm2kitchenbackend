@@ -1,5 +1,12 @@
-const { AddNewCategoryService, getCategoryService, getCategoryByIdService, getChildByCategoryIdService, updateCategoryService } = require("../../services/categoriesServices/categoriesServices");
-
+const {
+  AddNewCategoryService,
+  getCategoryService,
+  getCategoryByIdService,
+  getChildByCategoryIdService,
+  updateCategoryService,
+  deleteCategoryService,
+  GetAllCategoryService,
+} = require("../../services/categoriesServices/categoriesServices");
 
 const AddNewCategoryController = async (req, res) => {
   const { categoryName, description, parentCategoryId } = req.body;
@@ -19,6 +26,7 @@ const AddNewCategoryController = async (req, res) => {
 };
 
 const GetCategoryController = async (req, res) => {
+  
   try {
     await getCategoryService(req, (err, data) => {
       if (err) res.status(400).send(err.error);
@@ -28,6 +36,16 @@ const GetCategoryController = async (req, res) => {
     throw error;
   }
 };
+const GetAllCategoryController = async (req, res) => {
+    try{
+    await GetAllCategoryService((err, data) => {
+        if(err) res.status(400).send(err.error);
+        else res.send(data);
+    })
+    } catch (e) {
+      throw e
+    }
+}
 
 const GetCategoryByIdConteroller = async (req, res) => {
   const CategoryId = req.query.CategoryId;
@@ -61,13 +79,13 @@ const GetChildByCategoryIdController = async (req, res) => {
   } catch (e) {
     throw e;
   }
-}
+};
 
 const updateCategoryConteroller = async (req, res) => {
-  const { CategoryId, name, description } = req.body;
+  const { CategoryId, categoryName, description } = req.body;  
 
   try {
-    if (!CategoryId, !name, !description) {
+    if ((!CategoryId || !categoryName || !description)) {
       res.status(400).send({ message: "Check the data" });
     } else {
       await updateCategoryService(req.body, (err, data) => {
@@ -75,16 +93,34 @@ const updateCategoryConteroller = async (req, res) => {
         else res.send(data);
       });
     }
-
   } catch (e) {
     throw e;
   }
-}
+};
 
+const deleteCategoryController = async (req, res) => {
+  const CategoryId = req.query.CategoryId;
+  console.log("success");
+
+  try {
+    if (!CategoryId) {
+      res.status(400).send({ message: "Check the data" });
+    } else {
+      await deleteCategoryService(CategoryId, (err, data) => {
+        if (err) res.status(400).send(err.error);
+        else res.send(data);
+      });
+    }
+  } catch (e) {
+    throw e;
+  }
+};
 module.exports = {
   AddNewCategoryController,
   GetCategoryController,
   GetCategoryByIdConteroller,
   GetChildByCategoryIdController,
-  updateCategoryConteroller
+  updateCategoryConteroller,
+  deleteCategoryController,
+  GetAllCategoryController
 };
