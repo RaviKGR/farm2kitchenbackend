@@ -16,7 +16,7 @@ const SearchProduct = async (input, output) => {
 
 const GetCategoryIdProdect = async (input, output) => {
     const category_id = input.query.categoryId;
-    const categoryProdect = `SELECT * FROM product WHERE category_id LIKE ?`;
+    const categoryProdect = `SELECT * FROM product WHERE category_id = ?`;
 
     db.query(categoryProdect, [category_id], (err, result) => {
         if (err) {

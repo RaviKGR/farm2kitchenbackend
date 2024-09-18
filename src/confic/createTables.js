@@ -29,6 +29,7 @@ const Category = `CREATE TABLE IF NOT EXISTS  Category (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     parent_category_id BIGINT,
+    category_deleted VARCHAR(5),
     FOREIGN KEY (parent_category_id) REFERENCES Category(category_id)
 );`
 
@@ -60,6 +61,7 @@ const Product = `CREATE TABLE IF NOT EXISTS Product (
     packaging_id BIGINT NOT NULL,
 	barcode VARCHAR(100) NOT NULL, 
     status BOOLEAN DEFAULT TRUE,
+    product_deleted VARCHAR(5),
     FOREIGN KEY (category_id) REFERENCES Category(category_id),
     FOREIGN KEY (packaging_id) REFERENCES Packaging(packaging_id)
 ); `
@@ -83,7 +85,11 @@ const Inventory = `CREATE TABLE IF NOT EXISTS Inventory (
     FOREIGN KEY (supplier_id) REFERENCES Supplier(supplier_id)
 );`
 
-
+const favorites = `CREATE TABLE IF NOT EXISTS favorites (
+    favorite_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    product_id INT NOT NULL
+);`;
 
 const Offer = `CREATE TABLE IF NOT EXISTS Offer (
     offer_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -223,15 +229,6 @@ CREATE TABLE IF NOT EXISTS otps (
 
 
 
-
-
-
-
-
-
-
-
-
 // Function to execute the queries
 async function createTables() {
     try {
@@ -259,10 +256,11 @@ async function createTables() {
         await db.promise().query(role_permissions);
         await db.promise().query(otps);
         await db.promise().query(role_permissions);
+        await db.promise().query(favorites);
         console.log("All tables created successfully.");
     } catch (error) {
         console.error("Error creating tables:", error.message);
-    } 
+    }
 }
 
 // Run the function to create tables

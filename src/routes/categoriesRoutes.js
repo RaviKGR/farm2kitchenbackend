@@ -1,13 +1,5 @@
 const express = require("express");
-const {
-  AddNewCategoryController,
-  GetCategoryController,
-  GetCategoryByIdConteroller,
-  GetChildByCategoryIdController,
-  updateCategoryConteroller,
-  deleteCategoryController,
-  GetAllCategoryController,
-} = require("../controllers/Categories/CategoriesControllers");
+const { AddNewCategoryController, GetCategoryController, GetCategoryByIdConteroller, GetChildByCategoryIdController, updateCategoryConteroller, deleteCategoryController, GetAllCategoryController, } = require("../controllers/Categories/CategoriesControllers");
 const categoryRoutes = express.Router();
 
 categoryRoutes.post("/newCategories", AddNewCategoryController);
