@@ -1,6 +1,6 @@
 const sendOtpMail = require("../../email/emailconfic");
 const bcrypt = require('bcrypt')
-const authentiCationService = require("../../services/CategoriesServices/authenticationServices");
+const { authentiCationService, otpVerificationServieces } = require("../../services/CategoriesServices/authenticationServices");
 
 const addAuthenticationController = async (req, res) => {
 
@@ -8,8 +8,6 @@ const addAuthenticationController = async (req, res) => {
         const { emailId, password } = req.body;
         const saltRounds = 10;
         console.log(emailId, password);
-
-        // const salt = bcrypt.genSaltSync('10');
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         console.log(hashedPassword);
         const code = Math.floor(1000 + Math.random() * 9000);
@@ -26,7 +24,6 @@ const addAuthenticationController = async (req, res) => {
                 }
             });
         });
-
         // Send OTP email
         const mailSuccess = await sendOtpMail(emailId, code);
         if (mailSuccess) {
@@ -40,4 +37,26 @@ const addAuthenticationController = async (req, res) => {
     }
 }
 
-module.exports = addAuthenticationController;
+const otpVerifiCationController = async (req, res) => {
+    try {
+
+        const { verificationotp } = req.body;
+        const userIdverificationotp = req.query.userId;
+        const input = { verificationotp, userIdverificationotp };
+        if (!verificationotp || !userIdverificationotp) {
+            return res.status(400).send("Check the otp");
+        }
+        else {
+            await otpVerificationServieces(input, (err, data) => {
+                if (err) res.status(400).send(err.error);
+                else res.status(200).send(data);
+                console.log(data);
+
+            })
+        }
+    } catch (error) {
+        res.status(500).send({ error: "Internal server error" })
+    }
+}
+
+module.exports = { addAuthenticationController, otpVerifiCationController };

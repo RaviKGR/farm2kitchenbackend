@@ -13,7 +13,7 @@ const authentiCationService = async (input, output) => {
         if (err) {
             output({ error: { description: err.message } }, null);
             console.log(err);
-            
+
         }
         else {
             const user = result[3][0].user_id;
@@ -24,6 +24,27 @@ const authentiCationService = async (input, output) => {
     })
 }
 
+const otpVerificationServieces = async (input, output) => {
+    const verifiCationOtp = input.verificationotp;
+    const userIdverificationotp = input.userIdverificationotp;
+    const otpverificationquery = `SELECT * FROM otps WHERE user_id = ? AND otp_code = ?`;
+    db.query(otpverificationquery, [userIdverificationotp, verifiCationOtp], (err, result) => {
+        if (err) {
+            output({ error: { description: err.message } }, null);
+            console.log(err);
+        }
+        else {
+            if (result.length > 0) {
+                output(null, result)
+            }
+            else {
+                output(null, { result: false })
+                console.log(result);
+            }
+
+        }
+    })
+}
 
 
-module.exports = authentiCationService;
+module.exports = { authentiCationService, otpVerificationServieces };
