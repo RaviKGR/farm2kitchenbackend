@@ -4,6 +4,9 @@ const {
   addNewProductService,
   getProductByProductIdService,
   getAllProductService,
+  updateProductService,
+  updateProductStatusService,
+  deleteProductService,
 } = require("../../services/CategoriesServices/productServices");
 
 const addNewProductController = async (req, res) => {
@@ -87,10 +90,77 @@ const getAllProductController = async (req, res) => {
   }
 };
 
+const updateProductController = async (req, res) => {
+  const {
+    productId,
+    productName,
+    description,
+    price,
+    categoryId,
+    packagingId,
+    barcode,
+  } = req.body;
+  try {
+    if (
+      !productId ||
+      !productName ||
+      !description ||
+      !price ||
+      !categoryId ||
+      !packagingId ||
+      !barcode
+    ) {
+      res.status(400).send({ message: "Check the data" });
+    } else {
+      await updateProductService(req.body, (err, data) => {
+        if (err) res.status(400).send(err.error);
+        else res.send(data);
+      });
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+const updateProductStatusController = async (req, res) => {
+  const { productId, productStatus } = req.query;
+  try {
+    if (!productId || !productStatus) {
+      res.status(400).send({ message: "Check the data" });
+    } else {
+      await updateProductStatusService(req.query, (err, data) => {
+        if (err) res.status(400).send(err.error);
+        else res.send(data);
+      });
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+const deleteProductController = async (req, res) => {
+  const { productId } = req.query;
+  try {
+    if (!productId) {
+      res.status(400).send({ message: "Check the data" });
+    } else {
+      await deleteProductService(productId, (err, data) => {
+        if (err) res.status(400).send(err.error);
+        else res.send(data);
+      });
+    }
+  } catch (e) {
+    throw e;
+  }
+};
+
 module.exports = {
   GetSearchProducts,
   GetCategoryIdProducts,
   addNewProductController,
   getProductByProductIdController,
-  getAllProductController
+  getAllProductController,
+  updateProductController,
+  updateProductStatusController,
+  deleteProductController,
 };
