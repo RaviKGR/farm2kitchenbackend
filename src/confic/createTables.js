@@ -4,7 +4,7 @@ const { db } = require("./db");
 // SQL statements for creating tables
 const Users = `CREATE TABLE IF NOT EXISTS Users (
     user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     phone_number VARCHAR(20),
