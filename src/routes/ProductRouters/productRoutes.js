@@ -8,7 +8,7 @@ const {
   updateProductController,
   updateProductStatusController,
   deleteProductController,
-} = require("../controllers/Categories/productControllers");
+} = require("../../controllers/Product/productControllers");
 const ProductRoutes = express.Router();
 
 ProductRoutes.get("/searchProduct", GetSearchProducts);
@@ -18,7 +18,6 @@ ProductRoutes.get("/getByProductId", getProductByProductIdController);
 ProductRoutes.get("/getAllProduct", getAllProductController);
 ProductRoutes.put("/updateProduct", updateProductController);
 ProductRoutes.put("/updateProductStatus", updateProductStatusController);
-ProductRoutes.put("/delateProduct", deleteProductController)
-
+ProductRoutes.put("/delateProduct", deleteProductController);
 
 module.exports = ProductRoutes;

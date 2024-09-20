@@ -7,7 +7,7 @@ const {
   updateProductService,
   updateProductStatusService,
   deleteProductService,
-} = require("../../services/CategoriesServices/productServices");
+} = require("../../services/ProductServices/productServices");
 
 const addNewProductController = async (req, res) => {
   const { productName, description, price, categoryId, packagingId, barcode } =
@@ -32,6 +32,7 @@ const addNewProductController = async (req, res) => {
     throw e;
   }
 };
+
 const GetSearchProducts = async (req, res) => {
   try {
     await SearchProduct(req, (err, data) => {

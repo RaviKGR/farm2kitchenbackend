@@ -1,8 +1,8 @@
 const express = require("express");
-const categoryRoutes = require("./categoriesRoutes");
-const ProductRoutes = require("./productRoutes");
-const favoritesRoutes = require("./favoritesRoutes");
-const authenticationRouters = require("./authenticationRouters");
+const categoryRoutes = require("./CategoryRouter/categoriesRoutes");
+const ProductRoutes = require("./ProductRouters/productRoutes");
+const favoritesRoutes = require("./FavoritesRouters/favoritesRoutes");
+const authenticationRouters = require("./AuthenticationRouters/authenticationRouters");
 const routes = express.Router();
 
 routes.use('/category', categoryRoutes);
