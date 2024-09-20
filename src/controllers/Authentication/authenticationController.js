@@ -1,6 +1,6 @@
 const sendOtpMail = require("../../email/emailconfic");
 const bcrypt = require('bcrypt')
-const { authentiCationService, otpVerificationServieces } = require("../../services/CategoriesServices/authenticationServices");
+const { authentiCationService, otpVerificationServieces } = require("../../services/Authentication/authenticationServices");
 
 const addAuthenticationController = async (req, res) => {
 

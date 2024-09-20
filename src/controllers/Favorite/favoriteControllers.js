@@ -1,4 +1,4 @@
-const { addFavoriteServieces, getFavoritesServices, deleteUserFavoritesService } = require("../../services/CategoriesServices/favoritesServices");
+const { addFavoriteServieces, getFavoritesServices, deleteUserFavoritesService } = require("../../services/Favorites/favoritesServices");
 
 const AddNewFavoritesController = async (req, res) => {
     const { userId, productId } = req.body;

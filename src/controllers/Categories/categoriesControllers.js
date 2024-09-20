@@ -6,7 +6,7 @@ const {
   updateCategoryService,
   deleteCategoryService,
   GetAllCategoryService,
-} = require("../../services/categoriesServices/categoriesServices");
+} = require("../../services/CategoriesServices/categoriesServices");
 
 const AddNewCategoryController = async (req, res) => {
   const { categoryName, description, parentCategoryId } = req.body;

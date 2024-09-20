@@ -1,13 +1,5 @@
-const {
-  SearchProduct,
-  GetCategoryIdProdect,
-  addNewProductService,
-  getProductByProductIdService,
-  getAllProductService,
-  updateProductService,
-  updateProductStatusService,
-  deleteProductService,
-} = require("../../services/CategoriesServices/productServices");
+const { addNewProductService, SearchProduct, GetCategoryIdProdect, getProductByProductIdService, getAllProductService, updateProductService, updateProductStatusService, deleteProductService } = require("../../services/Product/productServices");
+
 
 const addNewProductController = async (req, res) => {
   const { productName, description, price, categoryId, packagingId, barcode } =
