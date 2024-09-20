@@ -9,6 +9,7 @@ const {
   deleteProductService,
 } = require("../../services/ProductServices/productServices");
 
+
 const addNewProductController = async (req, res) => {
   const { productName, description, price, categoryId, packagingId, barcode } =
     req.body;
