@@ -1,14 +1,6 @@
 const express = require("express");
-const {
-  GetSearchProducts,
-  GetCategoryIdProducts,
-  addNewProductController,
-  getProductByProductIdController,
-  getAllProductController,
-  updateProductController,
-  updateProductStatusController,
-  deleteProductController,
-} = require("../controllers/Categories/productControllers");
+const { GetSearchProducts, GetCategoryIdProducts, addNewProductController, getProductByProductIdController, getAllProductController, updateProductController, updateProductStatusController, deleteProductController } = require("../controllers/Product/productControllers");
+
 const ProductRoutes = express.Router();
 
 ProductRoutes.get("/searchProduct", GetSearchProducts);
