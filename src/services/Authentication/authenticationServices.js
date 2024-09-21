@@ -3,29 +3,31 @@ const bcrypt = require('bcrypt');
 const { GENERATE_TOKEN } = require("../../confic/JWT");
 
 const authentiCationService = async (input, output) => {
-    const emailId = input.emailId;
-    const password = input.hashedPassword;
-    const otp = input.code;
-    console.log(input)
-    const authenticationQuery = `INSERT INTO users (email, password) VALUES (?, ?);
+    const { emailId, hashedPassword: password, mobilenumber, code: otp } = input;
+    console.log(input);
+
+    const authenticationQuery = `
+        INSERT INTO users (email, password, phone_number) VALUES (?, ?, ?);
         SET @last_user_id = LAST_INSERT_ID();
-        INSERT INTO otps (user_id,otp_code,expires_at) VALUES (@last_user_id, ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE));
-       SELECT * FROM users WHERE user_id = @last_user_id;`
-    db.query(authenticationQuery, [emailId, password, otp], async (err, result) => {
+        INSERT INTO otps (user_id, otp_code, expires_at) 
+        VALUES (@last_user_id, ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE));
+        SELECT * FROM users WHERE user_id = @last_user_id;
+    `;
+    db.query(authenticationQuery, [emailId, password, mobilenumber, otp], async (err, result) => {
         if (err) {
             output({ error: { description: err.message } }, null);
             console.log(err);
-        }
-        else {
+        } else {
+            const saltRounds = 10;
             const user = result[3][0].user_id;
-            const token = await GENERATE_TOKEN(result[3][0].user_id, '10m');
-            const data = { user, token }
-            output(null, data)
-            console.log(data);
-
+            const token = await bcrypt.hash(otp.toString(), saltRounds);
+            const data = { user, token };
+            output(null, data);
+            console.log(token);
         }
-    })
-}
+    });
+};
+
 
 const otpVerificationServieces = async (input, output) => {
     const verifiCationOtp = input.verificationotp;
@@ -70,7 +72,7 @@ const processLoginServieces = async (input, output) => {
         const { password, ...userWithoutPassword } = user;
         const token = await GENERATE_TOKEN(user.user_id, '1h');
         console.log(user.user_id, token);
-        const insertToken = `INSERT INTO tokens (user_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE));`;        db.query(insertToken, [user.user_id, token], (err, results) => {
+        const insertToken = `INSERT INTO tokens (user_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE));`; db.query(insertToken, [user.user_id, token], (err, results) => {
             if (err) {
                 console.error("Database query error:", err);
                 return output({ error: { description: err.message } }, null);

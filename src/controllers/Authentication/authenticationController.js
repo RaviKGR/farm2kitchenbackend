@@ -5,12 +5,14 @@ const { authentiCationService, otpVerificationServieces, processLoginServieces }
 const addAuthenticationController = async (req, res) => {
 
     try {
-        const { emailId, password } = req.body;
+        const { emailId, password, mobilenumber } = req.body;
+        console.log(req.body);
+        
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         const code = Math.floor(1000 + Math.random() * 9000);
-        const input = { emailId, hashedPassword, code };
-        if (!emailId || !password) {
+        const input = { emailId, hashedPassword, code ,mobilenumber};
+        if ((!emailId && !mobilenumber) || !password) {
             return res.status(400).send("Invalid or missing email address");
         }
         const data = await new Promise((resolve, reject) => {
