@@ -3,13 +3,21 @@ const { db } = require("../../confic/db");
 const AddNewCategoryService = async (input, output) => {
   const name = input.categoryName;
   const description = input.description;
-  const parent_category_id = input.parentCategoryId;
+  const parent_category_id = Number(input.parentCategoryId) || null;
+  const priority = input.priority;
+  const image = `/uploads/${input.image}`;
 
-  const insertCategory = `INSERT INTO category (name, description, parent_category_id, category_deleted) VALUES (?, ?, ?, "N")`;
+  const insertCategory = `
+  INSERT INTO category (name, description, parent_category_id, category_deleted)
+  VALUES (?, ?, ?, "N");
+  SET @last_category_id = LAST_INSERT_ID();
+  INSERT INTO productimage (category_id, image_url, image_tag, alt_text, is_primary)
+  VALUES (@last_category_id, ?, "category", ?, ?);
+  `;
 
   db.query(
     insertCategory,
-    [name, description, parent_category_id],
+    [name, description, parent_category_id, image, name, priority],
     (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
@@ -45,8 +53,16 @@ const getCategoryService = async (input, output) => {
   });
 };
 
-const GetAllCategoryService = async ( output) => {
-  const AllCategory = `SELECT category_id, name, description, parent_category_id FROM category WHERE category_deleted = "N"`;
+const GetAllCategoryService = async (output) => {
+  // const AllCategory = `SELECT category.category_id, name, description, parent_category_id, productimage.image_url FROM category
+  // JOIN productimage
+  // ON productimage.category_id = category.category_id
+  // WHERE category.category_deleted = "N"`;
+
+  const AllCategory = `SELECT * FROM category 
+  JOIN productimage
+  ON productimage.category_id = category.category_id
+  WHERE category.category_deleted = "N"`;
 
   db.query(AllCategory, (err, result) => {
     if (err) {
@@ -60,7 +76,10 @@ const GetAllCategoryService = async ( output) => {
 const getCategoryByIdService = async (input, output) => {
   const categoryId = input.CategoryId;
 
-  const selectCategoryById = `SELECT category_id, name FROM category WHERE category_id = ? AND category_deleted = "N"`;
+  const selectCategoryById = `SELECT category.category_id, name, description, parent_category_id, productimage.image_url FROM category 
+  JOIN productimage
+  ON productimage.category_id = category.category_id
+  WHERE category.category_id = ? AND category.category_deleted = "N"`;
   db.query(selectCategoryById, [categoryId], (err, result) => {
     if (err) {
       output({ error: { description: err.message } }, null);
@@ -85,19 +104,40 @@ const getChildByCategoryIdService = async (input, output) => {
 };
 
 const updateCategoryService = async (input, output) => {
-  const { CategoryId, categoryName, description } = input;
+  const {
+    categoryId,
+    categoryName,
+    description,
+    parentCategoryId,
+    id,
+    isPrimary,
+    image,
+  } = input;
 
-  const updateCategory = `UPDATE category SET name = ?, description = ? WHERE category_id = ?`;
+  const updateCategory = `UPDATE category SET name = ?, description = ? WHERE category_id = ?;
+  UPDATE productimage SET image_url = ?, image_tag = "category", alt_text = ?, is_primary = ? WHERE category_id = ? AND id = ?`;
 
   db.query(
     updateCategory,
-    [categoryName, description, CategoryId],
+    [
+      categoryName,
+      description,
+      categoryId,
+      image,
+      categoryName,
+      isPrimary,
+      categoryId,
+      id,
+    ],
     (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
       } else {
-        const SelectData = `SELECT * FROM category WHERE category_id = ?`;
-        db.query(SelectData, [CategoryId], (err, result) => {
+        const SelectData = `SELECT * FROM category 
+  JOIN productimage
+  ON productimage.category_id = category.category_id
+  WHERE category.category_id`;
+        db.query(SelectData, [categoryId], (err, result) => {
           if (err) {
             output({ error: { description: err.message } }, null);
           } else {

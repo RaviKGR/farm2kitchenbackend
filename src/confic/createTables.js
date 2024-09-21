@@ -153,14 +153,16 @@ const Delivery = `CREATE TABLE IF NOT EXISTS Delivery (
 
 
 const ProductImage = `CREATE TABLE IF NOT EXISTS ProductImage (
-    image_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    product_id BIGINT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT,                 
+    category_id BIGINT,                
     image_url VARCHAR(500) NOT NULL,
+    image_tag VARCHAR(255) NOT NULL,
     alt_text VARCHAR(255),
     is_primary BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (product_id) REFERENCES Product(product_id)
+    FOREIGN KEY (product_id) REFERENCES Product(product_id), 
+    FOREIGN KEY (category_id) REFERENCES Category(category_id)
 );`
-
 
 
 // Authentication Tables
