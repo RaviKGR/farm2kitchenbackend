@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-
+const baseUrl = "https://localhost.com/verify";
 const transporter = nodemailer.createTransport({
     service: process.env.MAIL_SERVICE,
     host: process.env.MAIL_HOST,
@@ -11,17 +11,18 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-const sendOtpMail = async (to, code) => {
+const sendOtpMail = async (to, data) => {
+    const token = data.token
     try {
         const result = await transporter.sendMail({
             from: process.env.MAIL_USER,
             to: to,
             subject: "Welcome to Farm2kitchen",
-            text: `Verify your OTP code ${code}`,
+            text: `Verify your Sing-Up  clicking this link:https://localhost:300.com/verify?token=${token}`,
             // html: "<b>Hello world?</b>", 
         })
         console.log(result);
-        
+
         return !!result.messageId;
 
     } catch (error) {
