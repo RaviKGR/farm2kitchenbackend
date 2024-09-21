@@ -1,12 +1,4 @@
-const {
-  AddNewCategoryService,
-  getCategoryService,
-  getCategoryByIdService,
-  getChildByCategoryIdService,
-  updateCategoryService,
-  deleteCategoryService,
-  GetAllCategoryService,
-} = require("../../services/CategoriesServices/categoriesServices");
+const { AddNewCategoryService, getCategoryService, getCategoryByIdService, getChildByCategoryIdService, updateCategoryService, deleteCategoryService, GetAllCategoryService, } = require("../../services/CategoriesServices/categoriesServices");
 
 const AddNewCategoryController = async (req, res) => {
   const { categoryName, description, parentCategoryId } = req.body;
@@ -26,7 +18,7 @@ const AddNewCategoryController = async (req, res) => {
 };
 
 const GetCategoryController = async (req, res) => {
-  
+
   try {
     await getCategoryService(req, (err, data) => {
       if (err) res.status(400).send(err.error);
@@ -37,14 +29,14 @@ const GetCategoryController = async (req, res) => {
   }
 };
 const GetAllCategoryController = async (req, res) => {
-    try{
+  try {
     await GetAllCategoryService((err, data) => {
-        if(err) res.status(400).send(err.error);
-        else res.send(data);
+      if (err) res.status(400).send(err.error);
+      else res.send(data);
     })
-    } catch (e) {
-      throw e
-    }
+  } catch (e) {
+    throw e
+  }
 }
 
 const GetCategoryByIdConteroller = async (req, res) => {
@@ -82,7 +74,7 @@ const GetChildByCategoryIdController = async (req, res) => {
 };
 
 const updateCategoryConteroller = async (req, res) => {
-  const { CategoryId, categoryName, description } = req.body;  
+  const { CategoryId, categoryName, description } = req.body;
 
   try {
     if ((!CategoryId || !categoryName || !description)) {
