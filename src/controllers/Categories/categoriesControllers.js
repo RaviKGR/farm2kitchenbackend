@@ -1,13 +1,14 @@
 const { AddNewCategoryService, getCategoryService, getCategoryByIdService, getChildByCategoryIdService, updateCategoryService, deleteCategoryService, GetAllCategoryService, } = require("../../services/CategoriesServices/categoriesServices");
 
 const AddNewCategoryController = async (req, res) => {
-  const { categoryName, description, parentCategoryId } = req.body;
+  const { categoryName, description } = req.body;
+  const image = req.file ? req.file.filename : null;
 
   try {
     if (!categoryName || !description) {
       return res.status(400).send({ message: "Check the data" });
     } else {
-      await AddNewCategoryService(req.body, (err, data) => {
+      await AddNewCategoryService({ ...req.body, image }, (err, data) => {
         if (err) res.status(400).send(err.error);
         else res.status(200).send(data);
       });
@@ -74,13 +75,14 @@ const GetChildByCategoryIdController = async (req, res) => {
 };
 
 const updateCategoryConteroller = async (req, res) => {
-  const { CategoryId, categoryName, description } = req.body;
+  const { categoryId, categoryName, description, parentCategoryId, id, isPrimary } = req.body;  
+  const image = req.file ? req.file.filename : null;
 
   try {
-    if ((!CategoryId || !categoryName || !description)) {
+    if ((!categoryId || !categoryName || !description || !id || !isPrimary)) {
       res.status(400).send({ message: "Check the data" });
     } else {
-      await updateCategoryService(req.body, (err, data) => {
+      await updateCategoryService({...req.body, image}, (err, data) => {
         if (err) res.status(400).send(err.error);
         else res.send(data);
       });
