@@ -2,20 +2,24 @@ const { addNewProductService, SearchProduct, GetCategoryIdProdect, getProductByP
 
 
 const addNewProductController = async (req, res) => {
-  const { productName, description, price, categoryId, packagingId, barcode } =
+  const { productName, description, price, categoryId, barcode, isPrimary } =
     req.body;
+    const files = req.files;
+    
   try {
     if (
       !productName ||
       !description ||
       !price ||
       !categoryId ||
-      !packagingId ||
-      !barcode
+      !barcode ||
+      !isPrimary ||
+      !files || files.length === 0
     ) {
       res.status(400).send({ message: "Check the data" });
     } else {
-      await addNewProductService(req.body, (err, data) => {
+      const imageUrls = files.map(file => `/uploads/${file.filename}`);
+      await addNewProductService({...req.body, images: imageUrls}, (err, data) => {
         if (err) res.status(400).send(err.error);
         else res.send(data);
       });
@@ -89,9 +93,10 @@ const updateProductController = async (req, res) => {
     description,
     price,
     categoryId,
-    packagingId,
     barcode,
+    isPrimary
   } = req.body;
+  const files = req.files;
   try {
     if (
       !productId ||
@@ -99,12 +104,14 @@ const updateProductController = async (req, res) => {
       !description ||
       !price ||
       !categoryId ||
-      !packagingId ||
-      !barcode
+      !barcode ||
+      !isPrimary ||
+      !files || files.length === 0
     ) {
       res.status(400).send({ message: "Check the data" });
     } else {
-      await updateProductService(req.body, (err, data) => {
+      const imageUrls = files.map(file => `/uploads/${file.filename}`);
+      await updateProductService({...req.body, images: imageUrls}, (err, data) => {
         if (err) res.status(400).send(err.error);
         else res.send(data);
       });
