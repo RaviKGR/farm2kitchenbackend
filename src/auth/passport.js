@@ -1,23 +1,20 @@
+/*  PASSPORT SETUP  */
+
 const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+var userProfile;
 
-passport.serializeUser((user, done) => {
-    done(null, user);
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.set('view engine', 'ejs');
+
+app.get('/success', (req, res) => res.send(userProfile));
+app.get('/error', (req, res) => res.send("error logging in"));
+
+passport.serializeUser(function(user, cb) {
+  cb(null, user);
 });
 
-passport.deserializeUser((obj, done) => {
-    done(null, obj);
+passport.deserializeUser(function(obj, cb) {
+  cb(null, obj);
 });
-
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.CALLBACK_URL
-},
-    (accessToken, refreshToken, profile, done) => {
-        // Here, you can perform actions like saving the user to your database
-        return done(null, profile);
-    }
-));
-
-module.exports = passport;
