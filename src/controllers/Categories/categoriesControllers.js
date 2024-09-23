@@ -1,11 +1,11 @@
 const { AddNewCategoryService, getCategoryService, getCategoryByIdService, getChildByCategoryIdService, updateCategoryService, deleteCategoryService, GetAllCategoryService, } = require("../../services/CategoriesServices/categoriesServices");
 
 const AddNewCategoryController = async (req, res) => {
-  const { categoryName, description } = req.body;
+  const { categoryName, description, isPrimary } = req.body;
   const image = req.file ? req.file.filename : null;
 
   try {
-    if (!categoryName || !description) {
+    if (!categoryName || !description || !image || !isPrimary) {
       return res.status(400).send({ message: "Check the data" });
     } else {
       await AddNewCategoryService({ ...req.body, image }, (err, data) => {

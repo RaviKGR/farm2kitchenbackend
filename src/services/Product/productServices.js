@@ -27,17 +27,53 @@ const SearchProduct = async (input, output) => {
 };
 
 const addNewProductService = async (input, output) => {
-  const { productName, description, price, categoryId, packagingId, barcode } =
-    input;
-  const insertProduct = `INSERT INTO product (name, description, price, category_id, packaging_id, barcode, status, product_deleted) VALUES (?, ?, ?, ?, ?, ?, True, "N")`;
+  const {
+    productName,
+    description,
+    price,
+    categoryId,
+    barcode,
+    images,
+    isPrimary,
+  } = input;
+
+  const insertProduct = `INSERT INTO product (name, description, price, category_id, barcode, status, product_deleted) 
+  VALUES (?, ?, ?, ?, ?, True, "N");`;
+
   db.query(
     insertProduct,
-    [productName, description, price, categoryId, packagingId, barcode],
-    (err, result) => {
+    [productName, description, price, categoryId, barcode],
+    async (err, result) => {
       if (err) {
+        return output({ error: { description: err.message } }, null);
+      }
+
+      const last_product_id = result.insertId;
+      const insertImage = `INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) 
+    VALUES (?, ?, "product", ?, ?);`;
+
+      try {
+        // Use Promise.all to execute all insert queries for images
+        await Promise.all(
+          images.map((image) => {
+            return new Promise((resolve, reject) => {
+              db.query(
+                insertImage,
+                [last_product_id, image, productName, isPrimary],
+                (err, result) => {
+                  if (err) {
+                    return reject(err);
+                  }
+                  resolve(result);
+                }
+              );
+            });
+          })
+        );
+
+        output(null, { message: "Product added successfully", result });
+      } catch (err) {
         output({ error: { description: err.message } }, null);
-      } else {
-        output(null, result);
       }
     }
   );
@@ -57,8 +93,6 @@ const GetCategoryIdProdect = async (input, output) => {
 };
 
 const getProductByProductIdService = async (ProductId, output) => {
-  console.log(ProductId);
-
   const getProductById = `SELECT * FROM product WHERE product_id = ? AND product_deleted = "N" AND status = True`;
   db.query(getProductById, [ProductId], (err, result) => {
     if (err) {
@@ -87,22 +121,15 @@ const updateProductService = async (input, output) => {
     description,
     price,
     categoryId,
-    packagingId,
     barcode,
+    images,
+    isPrimary,
   } = input;
 
-  const UpdateProduct = `UPDATE product SET name = ?, description = ?, price = ?, category_id = ?, packaging_id = ?, barcode = ? WHERE product_id = ?`;
+  const UpdateProduct = `UPDATE product SET name = ?, description = ?, price = ?, category_id = ?, barcode = ? WHERE product_id = ?`;
   db.query(
     UpdateProduct,
-    [
-      productName,
-      description,
-      price,
-      categoryId,
-      packagingId,
-      barcode,
-      productId,
-    ],
+    [productName, description, price, categoryId, barcode, productId],
     (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
@@ -153,7 +180,7 @@ const deleteProductService = async (productId, output) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
-      output(null, {message: "Product Deleted successfully"});
+      output(null, { message: "Product Deleted successfully" });
     }
   });
 };
