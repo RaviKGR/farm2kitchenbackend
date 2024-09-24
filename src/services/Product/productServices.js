@@ -37,8 +37,8 @@ const addNewProductService = async (input, output) => {
     isPrimary,
   } = input;
 
-  const insertProduct = `INSERT INTO product (name, description, price, category_id, barcode, status, product_deleted) 
-  VALUES (?, ?, ?, ?, ?, True, "N");`;
+  const insertProduct = `INSERT INTO product (name, description, price, category_id, barcode, status, best_Seller, product_deleted) 
+  VALUES (?, ?, ?, ?, ?, True, False, "N");`;
 
   db.query(
     insertProduct,
@@ -80,8 +80,9 @@ const addNewProductService = async (input, output) => {
 };
 
 const GetCategoryIdProdect = async (input, output) => {
-  const category_id = input.query.categoryId;
-  const categoryProdect = `SELECT * FROM product WHERE category_id LIKE ? AND product_deleted = "N" AND status = True`;
+  const category_id = input.query.category_Id;
+  
+  const categoryProdect = `SELECT * FROM product WHERE category_id = ? AND product_deleted = "N" AND status = True`;
 
   db.query(categoryProdect, [category_id], (err, result) => {
     if (err) {
@@ -93,23 +94,120 @@ const GetCategoryIdProdect = async (input, output) => {
 };
 
 const getProductByProductIdService = async (ProductId, output) => {
-  const getProductById = `SELECT * FROM product WHERE product_id = ? AND product_deleted = "N" AND status = True`;
+  // const getProductById = `SELECT * FROM product WHERE product_id = ? AND product_deleted = "N" AND status = True`;
+  const getProductById = `
+    SELECT 
+      product.product_id, 
+      product.name, 
+      product.description, 
+      product.price, 
+      product.category_id, 
+      product.barcode, 
+      product.status, 
+      product.product_deleted,
+      productimage.id AS image_id, 
+      productimage.image_url, 
+      productimage.image_tag, 
+      productimage.alt_text, 
+      productimage.is_primary
+    FROM product
+    JOIN productimage 
+    ON productimage.image_id = product.product_id
+    WHERE product_id = ? AND image_tag = "product" AND product_deleted = "N" AND status = True
+  `;
   db.query(getProductById, [ProductId], (err, result) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
-      output(null, result);
+      const product = result.reduce((acc, row) => {
+        if (!acc.product_id) {
+          acc = {
+            product_id: row.product_id,
+            name: row.name,
+            description: row.description,
+            price: row.price,
+            category_id: row.category_id,
+            barcode: row.barcode,
+            status: row.status,
+            product_deleted: row.product_deleted,
+            images: [],
+          };
+        }
+
+        // Add each image to the images array
+        acc.images.push({
+          image_id: row.image_id,
+          image_url: row.image_url,
+          image_tag: row.image_tag,
+          alt_text: row.alt_text,
+          is_primary: row.is_primary,
+        });
+
+        return acc;
+      }, {});
+
+      output(null, product);
     }
   });
 };
 
 const getAllProductService = async (input, output) => {
-  const GetAllProduct = `SELECT * FROM product WHERE product_deleted = "N" AND status = True`;
+  // const GetAllProduct = `SELECT * FROM product WHERE product_deleted = "N" AND status = True`;
+  const GetAllProduct = `
+    SELECT 
+      product.product_id, 
+      product.name, 
+      product.description, 
+      product.price, 
+      product.category_id, 
+      product.barcode, 
+      product.status, 
+      product.product_deleted,
+      productimage.id AS image_id, 
+      productimage.image_url, 
+      productimage.image_tag, 
+      productimage.alt_text, 
+      productimage.is_primary
+    FROM product
+    JOIN productimage 
+    ON productimage.image_id = product.product_id
+    WHERE image_tag = "product" AND product_deleted = "N" AND status = True
+  `;
   db.query(GetAllProduct, (err, result) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
-      output(null, result);
+      const products = result.reduce((acc, row) => {
+        if (!acc[row.product_id]) {
+          // If not, create a new product object with an empty images array
+          acc[row.product_id] = {
+            product_id: row.product_id,
+            name: row.name,
+            description: row.description,
+            price: row.price,
+            category_id: row.category_id,
+            barcode: row.barcode,
+            status: row.status,
+            product_deleted: row.product_deleted,
+            images: [],
+          };
+        }
+
+        // Add each image to the corresponding product's images array
+        acc[row.product_id].images.push({
+          image_id: row.image_id,
+          image_url: row.image_url,
+          image_tag: row.image_tag,
+          alt_text: row.alt_text,
+          is_primary: row.is_primary,
+        });
+
+        return acc;
+      }, {});
+
+      const productArray = Object.values(products);
+
+      output(null, productArray);
     }
   });
 };
@@ -150,7 +248,7 @@ const updateProductService = async (input, output) => {
 const updateProductStatusService = async (input, output) => {
   const { productId, productStatus } = input;
 
-  const status = productStatus == "true" ? true : false;
+  const status = productStatus == "true" || productStatus == "True" ? true : false;
 
   const updateAndSelectQuery = `
     UPDATE product SET status = ? WHERE product_id = ?;
@@ -185,6 +283,161 @@ const deleteProductService = async (productId, output) => {
   });
 };
 
+const getProductBarCodeService = async (barCode, output) => {
+  const selectQuery = `
+    SELECT 
+      product.product_id, 
+      product.name, 
+      product.description, 
+      product.price, 
+      product.category_id, 
+      product.barcode, 
+      product.status, 
+      product.product_deleted,
+      productimage.id AS image_id, 
+      productimage.image_url, 
+      productimage.image_tag, 
+      productimage.alt_text, 
+      productimage.is_primary
+    FROM product
+    JOIN productimage 
+    ON productimage.image_id = product.product_id
+    WHERE barcode = ? AND image_tag = "product" AND product_deleted = "N" AND status = True
+  `;
+
+  db.query(selectQuery, [barCode], (err, result) => {
+    if (err) {
+      output({ error: { description: err.message } }, null);
+    } else if (result.length === 0) {
+      output(null, null); // No product found
+    } else {
+      const product = result.reduce((acc, row) => {
+        if (!acc.product_id) {
+          acc = {
+            product_id: row.product_id,
+            name: row.name,
+            description: row.description,
+            price: row.price,
+            category_id: row.category_id,
+            barcode: row.barcode,
+            status: row.status,
+            product_deleted: row.product_deleted,
+            images: [],
+          };
+        }
+
+        // Add each image to the images array
+        acc.images.push({
+          image_id: row.image_id,
+          image_url: row.image_url,
+          image_tag: row.image_tag,
+          alt_text: row.alt_text,
+          is_primary: row.is_primary,
+        });
+
+        return acc;
+      }, {});
+
+      output(null, product);
+    }
+  });
+};
+
+const getBestSellerProductService = async (output) => {
+  const GetAllProduct = `
+  SELECT 
+    product.product_id, 
+    product.name, 
+    product.description, 
+    product.price, 
+    product.category_id, 
+    product.barcode, 
+    product.status, 
+    product.product_deleted,
+    productimage.id AS image_id, 
+    productimage.image_url, 
+    productimage.image_tag, 
+    productimage.alt_text, 
+    productimage.is_primary
+  FROM product
+  JOIN productimage 
+  ON productimage.image_id = product.product_id
+  WHERE image_tag = "product" AND product_deleted = "N" AND status = True AND best_Seller = 1
+`;
+  db.query(GetAllProduct, (err, result) => {
+    if (err) {
+      output({ error: { description: err.message } }, null);
+    } else {
+      const products = result.reduce((acc, row) => {
+        if (!acc[row.product_id]) {
+          // If not, create a new product object with an empty images array
+          acc[row.product_id] = {
+            product_id: row.product_id,
+            name: row.name,
+            description: row.description,
+            price: row.price,
+            category_id: row.category_id,
+            barcode: row.barcode,
+            status: row.status,
+            product_deleted: row.product_deleted,
+            images: [],
+          };
+        }
+
+        // Add each image to the corresponding product's images array
+        acc[row.product_id].images.push({
+          image_id: row.image_id,
+          image_url: row.image_url,
+          image_tag: row.image_tag,
+          alt_text: row.alt_text,
+          is_primary: row.is_primary,
+        });
+
+        return acc;
+      }, {});
+
+      const productArray = Object.values(products);
+
+      output(null, productArray);
+    }
+  });
+};
+
+const updateBestSellerProductService = async (input, output) => {
+  const { productId, bestSeller } = input;
+  const BestSeller =  bestSeller == "true" || bestSeller == "True" ? true : false;
+  
+  const UpdateBestSeller = `UPDATE product SET best_Seller = ? WHERE product_id = ?`;
+  db.query(UpdateBestSeller, [BestSeller, productId], (err, result) => {
+    if (err) {
+      output({ error: { description: err.message } }, null);
+    } else {
+      output(null, { message: "BestSeller updated successfully", result})
+    }
+  })
+};
+
+const getProductsToCSVService = ( callback) => {
+  // SQL query to fetch products by category_id
+  const ProductQuery = `
+    SELECT * 
+    FROM product 
+    WHERE product_deleted = "N" 
+    AND status = True
+  `;
+
+  // Executing the query
+  db.query(ProductQuery, (err, result) => {
+    if (err) {
+      // If there's an error, pass it to the callback with an error description
+      return callback({ error: { description: err.message } }, null);
+    } else {
+      // If query is successful, pass the result to the callback
+      return callback(null, result);
+    }
+  });
+};
+
 module.exports = {
   SearchProduct,
   GetCategoryIdProdect,
@@ -194,4 +447,8 @@ module.exports = {
   updateProductService,
   updateProductStatusService,
   deleteProductService,
+  getProductBarCodeService,
+  getBestSellerProductService,
+  updateBestSellerProductService,
+  getProductsToCSVService
 };

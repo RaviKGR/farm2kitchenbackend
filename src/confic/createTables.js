@@ -52,15 +52,13 @@ const Packaging = `CREATE TABLE IF NOT EXISTS Packaging (
 const Product = `CREATE TABLE IF NOT EXISTS Product (
     product_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    description TEXT,
-    price DECIMAL(10, 2) NOT NULL,
     category_id BIGINT NOT NULL,
-	barcode VARCHAR(100) NOT NULL, 
     status BOOLEAN DEFAULT TRUE,
-    product_deleted VARCHAR(5),
+    best_Seller BOOLEAN DEFAULT FALSE NOT NULL,
+    deleted VARCHAR(5),
     FOREIGN KEY (category_id) REFERENCES Category(category_id),
     FOREIGN KEY (packaging_id) REFERENCES Packaging(packaging_id)
-); `
+); `;
 
 const Supplier = `CREATE TABLE IF NOT EXISTS Supplier (
     supplier_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -68,18 +66,32 @@ const Supplier = `CREATE TABLE IF NOT EXISTS Supplier (
     contact_info VARCHAR(255),
     address_id BIGINT,
     FOREIGN KEY (address_id) REFERENCES Address(address_id)
-);`
+);`;
+
+const productvariant = `CREATE TABLE IF NOT EXISTS productVariant (
+    variant_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT NOT NULL,
+    description TEXT,
+    size INT NOT NULL,
+    type VARCHAR(255),
+    barcode VARCHAR(100) NOT NULL, 
+    status BOOLEAN DEFAULT TRUE,
+    best_Seller BOOLEAN DEFAULT FALSE NOT NULL,
+    deleted VARCHAR(5),
+    FOREIGN KEY (product_id) REFERENCES Product(product_id)
+)`;
 
 const Inventory = `CREATE TABLE IF NOT EXISTS Inventory (
     inventory_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    product_id BIGINT NOT NULL,
+    variant_id BIGINT NOT NULL,
     quantity_in_stock INT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
     reorder_level INT NOT NULL,
-    supplier_id BIGINT NOT NULL,
+    supplier_id BIGINT,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (product_id) REFERENCES Product(product_id),
+    FOREIGN KEY (variant_id) REFERENCES productvariant(variant_id),
     FOREIGN KEY (supplier_id) REFERENCES Supplier(supplier_id)
-);`
+);`;
 
 const favorites = `CREATE TABLE IF NOT EXISTS favorites (
     favorite_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -233,6 +245,7 @@ async function createTables() {
         await db.promise().query(Packaging);
         await db.promise().query(Product);
         await db.promise().query(Supplier);
+        await db.promise().query(productvariant);
         await db.promise().query(Inventory);
         await db.promise().query(Offer);
         await db.promise().query(Product_Offer);
