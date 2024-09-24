@@ -6,7 +6,6 @@ const Users = `CREATE TABLE IF NOT EXISTS Users (
     user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NULL,
     email VARCHAR(255) UNIQUE NULL,
-    password VARCHAR(255) NOT NULL,
     phone_number VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );`
@@ -32,8 +31,6 @@ const Category = `CREATE TABLE IF NOT EXISTS  Category (
     category_deleted VARCHAR(5),
     FOREIGN KEY (parent_category_id) REFERENCES Category(category_id)
 );`
-
-
 
 
 const SubCategory = `CREATE TABLE IF NOT EXISTS  SubCategory (
@@ -165,14 +162,13 @@ const ProductImage = `CREATE TABLE IF NOT EXISTS ProductImage (
 
 const users_credentials = `
 CREATE TABLE IF NOT EXISTS users_credentials (
-    uc_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    username VARCHAR(50) UNIQUE NOT NULL,
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NULL,
     password_hash VARCHAR(255) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NULL,
+    phone_number VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-     FOREIGN KEY (user_id) REFERENCES Users(user_id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );`;
 
 const tokens = `
@@ -218,13 +214,12 @@ CREATE TABLE IF NOT EXISTS role_permissions (
 const otps = `
 CREATE TABLE IF NOT EXISTS otps (
     otp_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT,
+    user_id INT,
     otp_code VARCHAR(6) NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+    FOREIGN KEY (user_id) REFERENCES users_credentials (user_id)
 );`
-
 
 
 // Function to execute the queries
