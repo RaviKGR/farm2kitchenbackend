@@ -1,30 +1,51 @@
 const { db } = require("../../confic/db");
 
-const SearchProduct = async (input, output) => {
+const SearchProduct = (input) => {
   const SearchName = input.query.SearchName;
   const SearchProductWithCategory = `
-    SELECT 
-        p.product_id, p.name AS product_name, p.description, p.price, p.barcode,
-        c.category_id, c.name AS category_name, c.description AS category_description
-      FROM 
-        Product p
-      JOIN 
-        Category c ON p.category_id = c.category_id
-      WHERE 
-        p.name LIKE ? OR c.name LIKE ?
-  `;
-  db.query(
-    SearchProductWithCategory,
-    [`%${SearchName}%`, `%${SearchName}%`],
-    (err, result) => {
-      if (err) {
-        output({ error: { description: err.message } }, null);
-      } else {
-        output(null, result);
+  SELECT 
+      p.product_id, 
+      p.name AS product_name, 
+      pv.description AS variant_description, 
+      pv.size, 
+      pv.type, 
+      pv.barcode, 
+      c.category_id, 
+      c.name AS category_name, 
+      c.description AS category_description,
+      i.quantity_in_stock,
+      CASE 
+          WHEN i.quantity_in_stock = 0 THEN 'Out of Stock' 
+          ELSE 'In Stock' 
+      END AS stock_status
+  FROM 
+      Product p
+  INNER JOIN 
+      Category c ON p.category_id = c.category_id
+  INNER JOIN
+      productVariant pv ON pv.product_id = p.product_id
+  INNER JOIN
+      Inventory i ON i.variant_id = pv.variant_id
+  WHERE 
+      p.name LIKE ? OR c.name LIKE ?
+`;
+
+
+  return new Promise((resolve, reject) => {
+    db.query(
+      SearchProductWithCategory,
+      [`%${SearchName}%`, `%${SearchName}%`],
+      (err, result) => {
+        if (err) {
+          reject({ description: err.message, status: 400 });
+        } else {
+          resolve(result);
+        }
       }
-    }
-  );
+    );
+  });
 };
+
 
 const addNewProductService = async (input, output) => {
   const {
@@ -81,7 +102,7 @@ const addNewProductService = async (input, output) => {
 
 const GetCategoryIdProdect = async (input, output) => {
   const category_id = input.query.category_Id;
-  
+
   const categoryProdect = `SELECT * FROM product WHERE category_id = ? AND product_deleted = "N" AND status = True`;
 
   db.query(categoryProdect, [category_id], (err, result) => {
@@ -405,19 +426,19 @@ const getBestSellerProductService = async (output) => {
 
 const updateBestSellerProductService = async (input, output) => {
   const { productId, bestSeller } = input;
-  const BestSeller =  bestSeller == "true" || bestSeller == "True" ? true : false;
-  
+  const BestSeller = bestSeller == "true" || bestSeller == "True" ? true : false;
+
   const UpdateBestSeller = `UPDATE product SET best_Seller = ? WHERE product_id = ?`;
   db.query(UpdateBestSeller, [BestSeller, productId], (err, result) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
-      output(null, { message: "BestSeller updated successfully", result})
+      output(null, { message: "BestSeller updated successfully", result })
     }
   })
 };
 
-const getProductsToCSVService = ( callback) => {
+const getProductsToCSVService = (callback) => {
   // SQL query to fetch products by category_id
   const ProductQuery = `
     SELECT * 
