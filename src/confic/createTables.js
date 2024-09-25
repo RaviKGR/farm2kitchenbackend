@@ -97,7 +97,7 @@ const favorites = `CREATE TABLE IF NOT EXISTS favorites (
     favorite_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     product_id INT NOT NULL
-);`;
+);`
 
 const Offer = `CREATE TABLE IF NOT EXISTS Offer (
     offer_id BIGINT AUTO_INCREMENT PRIMARY KEY,
