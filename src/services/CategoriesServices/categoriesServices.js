@@ -5,6 +5,7 @@ const AddNewCategoryService = async (input, output) => {
   const description = input.description;
   const parent_category_id = Number(input.parentCategoryId) || null;
   const isPrimary = input.isPrimary;
+  const imageTag = input.imageTag.toUpperCase();
   const image = `/uploads/${input.image}`;
 
   const insertCategory = `
@@ -12,24 +13,28 @@ const AddNewCategoryService = async (input, output) => {
   VALUES (?, ?, ?, "N");
   SET @last_category_id = LAST_INSERT_ID();
   INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary)
-  VALUES (@last_category_id, ?, "category", ?, ?);
+  VALUES (@last_category_id, ?, ?, ?, ?);
   `;
 
   db.query(
     insertCategory,
-    [name, description, parent_category_id, image, name, isPrimary],
+    [name, description, parent_category_id, image, imageTag, name, isPrimary],
     (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
       } else {
-        output(null, { message: "Category added successfully", result });
+        output(null, { message: "Category added successfully"});
       }
     }
   );
 };
 
 const getCategoryService = async (input, output) => {
-  const AllCategory = `SELECT category_id, name, description, parent_category_id FROM category WHERE category_deleted = "N"`;
+  const AllCategory = `SELECT c.category_id, c.name, c.description, c.parent_category_id, i.id, i.image_url, i.image_url
+  FROM category c
+  JOIN productimage i
+  ON c.category_id = i.image_id AND (i.image_tag = "CATEGORY" OR i.image_tag = "category")
+  WHERE c.category_deleted = "N"`;
 
   db.query(AllCategory, (err, result) => {
     if (err) {
@@ -102,6 +107,17 @@ const getChildByCategoryIdService = async (input, output) => {
     }
   });
 };
+
+const GetParentCategoryService = async (output) => {
+  const getQuery = `SELECT category_id, name FROM category WHERE parent_category_id is NULL AND category_deleted = "N"`;
+  db.query(getQuery, (err, result) => {
+    if (err) {
+      output({ error: { description: err.message } }, null);
+    } else {
+      output(null, result);
+    }
+  });
+}
 
 const updateCategoryService = async (input, output) => {
   const {
@@ -176,4 +192,5 @@ module.exports = {
   updateCategoryService,
   deleteCategoryService,
   GetAllCategoryService,
+  GetParentCategoryService
 };

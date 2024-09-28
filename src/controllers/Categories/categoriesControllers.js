@@ -1,11 +1,21 @@
-const { AddNewCategoryService, getCategoryService, getCategoryByIdService, getChildByCategoryIdService, updateCategoryService, deleteCategoryService, GetAllCategoryService, } = require("../../services/CategoriesServices/categoriesServices");
+const {
+  AddNewCategoryService,
+  getCategoryService,
+  getCategoryByIdService,
+  getChildByCategoryIdService,
+  updateCategoryService,
+  deleteCategoryService,
+  GetAllCategoryService,
+  GetParentCategoryService,
+} = require("../../services/CategoriesServices/categoriesServices");
 
 const AddNewCategoryController = async (req, res) => {
-  const { categoryName, description, isPrimary } = req.body;
+  const { categoryName, description, isPrimary, imageTag } = req.body;
   const image = req.file ? req.file.filename : null;
+console.log(req.body);
 
   try {
-    if (!categoryName || !description || !image || !isPrimary) {
+    if (!categoryName || !description || !image || !isPrimary || !imageTag) {
       return res.status(400).send({ message: "Check the data" });
     } else {
       await AddNewCategoryService({ ...req.body, image }, (err, data) => {
@@ -19,7 +29,6 @@ const AddNewCategoryController = async (req, res) => {
 };
 
 const GetCategoryController = async (req, res) => {
-
   try {
     await getCategoryService(req, (err, data) => {
       if (err) res.status(400).send(err.error);
@@ -34,11 +43,11 @@ const GetAllCategoryController = async (req, res) => {
     await GetAllCategoryService((err, data) => {
       if (err) res.status(400).send(err.error);
       else res.send(data);
-    })
+    });
   } catch (e) {
-    throw e
+    throw e;
   }
-}
+};
 
 const GetCategoryByIdConteroller = async (req, res) => {
   const CategoryId = req.query.CategoryId;
@@ -74,15 +83,33 @@ const GetChildByCategoryIdController = async (req, res) => {
   }
 };
 
+const GetParentCategoryController = async (req, res) => {
+  try {
+    await GetParentCategoryService((err, data) => {
+      if (err) res.status(400).send(err.error);
+      else res.send(data);
+    });
+  } catch (e) {
+    throw e;
+  }
+};
+
 const updateCategoryConteroller = async (req, res) => {
-  const { categoryId, categoryName, description, parentCategoryId, id, isPrimary } = req.body;  
+  const {
+    categoryId,
+    categoryName,
+    description,
+    parentCategoryId,
+    id,
+    isPrimary,
+  } = req.body;
   const image = req.file ? req.file.filename : null;
 
   try {
-    if ((!categoryId || !categoryName || !description || !id || !isPrimary)) {
+    if (!categoryId || !categoryName || !description || !id || !isPrimary) {
       res.status(400).send({ message: "Check the data" });
     } else {
-      await updateCategoryService({...req.body, image}, (err, data) => {
+      await updateCategoryService({ ...req.body, image }, (err, data) => {
         if (err) res.status(400).send(err.error);
         else res.send(data);
       });
@@ -116,5 +143,6 @@ module.exports = {
   GetChildByCategoryIdController,
   updateCategoryConteroller,
   deleteCategoryController,
-  GetAllCategoryController
+  GetAllCategoryController,
+  GetParentCategoryController,
 };

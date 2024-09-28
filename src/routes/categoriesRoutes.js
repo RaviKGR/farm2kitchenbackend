@@ -1,7 +1,7 @@
 const express = require("express");
 const multer = require('multer');
 const path = require('path');
-const { AddNewCategoryController, GetCategoryController, GetCategoryByIdConteroller, GetAllCategoryController, GetChildByCategoryIdController, updateCategoryConteroller, deleteCategoryController } = require("../controllers/Categories/CategoriesControllers");
+const { AddNewCategoryController, GetCategoryController, GetCategoryByIdConteroller, GetAllCategoryController, GetChildByCategoryIdController, updateCategoryConteroller, deleteCategoryController, GetParentCategoryController } = require("../controllers/Categories/CategoriesControllers");
 const categoryRoutes = express.Router();
 
 const categoryStorage = multer.diskStorage({
@@ -21,8 +21,9 @@ categoryRoutes.post("/newCategories", uploadCategory.single('image'), AddNewCate
 categoryRoutes.get("/getCategories", GetCategoryController);
 categoryRoutes.get("/getCategoryById", GetCategoryByIdConteroller);
 categoryRoutes.get("/getAllCategory", GetAllCategoryController);
+categoryRoutes.get("/getparentCategory", GetParentCategoryController);
 categoryRoutes.get("/getChildCategoryByCategoryId", GetChildByCategoryIdController);
 categoryRoutes.put("/updateCategory", uploadCategory.single('image'), updateCategoryConteroller);
-categoryRoutes.put("/deleteCategory", deleteCategoryController); // Delete category
+categoryRoutes.delete("/deleteCategory", deleteCategoryController); // Delete category
 
 module.exports = categoryRoutes;
