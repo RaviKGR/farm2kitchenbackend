@@ -104,22 +104,19 @@ const favorites = `CREATE TABLE IF NOT EXISTS favorites (
 
 const Offer = `CREATE TABLE IF NOT EXISTS Offer (
     offer_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    product_id BIGINT NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
 	discountType VARCHAR(50) NOT NULL, 
     discountValue DECIMAL(10, 2) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL
-	
 );`
 
 const Product_Offer = `CREATE TABLE IF NOT EXISTS Offer_Details (
-    id BIGINT NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     offer_id BIGINT NOT NULL,
-    tag VARCHAR(255) NOT NULL,
-    PRIMARY KEY (product_id, offer_id),
-    FOREIGN KEY (product_id) REFERENCES Product(product_id),
+    offer_tag VARCHAR(255) NOT NULL,
+    tag_id BIGINT NOT NULL,
     FOREIGN KEY (offer_id) REFERENCES Offer(offer_id)
 );`
 
