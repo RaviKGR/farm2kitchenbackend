@@ -56,8 +56,7 @@ const Product = `CREATE TABLE IF NOT EXISTS Product (
     status BOOLEAN DEFAULT TRUE,
     best_Seller BOOLEAN DEFAULT FALSE NOT NULL,
     deleted VARCHAR(5),
-    FOREIGN KEY (category_id) REFERENCES Category(category_id),
-    FOREIGN KEY (packaging_id) REFERENCES Packaging(packaging_id)
+    FOREIGN KEY (category_id) REFERENCES Category(category_id)
 ); `;
 
 const Supplier = `CREATE TABLE IF NOT EXISTS Supplier (
@@ -74,7 +73,10 @@ const productvariant = `CREATE TABLE IF NOT EXISTS productVariant (
     description TEXT,
     size INT NOT NULL,
     type VARCHAR(255),
-    barcode VARCHAR(100) NOT NULL, 
+    purchase_price decimal(10,2) NOT NULL,
+    HST DECIMAL(5, 2),
+    barcode VARCHAR(100) NOT NULL,
+    purchase_date date, 
     status BOOLEAN DEFAULT TRUE,
     best_Seller BOOLEAN DEFAULT FALSE NOT NULL,
     deleted VARCHAR(5),
@@ -87,6 +89,7 @@ const Inventory = `CREATE TABLE IF NOT EXISTS Inventory (
     quantity_in_stock INT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     reorder_level INT NOT NULL,
+    discount_percentage decimal(5, 2),
     supplier_id BIGINT,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (variant_id) REFERENCES productvariant(variant_id),
@@ -101,6 +104,7 @@ const favorites = `CREATE TABLE IF NOT EXISTS favorites (
 
 const Offer = `CREATE TABLE IF NOT EXISTS Offer (
     offer_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
 	discountType VARCHAR(50) NOT NULL, 
@@ -110,9 +114,10 @@ const Offer = `CREATE TABLE IF NOT EXISTS Offer (
 	
 );`
 
-const Product_Offer = `CREATE TABLE IF NOT EXISTS Product_Offer (
-    product_id BIGINT NOT NULL,
+const Product_Offer = `CREATE TABLE IF NOT EXISTS Offer_Details (
+    id BIGINT NOT NULL,
     offer_id BIGINT NOT NULL,
+    tag VARCHAR(255) NOT NULL,
     PRIMARY KEY (product_id, offer_id),
     FOREIGN KEY (product_id) REFERENCES Product(product_id),
     FOREIGN KEY (offer_id) REFERENCES Offer(offer_id)
