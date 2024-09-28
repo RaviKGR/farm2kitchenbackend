@@ -23,7 +23,7 @@ const AddNewCategoryService = async (input, output) => {
       if (err) {
         output({ error: { description: err.message } }, null);
       } else {
-        output(null, { message: "Category added successfully"});
+        output(null, { message: "Category added successfully" });
       }
     }
   );
@@ -117,7 +117,7 @@ const GetParentCategoryService = async (output) => {
       output(null, result);
     }
   });
-}
+};
 
 const updateCategoryService = async (input, output) => {
   const {
@@ -130,27 +130,26 @@ const updateCategoryService = async (input, output) => {
     image,
   } = input;
 
-  const updateCategory = `UPDATE category SET name = ?, description = ? WHERE category_id = ?;
-  UPDATE productimage SET image_url = ?, image_tag = "category", alt_text = ?, is_primary = ? WHERE AND id = ?`;
+  const updateCategory = `
+  UPDATE category 
+  SET name = ?, description = ? 
+  WHERE category_id = ?;
+
+  UPDATE productimage 
+  SET image_url = ?, image_tag = "category", alt_text = ?, is_primary = ? 
+  WHERE id = ?;
+`;
 
   db.query(
     updateCategory,
-    [
-      categoryName,
-      description,
-      categoryId,
-      image,
-      categoryName,
-      isPrimary,
-      id,
-    ],
+    [categoryName, description, categoryId, image, categoryName, isPrimary, id],
     (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
       } else {
         const SelectData = `SELECT * FROM category 
   JOIN productimage
-  ON productimage.category_id = category.category_id
+  ON productimage.image_id = category.category_id
   WHERE category.category_id`;
         db.query(SelectData, [categoryId], (err, result) => {
           if (err) {
@@ -192,5 +191,5 @@ module.exports = {
   updateCategoryService,
   deleteCategoryService,
   GetAllCategoryService,
-  GetParentCategoryService
+  GetParentCategoryService,
 };

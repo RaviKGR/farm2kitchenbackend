@@ -12,7 +12,6 @@ const {
 const AddNewCategoryController = async (req, res) => {
   const { categoryName, description, isPrimary, imageTag } = req.body;
   const image = req.file ? req.file.filename : null;
-console.log(req.body);
 
   try {
     if (!categoryName || !description || !image || !isPrimary || !imageTag) {

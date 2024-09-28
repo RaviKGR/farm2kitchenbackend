@@ -45,75 +45,6 @@ const SearchProduct = (input) => {
   });
 };
 
-// const addNewProductService = async (input, output) => {
-//   const {
-//     productName,
-//     categoryId,
-//     imageTag,
-//     isPrimary,
-//     description,
-//     size,
-//     type,
-//     barcode,
-//     quantityInStock,
-//     price,
-//     reorderLevel,
-//     images,
-//   } = input;
-
-//   const insertProduct = `
-//     INSERT INTO product (name, category_id, status, best_seller, product_deleted)
-//     VALUES (?, ?, True, False, 'N');
-
-//     SET @last_product_id = LAST_INSERT_ID();
-
-//     INSERT INTO productvariant (product_id, description, size, type, barcode, status, best_seller, deleted)
-//     VALUES (@last_product_id, ?, ?, ?, ?, True, False, 'N');
-
-//     SET @last_variant_id = LAST_INSERT_ID();
-
-//     INSERT INTO inventory (variant_id, quantity_in_stock, price, reorder_level)
-//     VALUES (@last_variant_id, ?, ?, ?);
-//   `;
-//   db.query(
-//     insertProduct,
-//     [productName, categoryId, description, size, type, barcode, quantityInStock, price, reorderLevel],
-//     async (err, result) => {
-//       if (err) {
-//         return output({ error: { description: err.message } }, null);
-//       }
-//       console.log(result);
-
-//       const last_product_id = result.insertId;
-//       const insertImage = `INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary)
-//     VALUES (?, ?, ?, ?, ?);`;
-
-//       try {
-//         // Use Promise.all to execute all insert queries for images
-//         await Promise.all(
-//           images.map((image) => {
-//             return new Promise((resolve, reject) => {
-//               db.query(
-//                 insertImage,
-//                 [last_product_id, image, imageTag, productName, isPrimary],
-//                 (err, result) => {
-//                   if (err) {
-//                     return reject(err);
-//                   }
-//                   resolve(result);
-//                 }
-//               );
-//             });
-//           })
-//         );
-//         output(null, { message: "Product added successfully", result });
-//       } catch (err) {
-//         output({ error: { description: err.message } }, null);
-//       }
-//     }
-//   );
-// };
-
 const addNewProductService = async (input, output) => {
   const {
     productId,
@@ -123,10 +54,14 @@ const addNewProductService = async (input, output) => {
     description,
     size,
     type,
+    purchasePrice,
+    HST,
     barcode,
+    purchaseDate,
     quantityInStock,
     price,
     reorderLevel,
+    discountPercentage,
     images,
   } = input;
   const imageTag = input.imageTag.toUpperCase();
@@ -145,13 +80,22 @@ const addNewProductService = async (input, output) => {
 
       // Step 2: Insert into productvariant using `last_product_id`
       const insertVariant = `
-      INSERT INTO productvariant (product_id, description, size, type, barcode, status, best_seller, deleted)
-      VALUES (?, ?, ?, ?, ?, True, False, 'N');
+      INSERT INTO productvariant (product_id, description, size, type, purchase_price, HST, barcode, purchase_date, status, best_seller, deleted)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, True, False, 'N');
     `;
 
       db.query(
         insertVariant,
-        [last_product_id, description, size, type, barcode],
+        [
+          last_product_id,
+          description,
+          size,
+          type,
+          purchasePrice,
+          HST,
+          barcode,
+          purchaseDate,
+        ],
         (err, result) => {
           if (err) {
             return output({ error: { description: err.message } }, null);
@@ -160,12 +104,18 @@ const addNewProductService = async (input, output) => {
 
           // Step 3: Insert into inventory using `last_variant_id`
           const insertInventory = `
-        INSERT INTO inventory (variant_id, quantity_in_stock, price, reorder_level) 
-        VALUES (?, ?, ?, ?);
+        INSERT INTO inventory (variant_id, quantity_in_stock, price, reorder_level, discount_percentage) 
+        VALUES (?, ?, ?, ?, ?);
       `;
           db.query(
             insertInventory,
-            [last_variant_id, quantityInStock, price, reorderLevel],
+            [
+              last_variant_id,
+              quantityInStock,
+              price,
+              reorderLevel,
+              discountPercentage,
+            ],
             async (err, result) => {
               if (err) {
                 return output({ error: { description: err.message } }, null);
@@ -212,23 +162,38 @@ const addNewProductService = async (input, output) => {
     });
   } else {
     const insertVariant = `
-    INSERT INTO productvariant (product_id, description, size, type, barcode, status, best_seller, deleted)
-    VALUES (?, ?, ?, ?, ?, True, False, 'N');
+    INSERT INTO productvariant (product_id, description, size, type, purchase_price, HST, barcode, purchase_date, status, best_seller, deleted)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, True, False, 'N');
   `;
     db.query(
       insertVariant,
-      [productId, description, size, type, barcode],
+      [
+        productId,
+        description,
+        size,
+        type,
+        purchasePrice,
+        HST,
+        barcode,
+        purchaseDate,
+      ],
       (err, result) => {
         if (err) {
           output({ error: { description: err.message } }, null);
         } else {
           const last_variant_id = result.insertId;
 
-          const insertInventory = ` INSERT INTO inventory (variant_id, quantity_in_stock, price, reorder_level) VALUES (?, ?, ?, ?);`;
+          const insertInventory = ` INSERT INTO inventory (variant_id, quantity_in_stock, price, reorder_level, discount_percentage) VALUES (?, ?, ?, ?, ?);`;
 
           db.query(
             insertInventory,
-            [last_variant_id, quantityInStock, price, reorderLevel],
+            [
+              last_variant_id,
+              quantityInStock,
+              price,
+              reorderLevel,
+              discountPercentage,
+            ],
             (err, result) => {
               if (err) {
                 output({ error: { description: err.message } }, null);
@@ -268,7 +233,10 @@ const getProductByCategoryIdService = async (categoryId, output) => {
       pv.description, 
       pv.size,
       pv.type,
-      pv.barcode, 
+      pv.purchase_price,
+      pv.HST,
+      pv.barcode,
+      pv.purchase_date, 
       pi.id,
       pi.image_id, 
       pi.image_url, 
@@ -298,6 +266,9 @@ const getProductByCategoryIdService = async (categoryId, output) => {
             barcode: row.barcode,
             size: row.size,
             type: row.type,
+            purchase_price: row.purchase_price,
+            HST: row.HST,
+            purchase_date: row.purchase_date,
             price: row.price,
             quantity_in_stock: row.quantity_in_stock,
             status: row.status,
@@ -338,7 +309,10 @@ const getProductByProductIdService = async (ProductId, output) => {
       pv.description, 
       pv.size,
       pv.type,
-      pv.barcode, 
+      pv.purchase_price,
+      pv.HST,
+      pv.barcode,
+      pv.purchase_date,  
       pi.id,
       pi.image_id, 
       pi.image_url, 
@@ -350,7 +324,7 @@ const getProductByProductIdService = async (ProductId, output) => {
     ON pi.image_id = p.product_id
     JOIN productvariant pv
     ON pv.product_id = p.product_id
-    WHERE p.product_id = ? AND pi.image_tag = "product" OR pi.image_tag = "PRODUCT" AND p.product_deleted = "N" AND p.status = True
+    WHERE p.product_id = ? AND (pi.image_tag = "product" OR pi.image_tag = "PRODUCT") AND p.product_deleted = "N" AND p.status = True
   `;
   db.query(getProductById, [ProductId], (err, result) => {
     if (err) {
@@ -367,6 +341,9 @@ const getProductByProductIdService = async (ProductId, output) => {
             barcode: row.barcode,
             size: row.size,
             type: row.type,
+            purchase_price: row.purchase_price,
+            HST: row.HST,
+            purchase_date: row.purchase_date,
             price: row.price,
             quantity_in_stock: row.quantity_in_stock,
             status: row.status,
@@ -405,7 +382,10 @@ const getAllProductService = async (input, output) => {
       pv.description, 
       pv.size,
       pv.type,
-      pv.barcode, 
+      pv.purchase_price,
+      pv.HST,
+      pv.barcode,
+      pv.purchase_date, 
       pi.id,
       pi.image_id, 
       pi.image_url, 
@@ -438,6 +418,9 @@ const getAllProductService = async (input, output) => {
             barcode: row.barcode,
             size: row.size,
             type: row.type,
+            purchase_price: row.purchase_price,
+            HST: row.HST,
+            purchase_date: row.purchase_date,
             price: row.price,
             quantity_in_stock: row.quantity_in_stock,
             status: row.status,
@@ -470,33 +453,43 @@ const updateProductService = async (input, output) => {
   const {
     productId,
     productName,
-    description,
-    price,
+    productBrand,
     categoryId,
+    variantId,
+    description,
+    size,
+    type,
+    purchasePrice,
+    HST,
     barcode,
-    images,
-    isPrimary,
+    purchaseDate,
   } = input;
 
-  const UpdateProduct = `UPDATE product SET name = ?, description = ?, price = ?, category_id = ?, barcode = ? WHERE product_id = ?`;
+  const UpdateProduct = `UPDATE product SET name = ?, brand = ?, category_id = ? WHERE product_id = ?;
+  UPDATE productvariant SET description = ?, size = ?, type = ?, purchase_price = ?, HST = ?, barcode = ?, purchase_date = ? WHERE variant_id = ?;
+  `;
   db.query(
     UpdateProduct,
-    [productName, description, price, categoryId, barcode, productId],
+    [productName, productBrand, categoryId, productId, description, size, type, purchasePrice, HST, barcode, purchaseDate, variantId],
     (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
       } else {
-        const UpdatedData = `SELECT * FROM product WHERE product_id = ? AND product_deleted = "N" AND status = True`;
-        db.query(UpdatedData, [productId], (err, result) => {
-          if (err) {
-            output({ error: { description: err.message } }, null);
-          } else {
-            output(null, { message: "Product updated successfully", result });
-          }
-        });
+        output(null, { message: "Product updated successfully", result });
       }
     }
   );
+};
+
+const updateProductImageService = async (id, image, output) => {
+  const updateimage = `UPDATE productimage SET image_url = ? WHERE id = ?`;
+  db.query(updateimage, [image, id], (err, result) => {
+    if (err) {
+      output({ error: { description: err.message } }, null);
+    } else {
+      output(null, { message: "Product iamge updated successfully" });
+    }
+  });
 };
 
 const updateProductStatusService = async (input, output) => {
@@ -539,29 +532,38 @@ const deleteProductService = async (productId, output) => {
 };
 
 const getProductBarCodeService = async (barCode, output) => {
-  const selectQuery = `
-    SELECT
-    product.product_id,
-    product.name,
-    productvariant.description,
-    product.category_id,
-    productvariant.barcode,
-    product.status,
-    product.product_deleted,
-    productimage.id AS image_id,
-    productimage.image_url,
-    productimage.image_tag,
-    productimage.alt_text,
-    productimage.is_primary
-    FROM product
-    JOIN productimage
-    ON productimage.image_id = product.product_id
-    JOIN productvariant
-    ON productvariant.product_id = product.product_id
-    WHERE productvariant.barcode = ? AND (image_tag = "product" OR image_tag = "PRODUCT") AND product.product_deleted = "N" AND product.status = True AND productvariant.status = True AND productvariant.deleted = "N"
-  `;
+  const getProductByBarcode = `
+    SELECT 
+      p.product_id, 
+      p.name, 
+      p.category_id, 
+      p.status, 
+      p.product_deleted,
+      pv.description, 
+      pv.size,
+      pv.type,
+      pv.purchase_price,
+      pv.HST,
+      pv.barcode,
+      pv.purchase_date, 
+      pi.id,
+      pi.image_id, 
+      pi.image_url, 
+      pi.image_tag, 
+      pi.alt_text, 
+      pi.is_primary
+    FROM product p
+    JOIN productimage pi
+      ON pi.image_id = p.product_id
+    JOIN productvariant pv
+      ON pv.product_id = p.product_id
+    WHERE pv.barcode = ? AND (pi.image_tag = "product" OR pi.image_tag = "PRODUCT") 
+      AND p.product_deleted = "N" 
+      AND p.status = True 
+      AND p.best_Seller = 1
+      `;
 
-  db.query(selectQuery, [barCode], (err, result) => {
+  db.query(getProductByBarcode, [barCode], (err, result) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else if (result.length === 0) {
@@ -576,6 +578,13 @@ const getProductBarCodeService = async (barCode, output) => {
             price: row.price,
             category_id: row.category_id,
             barcode: row.barcode,
+            size: row.size,
+            type: row.type,
+            purchase_price: row.purchase_price,
+            HST: row.HST,
+            purchase_date: row.purchase_date,
+            price: row.price,
+            quantity_in_stock: row.quantity_in_stock,
             status: row.status,
             product_deleted: row.product_deleted,
             images: [],
@@ -584,6 +593,7 @@ const getProductBarCodeService = async (barCode, output) => {
 
         // Add each image to the images array
         acc.images.push({
+          id: row.id,
           image_id: row.image_id,
           image_url: row.image_url,
           image_tag: row.image_tag,
@@ -601,32 +611,35 @@ const getProductBarCodeService = async (barCode, output) => {
 
 const getBestSellerProductService = async (output) => {
   const GetAllProduct = `
-  SELECT 
-    p.product_id, 
-    p.name, 
-    p.category_id, 
-    p.status, 
-    p.product_deleted,
-    pv.description, 
-    pv.size,
-    pv.type,
-    pv.barcode, 
-    pi.id,
-    pi.image_id, 
-    pi.image_url, 
-    pi.image_tag, 
-    pi.alt_text, 
-    pi.is_primary
-  FROM product p
-  JOIN productimage pi
-    ON pi.image_id = p.product_id
-  JOIN productvariant pv
-    ON pv.product_id = p.product_id
-  WHERE (pi.image_tag = "product" OR pi.image_tag = "PRODUCT") 
-    AND p.product_deleted = "N" 
-    AND p.status = True 
-    AND p.best_Seller = 1
-`;
+    SELECT 
+      p.product_id, 
+      p.name, 
+      p.category_id, 
+      p.status, 
+      p.product_deleted,
+      pv.description, 
+      pv.size,
+      pv.type,
+      pv.purchase_price,
+      pv.HST,
+      pv.barcode,
+      pv.purchase_date, 
+      pi.id,
+      pi.image_id, 
+      pi.image_url, 
+      pi.image_tag, 
+      pi.alt_text, 
+      pi.is_primary
+    FROM product p
+    JOIN productimage pi
+      ON pi.image_id = p.product_id
+    JOIN productvariant pv
+      ON pv.product_id = p.product_id
+    WHERE (pi.image_tag = "product" OR pi.image_tag = "PRODUCT") 
+      AND p.product_deleted = "N" 
+      AND p.status = True 
+      AND p.best_Seller = 1
+  `;
 
   db.query(GetAllProduct, (err, result) => {
     if (err) {
@@ -644,6 +657,9 @@ const getBestSellerProductService = async (output) => {
             barcode: row.barcode,
             size: row.size,
             type: row.type,
+            purchase_price: row.purchase_price,
+            HST: row.HST,
+            purchase_date: row.purchase_date,
             price: row.price,
             quantity_in_stock: row.quantity_in_stock,
             status: row.status,
@@ -715,10 +731,10 @@ const updateInventoryService = async (input, output) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
-      output(null, { message: "Inventory updated successfully"});
+      output(null, { message: "Inventory updated successfully" });
     }
-  })
-}
+  });
+};
 
 module.exports = {
   SearchProduct,
@@ -728,11 +744,12 @@ module.exports = {
   getProductByProductIdService,
   getAllProductService,
   updateProductService,
+  updateProductImageService,
   updateProductStatusService,
   deleteProductService,
   getProductBarCodeService,
   getBestSellerProductService,
   updateBestSellerProductService,
   getProductsToCSVService,
-  updateInventoryService
+  updateInventoryService,
 };
