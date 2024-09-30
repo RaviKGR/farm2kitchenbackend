@@ -1,4 +1,4 @@
-const { Parser } = require('json2csv');
+const { Parser } = require("json2csv");
 const {
   addNewProductService,
   SearchProduct,
@@ -13,39 +13,49 @@ const {
   updateBestSellerProductService,
   getProductsToCSVService,
   getProductByCategoryIdService,
-  updateInventoryService,
+  updateProductImageService,
 } = require("../../services/Product/productServices");
 
 const addNewProductController = async (req, res) => {
   const {
     productId,
     productName,
+    brandName,
     categoryId,
     imageTag,
     isPrimary,
     description,
     size,
     type,
+    purchasePrice,
+    HST,
     barcode,
+    purchaseDate,
     quantityInStock,
     price,
     reorderLevel,
+    discountPercentage,
   } = req.body;
   const files = req.files;
 
   try {
     if (
       !productName ||
+      !brandName ||
       !categoryId ||
       !isPrimary ||
       !imageTag ||
       !description ||
       !size ||
       !type ||
+      !purchasePrice ||
+      !HST ||
       !barcode ||
+      !purchaseDate ||
       !quantityInStock ||
       !price ||
       !reorderLevel ||
+      !discountPercentage ||
       !files ||
       files.length === 0
     ) {
@@ -56,7 +66,7 @@ const addNewProductController = async (req, res) => {
         { ...req.body, images: imageUrls },
         (err, data) => {
           if (err) res.status(400).send(err.error);
-          else res.send(data);
+          else res.status(201).send(data);
         }
       );
     }
@@ -92,17 +102,17 @@ const GetCategoryIdProducts = async (req, res) => {
   }
 };
 
-const getProductByCategoryIdController = async(req, res) => {
-    const {categoryId} = req.query;
-    try {
-      await getProductByCategoryIdService(categoryId, (err, data) => {
-        if(err) res.status(400).send(err.error);
-        else  res.status(200).send(data);
-      })
-    } catch (error) {
-      throw error;
-    }
-}
+const getProductByCategoryIdController = async (req, res) => {
+  const { categoryId } = req.query;
+  try {
+    await getProductByCategoryIdService(categoryId, (err, data) => {
+      if (err) res.status(400).send(err.error);
+      else res.status(200).send(data);
+    });
+  } catch (error) {
+    throw error;
+  }
+};
 
 const getProductByProductIdController = async (req, res) => {
   const { ProductId } = req.query;
@@ -136,42 +146,64 @@ const updateProductController = async (req, res) => {
   const {
     productId,
     productName,
-    description,
-    price,
+    productBrand,
     categoryId,
+    variantId,
+    description,
+    size,
+    type,
+    purchasePrice,
+    HST,
     barcode,
-    isPrimary,
+    purchaseDate
   } = req.body;
-  const files = req.files;
+  
+  console.log("Request Body: ", req.body); // Log the request body
 
   try {
     if (
       !productId ||
       !productName ||
-      !description ||
-      !price ||
+      !productBrand ||
       !categoryId ||
+      !variantId ||
+      !description ||
+      !size ||
+      !type ||
+      !purchasePrice ||
+      !HST ||
       !barcode ||
-      !isPrimary ||
-      !files ||
-      files.length === 0
+      !purchaseDate
     ) {
       res.status(400).send({ message: "Required All Fields" });
     } else {
-      const imageUrls = files.map((file) => `/uploads/${file.filename}`);
-      await updateProductService(
-        { ...req.body, images: imageUrls },
-        (err, data) => {
+      await updateProductService(req.body, (err, data) => {
           if (err) res.status(400).send(err.error);
           else res.send(data);
         }
       );
     }
   } catch (error) {
-    throw error;
+    throw (error);
   }
 };
 
+const updateProductImageController = async (req, res) => {
+  const id = req.body.id;
+  const image = req.file ? req.file.filename : null;
+  try {
+    if (!id || !image || image.length === 0) {
+      res.status(400).send({ message: "Required All Fields" });
+    } else {
+      await updateProductImageService(id, image, (err, data) => {
+        if (err) res.status(400).send(err.error);
+        else res.send(data);
+      });
+    }
+  } catch (error) {
+    throw error;
+  }
+};
 const updateProductStatusController = async (req, res) => {
   const { productId, productStatus } = req.query;
   try {
@@ -284,21 +316,7 @@ const exportProductsToCSVController = async (req, res) => {
   }
 };
 
-const updateInventoryController = async (req, res) => {
-  const {  } = req.query;
-  try {
-    if (!productId || !productStatus) {
-      res.status(400).send({ message: "Required All Fields" });
-    } else {
-      await updateInventoryService(req.query, (err, data) => {
-        if (err) res.status(400).send(err.error);
-        else res.send(data);
-      });
-    }
-  } catch (error) {
-    throw error;
-  }
-}
+
 
 module.exports = {
   GetSearchProducts,
@@ -308,11 +326,11 @@ module.exports = {
   getProductByProductIdController,
   getAllProductController,
   updateProductController,
+  updateProductImageController,
   updateProductStatusController,
   deleteProductController,
   getProductBarCodeController,
   getBestSellerProductController,
   updateBestSellerProductController,
-  exportProductsToCSVController,
-  updateInventoryController
+  exportProductsToCSVController
 };

@@ -12,7 +12,6 @@ const {
 const AddNewCategoryController = async (req, res) => {
   const { categoryName, description, isPrimary, imageTag } = req.body;
   const image = req.file ? req.file.filename : null;
-console.log(req.body);
 
   try {
     if (!categoryName || !description || !image || !isPrimary || !imageTag) {
@@ -20,7 +19,7 @@ console.log(req.body);
     } else {
       await AddNewCategoryService({ ...req.body, image }, (err, data) => {
         if (err) res.status(400).send(err.error);
-        else res.status(200).send(data);
+        else res.status(201).send(data);
       });
     }
   } catch (e) {
