@@ -19,7 +19,7 @@ const AddNewCategoryController = async (req, res) => {
     } else {
       await AddNewCategoryService({ ...req.body, image }, (err, data) => {
         if (err) res.status(400).send(err.error);
-        else res.status(200).send(data);
+        else res.status(201).send(data);
       });
     }
   } catch (e) {

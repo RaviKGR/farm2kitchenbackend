@@ -49,6 +49,7 @@ const addNewProductService = async (input, output) => {
   const {
     productId,
     productName,
+    brandName,
     categoryId,
     isPrimary,
     description,
@@ -68,11 +69,11 @@ const addNewProductService = async (input, output) => {
   // Step 1: Insert the product and capture `insertId` for `product_id`
   if (!productId) {
     const insertProduct = `
-    INSERT INTO product (name, category_id, status, best_seller, product_deleted) 
+    INSERT INTO product (name, brand, category_id, status, best_seller, product_deleted) 
     VALUES (?, ?, True, False, 'N');
   `;
 
-    db.query(insertProduct, [productName, categoryId], async (err, result) => {
+    db.query(insertProduct, [productName, brandName, categoryId], async (err, result) => {
       if (err) {
         return output({ error: { description: err.message } }, null);
       }
@@ -227,6 +228,7 @@ const getProductByCategoryIdService = async (categoryId, output) => {
     SELECT 
       p.product_id, 
       p.name, 
+      p.brand,
       p.category_id, 
       p.status, 
       p.product_deleted,
@@ -259,7 +261,8 @@ const getProductByCategoryIdService = async (categoryId, output) => {
           // If not, create a new product object with an empty images array
           acc[row.product_id] = {
             product_id: row.product_id,
-            name: row.name,
+            productName: row.name,
+            brandName: row.brand,
             description: row.description,
             price: row.price,
             category_id: row.category_id,
@@ -303,6 +306,7 @@ const getProductByProductIdService = async (ProductId, output) => {
     SELECT 
       p.product_id, 
       p.name, 
+      p.brand,
       p.category_id, 
       p.status, 
       p.product_deleted,
@@ -334,7 +338,8 @@ const getProductByProductIdService = async (ProductId, output) => {
         if (!acc.product_id) {
           acc = {
             product_id: row.product_id,
-            name: row.name,
+            productName: row.name,
+            brandName: row.brand,
             description: row.description,
             price: row.price,
             category_id: row.category_id,
@@ -376,6 +381,7 @@ const getAllProductService = async (input, output) => {
     SELECT 
       p.product_id, 
       p.name, 
+      p.brand,
       p.category_id, 
       p.status, 
       p.product_deleted,
@@ -411,7 +417,8 @@ const getAllProductService = async (input, output) => {
           // If not, create a new product object with an empty images array
           acc[row.product_id] = {
             product_id: row.product_id,
-            name: row.name,
+            productName: row.name,
+            brandName: row.brand,
             description: row.description,
             price: row.price,
             category_id: row.category_id,
@@ -724,17 +731,6 @@ const getProductsToCSVService = (callback) => {
   });
 };
 
-const updateInventoryService = async (input, output) => {
-  const {} = input;
-  const updateQuery = `UPDATE inventory SET quantity_in_stock = ?, price = ? WHERE inventory_id = ?`;
-  db.query(updateQuery, [], (err, result) => {
-    if (err) {
-      output({ error: { description: err.message } }, null);
-    } else {
-      output(null, { message: "Inventory updated successfully" });
-    }
-  });
-};
 
 module.exports = {
   SearchProduct,
@@ -751,5 +747,4 @@ module.exports = {
   getBestSellerProductService,
   updateBestSellerProductService,
   getProductsToCSVService,
-  updateInventoryService,
 };

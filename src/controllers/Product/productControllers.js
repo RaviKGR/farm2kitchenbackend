@@ -13,7 +13,6 @@ const {
   updateBestSellerProductService,
   getProductsToCSVService,
   getProductByCategoryIdService,
-  updateInventoryService,
   updateProductImageService,
 } = require("../../services/Product/productServices");
 
@@ -21,6 +20,7 @@ const addNewProductController = async (req, res) => {
   const {
     productId,
     productName,
+    brandName,
     categoryId,
     imageTag,
     isPrimary,
@@ -41,6 +41,7 @@ const addNewProductController = async (req, res) => {
   try {
     if (
       !productName ||
+      !brandName ||
       !categoryId ||
       !isPrimary ||
       !imageTag ||
@@ -65,7 +66,7 @@ const addNewProductController = async (req, res) => {
         { ...req.body, images: imageUrls },
         (err, data) => {
           if (err) res.status(400).send(err.error);
-          else res.send(data);
+          else res.status(201).send(data);
         }
       );
     }
@@ -315,21 +316,7 @@ const exportProductsToCSVController = async (req, res) => {
   }
 };
 
-const updateInventoryController = async (req, res) => {
-  const {} = req.query;
-  try {
-    if (!productId || !productStatus) {
-      res.status(400).send({ message: "Required All Fields" });
-    } else {
-      await updateInventoryService(req.query, (err, data) => {
-        if (err) res.status(400).send(err.error);
-        else res.send(data);
-      });
-    }
-  } catch (error) {
-    throw error;
-  }
-};
+
 
 module.exports = {
   GetSearchProducts,
@@ -345,6 +332,5 @@ module.exports = {
   getProductBarCodeController,
   getBestSellerProductController,
   updateBestSellerProductController,
-  exportProductsToCSVController,
-  updateInventoryController,
+  exportProductsToCSVController
 };
