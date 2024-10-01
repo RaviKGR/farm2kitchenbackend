@@ -52,7 +52,7 @@ const Packaging = `CREATE TABLE IF NOT EXISTS Packaging (
 const Product = `CREATE TABLE IF NOT EXISTS Product (
     product_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    category_id BIGINT NOT NULL,
+    category_id BIGINT,
     status BOOLEAN DEFAULT TRUE,
     best_Seller BOOLEAN DEFAULT FALSE NOT NULL,
     deleted VARCHAR(5),
@@ -109,7 +109,8 @@ const Offer = `CREATE TABLE IF NOT EXISTS Offer (
 	discountType VARCHAR(50) NOT NULL, 
     discountValue DECIMAL(10, 2) NOT NULL,
     start_date DATE NOT NULL,
-    end_date DATE NOT NULL
+    end_date DATE NOT NULL,
+    deleted VARCHAR(5) NOT NULL
 );`
 
 const Product_Offer = `CREATE TABLE IF NOT EXISTS Offer_Details (
