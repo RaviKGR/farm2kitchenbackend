@@ -15,6 +15,7 @@ const {
   getProductByCategoryIdService,
   updateProductImageService,
   getProductByProductNameService,
+  updateProductAndCategoryMapService,
 } = require("../../services/Product/productServices");
 
 const addNewProductController = async (req, res) => {
@@ -156,9 +157,9 @@ const updateProductController = async (req, res) => {
     purchasePrice,
     HST,
     barcode,
-    purchaseDate
+    purchaseDate,
   } = req.body;
-  
+
   console.log("Request Body: ", req.body); // Log the request body
 
   try {
@@ -179,13 +180,12 @@ const updateProductController = async (req, res) => {
       res.status(400).send({ message: "Required All Fields" });
     } else {
       await updateProductService(req.body, (err, data) => {
-          if (err) res.status(400).send(err.error);
-          else res.send(data);
-        }
-      );
+        if (err) res.status(400).send(err.error);
+        else res.send(data);
+      });
     }
   } catch (error) {
-    throw (error);
+    throw error;
   }
 };
 
@@ -318,22 +318,36 @@ const exportProductsToCSVController = async (req, res) => {
 };
 
 const getProductByProductNameController = async (req, res) => {
-    const { productName } = req.query;
-    try {
-      if(!productName) {
-        res.status(400).send({ message: "Required All Fields" });
-      } else {
-          await getProductByProductNameService(productName, (err, data) => {
-            if (err) res.status(400).send(err.error);
-            else res.send(data);
-          })
-      }
-    } catch (error) {
-      throw (error)
+  const { productName } = req.query;  
+  try {
+    if (!productName) {
+      res.status(400).send({ message: "Required All Fields" });
+    } else {
+      await getProductByProductNameService(productName, (err, data) => {
+        if (err) res.status(400).send(err.error);
+        else res.send(data);        
+      });
     }
-}
+  } catch (error) {
+    throw error;
+  }
+};
 
-
+const updateProductAndCategoryMapController = async (req, res) => {
+  const { categoryId, productId } = req.query;
+  try {
+    if(!categoryId || !productId) {
+      res.status(400).send({ message: "Required All Fields" });
+    } else {
+      await updateProductAndCategoryMapService(req.query, (err, data) => {
+        if (err) res.status(400).send(err.error);
+        else res.send(data);
+      });
+    }
+  } catch (error) {
+    throw (error);
+  }
+};
 
 module.exports = {
   GetSearchProducts,
@@ -350,5 +364,6 @@ module.exports = {
   getBestSellerProductController,
   updateBestSellerProductController,
   exportProductsToCSVController,
-  getProductByProductNameController
+  getProductByProductNameController,
+  updateProductAndCategoryMapController,
 };
