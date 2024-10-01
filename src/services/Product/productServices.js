@@ -50,8 +50,7 @@ const addNewProductService = async (input, output) => {
     productId,
     productName,
     brandName,
-    categoryId,
-    isPrimary,
+    // isPrimary,
     description,
     size,
     type,
@@ -65,12 +64,14 @@ const addNewProductService = async (input, output) => {
     discountPercentage,
     images,
   } = input;
+  const categoryId = input.categoryId || null;
+  
   const imageTag = input.imageTag.toUpperCase();
   // Step 1: Insert the product and capture `insertId` for `product_id`
   if (!productId) {
     const insertProduct = `
     INSERT INTO product (name, brand, category_id, status, best_seller, product_deleted) 
-    VALUES (?, ?, True, False, 'N');
+    VALUES (?, ?, ?, True, False, 'N');
   `;
 
     db.query(insertProduct, [productName, brandName, categoryId], async (err, result) => {
@@ -124,14 +125,14 @@ const addNewProductService = async (input, output) => {
 
               // Step 4: Insert images
               const insertImage = `
-          INSERT INTO productimage (product_id, image_url, image_tag, alt_text, is_primary) 
+          INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) 
           VALUES (?, ?, ?, ?, ?);
         `;
 
               try {
                 // Insert all images related to the product
                 await Promise.all(
-                  images.map((image) => {
+                  images.map((image, i) => {
                     return new Promise((resolve, reject) => {
                       db.query(
                         insertImage,
@@ -140,7 +141,7 @@ const addNewProductService = async (input, output) => {
                           image,
                           imageTag,
                           productName,
-                          isPrimary,
+                          i === 0 ? "Y": "N"
                         ],
                         (err, result) => {
                           if (err) {
@@ -731,6 +732,17 @@ const getProductsToCSVService = (callback) => {
   });
 };
 
+const getProductByProductNameService = async (productName, output) => {
+    const getQuery = `SELECT product_id, brand FROM product WHERE name LIKE ?`;
+    db.query(getQuery, [`%${productName}%`], (err, result) => {
+      if (err) {
+        output({ error: { description: err.message } }, null);
+      } else {
+        output(null, { result });
+      } 
+    })
+}
+
 
 module.exports = {
   SearchProduct,
@@ -747,4 +759,5 @@ module.exports = {
   getBestSellerProductService,
   updateBestSellerProductService,
   getProductsToCSVService,
+  getProductByProductNameService
 };

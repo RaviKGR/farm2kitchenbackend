@@ -6,6 +6,7 @@ const authenticationRouters = require("./authenticationRouters");
 const OrderHistoryRouters = require("./OrderHistoryRouters");
 const AddCartRouters = require("./AddCartRouters");
 const InventoryRouters = require("./inventoryRouters");
+const OfferRouters = require("./OfferRouters");
 const routes = express.Router();
 
 routes.use('/category', categoryRoutes);
@@ -15,5 +16,6 @@ routes.use('/authentication', authenticationRouters);
 routes.use('/orderhistory', OrderHistoryRouters);
 routes.use('/carts', AddCartRouters)
 routes.use('/inventory', InventoryRouters);
+routes.use('/offer', OfferRouters);
 
 module.exports = routes;
