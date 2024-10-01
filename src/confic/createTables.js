@@ -28,7 +28,7 @@ const Category = `CREATE TABLE IF NOT EXISTS  Category (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     parent_category_id BIGINT,
-    category_deleted VARCHAR(5),
+    deleted VARCHAR(5),
     FOREIGN KEY (parent_category_id) REFERENCES Category(category_id)
 );`
 
@@ -52,6 +52,7 @@ const Packaging = `CREATE TABLE IF NOT EXISTS Packaging (
 const Product = `CREATE TABLE IF NOT EXISTS Product (
     product_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    brand VARCHAR(255) NOT NULL,
     category_id BIGINT,
     status BOOLEAN DEFAULT TRUE,
     best_Seller BOOLEAN DEFAULT FALSE NOT NULL,
@@ -113,7 +114,7 @@ const Offer = `CREATE TABLE IF NOT EXISTS Offer (
     deleted VARCHAR(5) NOT NULL
 );`
 
-const Product_Offer = `CREATE TABLE IF NOT EXISTS Offer_Details (
+const offerDetails = `CREATE TABLE IF NOT EXISTS Offer_Details (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     offer_id BIGINT NOT NULL,
     offer_tag VARCHAR(255) NOT NULL,
@@ -251,7 +252,7 @@ async function createTables() {
         await db.promise().query(productvariant);
         await db.promise().query(Inventory);
         await db.promise().query(Offer);
-        await db.promise().query(Product_Offer);
+        await db.promise().query(offerDetails);
         await db.promise().query(Order);
         await db.promise().query(OrderItem);
         await db.promise().query(DeliveryPerson);

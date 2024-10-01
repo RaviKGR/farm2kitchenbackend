@@ -9,7 +9,7 @@ const AddNewCategoryService = async (input, output) => {
   const image = `/uploads/${input.image}`;
 
   const insertCategory = `
-  INSERT INTO category (name, description, parent_category_id, category_deleted)
+  INSERT INTO category (name, description, parent_category_id, deleted)
   VALUES (?, ?, ?, "N");
   SET @last_category_id = LAST_INSERT_ID();
   INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary)
@@ -34,7 +34,7 @@ const getCategoryService = async (input, output) => {
   FROM category c
   JOIN productimage i
   ON c.category_id = i.image_id AND (i.image_tag = "CATEGORY" OR i.image_tag = "category")
-  WHERE c.category_deleted = "N"`;
+  WHERE c.deleted = "N"`;
 
   db.query(AllCategory, (err, result) => {
     if (err) {
@@ -62,12 +62,12 @@ const GetAllCategoryService = async (output) => {
   // const AllCategory = `SELECT category.category_id, name, description, parent_category_id, productimage.image_url FROM category
   // JOIN productimage
   // ON productimage.image_id = category.category_id
-  // WHERE productimage.image_tag = "category" AND category.category_deleted = "N"`;
+  // WHERE productimage.image_tag = "category" AND category.deleted = "N"`;
 
   const AllCategory = `SELECT * FROM category 
   JOIN productimage
   ON productimage.image_id = category.category_id
-  WHERE productimage.image_tag = "category" AND category.category_deleted = "N"`;
+  WHERE productimage.image_tag = "category" AND category.deleted = "N"`;
 
   db.query(AllCategory, (err, result) => {
     if (err) {
@@ -84,7 +84,7 @@ const getCategoryByIdService = async (input, output) => {
   const selectCategoryById = `SELECT category.category_id, name, description, parent_category_id, productimage.image_url FROM category 
   JOIN productimage
   ON productimage.image_id = category.category_id
-  WHERE category.category_id = ? AND category.category_deleted = "N"`;
+  WHERE category.category_id = ? AND category.deleted = "N"`;
   db.query(selectCategoryById, [categoryId], (err, result) => {
     if (err) {
       output({ error: { description: err.message } }, null);
@@ -97,7 +97,7 @@ const getCategoryByIdService = async (input, output) => {
 const getChildByCategoryIdService = async (input, output) => {
   const categoryId = input.CategoryId;
 
-  const selectChildCategory = `SELECT category_id, name FROM category WHERE parent_category_id = ? AND category_deleted = "N"`;
+  const selectChildCategory = `SELECT category_id, name FROM category WHERE parent_category_id = ? AND deleted = "N"`;
 
   db.query(selectChildCategory, [categoryId], (err, result) => {
     if (err) {
@@ -109,7 +109,7 @@ const getChildByCategoryIdService = async (input, output) => {
 };
 
 const GetParentCategoryService = async (output) => {
-  const getQuery = `SELECT category_id, name FROM category WHERE parent_category_id is NULL AND category_deleted = "N"`;
+  const getQuery = `SELECT category_id, name FROM category WHERE parent_category_id is NULL AND deleted = "N"`;
   db.query(getQuery, (err, result) => {
     if (err) {
       output({ error: { description: err.message } }, null);
@@ -165,7 +165,7 @@ const updateCategoryService = async (input, output) => {
 
 //  Delete Category
 const deleteCategoryService = async (CategoryId, output) => {
-  const DeleteCategory = `UPDATE category SET category_deleted = "Y" WHERE category_id = ? OR parent_category_id = ?`;
+  const DeleteCategory = `UPDATE category SET deleted = "Y" WHERE category_id = ? OR parent_category_id = ?`;
 
   db.query(DeleteCategory, [CategoryId, CategoryId], (err, result) => {
     if (err) {

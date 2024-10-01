@@ -65,12 +65,12 @@ const addNewProductService = async (input, output) => {
     images,
   } = input;
   const categoryId = input.categoryId || null;
-  
+
   const imageTag = input.imageTag.toUpperCase();
   // Step 1: Insert the product and capture `insertId` for `product_id`
   if (!productId) {
     const insertProduct = `
-    INSERT INTO product (name, brand, category_id, status, best_seller, product_deleted) 
+    INSERT INTO product (name, brand, category_id, status, best_seller, deleted) 
     VALUES (?, ?, ?, True, False, 'N');
   `;
 
@@ -213,7 +213,7 @@ const addNewProductService = async (input, output) => {
 const GetCategoryIdProduct = async (input, output) => {
   const category_id = input.query.category_Id;
 
-  const categoryProdect = `SELECT * FROM product WHERE category_id = ? AND product_deleted = "N" AND status = True`;
+  const categoryProdect = `SELECT * FROM product WHERE category_id = ? AND deleted = "N" AND status = True`;
 
   db.query(categoryProdect, [category_id], (err, result) => {
     if (err) {
@@ -232,7 +232,7 @@ const getProductByCategoryIdService = async (categoryId, output) => {
       p.brand,
       p.category_id, 
       p.status, 
-      p.product_deleted,
+      p.deleted,
       pv.description, 
       pv.size,
       pv.type,
@@ -251,7 +251,7 @@ const getProductByCategoryIdService = async (categoryId, output) => {
     ON pi.image_id = p.product_id
     JOIN productvariant pv
     ON pv.product_id = p.product_id
-    WHERE p.category_id = ? AND pi.image_tag = "product" OR pi.image_tag = "PRODUCT" AND p.product_deleted = "N" AND p.status = True
+    WHERE p.category_id = ? AND pi.image_tag = "product" OR pi.image_tag = "PRODUCT" AND p.deleted = "N" AND p.status = True
   `;
   db.query(selectQuery, [categoryId], (err, result) => {
     if (err) {
@@ -276,7 +276,7 @@ const getProductByCategoryIdService = async (categoryId, output) => {
             price: row.price,
             quantity_in_stock: row.quantity_in_stock,
             status: row.status,
-            product_deleted: row.product_deleted,
+            deleted: row.deleted,
             images: [],
           };
         }
@@ -302,7 +302,7 @@ const getProductByCategoryIdService = async (categoryId, output) => {
 };
 
 const getProductByProductIdService = async (ProductId, output) => {
-  // const getProductById = `SELECT * FROM product WHERE product_id = ? AND product_deleted = "N" AND status = True`;
+  // const getProductById = `SELECT * FROM product WHERE product_id = ? AND deleted = "N" AND status = True`;
   const getProductById = `
     SELECT 
       p.product_id, 
@@ -310,7 +310,7 @@ const getProductByProductIdService = async (ProductId, output) => {
       p.brand,
       p.category_id, 
       p.status, 
-      p.product_deleted,
+      p.deleted,
       pv.description, 
       pv.size,
       pv.type,
@@ -329,7 +329,7 @@ const getProductByProductIdService = async (ProductId, output) => {
     ON pi.image_id = p.product_id
     JOIN productvariant pv
     ON pv.product_id = p.product_id
-    WHERE p.product_id = ? AND (pi.image_tag = "product" OR pi.image_tag = "PRODUCT") AND p.product_deleted = "N" AND p.status = True
+    WHERE p.product_id = ? AND (pi.image_tag = "product" OR pi.image_tag = "PRODUCT") AND p.deleted = "N" AND p.status = True
   `;
   db.query(getProductById, [ProductId], (err, result) => {
     if (err) {
@@ -353,7 +353,7 @@ const getProductByProductIdService = async (ProductId, output) => {
             price: row.price,
             quantity_in_stock: row.quantity_in_stock,
             status: row.status,
-            product_deleted: row.product_deleted,
+            deleted: row.deleted,
             images: [],
           };
         }
@@ -377,7 +377,7 @@ const getProductByProductIdService = async (ProductId, output) => {
 };
 
 const getAllProductService = async (input, output) => {
-  // const GetAllProduct = `SELECT * FROM product WHERE product_deleted = "N" AND status = True`;
+  // const GetAllProduct = `SELECT * FROM product WHERE deleted = "N" AND status = True`;
   const GetAllProduct = `
     SELECT 
       p.product_id, 
@@ -385,7 +385,7 @@ const getAllProductService = async (input, output) => {
       p.brand,
       p.category_id, 
       p.status, 
-      p.product_deleted,
+      p.deleted,
       pv.description, 
       pv.size,
       pv.type,
@@ -405,7 +405,7 @@ const getAllProductService = async (input, output) => {
     JOIN productvariant pv
       ON pv.product_id = p.product_id
     WHERE (pi.image_tag = "product" OR pi.image_tag = "PRODUCT")
-      AND p.product_deleted = "N" 
+      AND p.deleted = "N" 
       AND p.status = True
 `;
 
@@ -432,7 +432,7 @@ const getAllProductService = async (input, output) => {
             price: row.price,
             quantity_in_stock: row.quantity_in_stock,
             status: row.status,
-            product_deleted: row.product_deleted,
+            deleted: row.deleted,
             images: [],
           };
         }
@@ -529,7 +529,7 @@ const updateProductStatusService = async (input, output) => {
 };
 
 const deleteProductService = async (productId, output) => {
-  const updateQuery = `UPDATE product SET product_deleted = "Y" WHERE product_id = ?`;
+  const updateQuery = `UPDATE product SET deleted = "Y" WHERE product_id = ?`;
   db.query(updateQuery, [productId], (err, result) => {
     if (err) {
       output({ error: { description: err.message } }, null);
@@ -546,7 +546,7 @@ const getProductBarCodeService = async (barCode, output) => {
       p.name, 
       p.category_id, 
       p.status, 
-      p.product_deleted,
+      p.deleted,
       pv.description, 
       pv.size,
       pv.type,
@@ -566,7 +566,7 @@ const getProductBarCodeService = async (barCode, output) => {
     JOIN productvariant pv
       ON pv.product_id = p.product_id
     WHERE pv.barcode = ? AND (pi.image_tag = "product" OR pi.image_tag = "PRODUCT") 
-      AND p.product_deleted = "N" 
+      AND p.deleted = "N" 
       AND p.status = True 
       AND p.best_Seller = 1
       `;
@@ -594,7 +594,7 @@ const getProductBarCodeService = async (barCode, output) => {
             price: row.price,
             quantity_in_stock: row.quantity_in_stock,
             status: row.status,
-            product_deleted: row.product_deleted,
+            deleted: row.deleted,
             images: [],
           };
         }
@@ -624,7 +624,7 @@ const getBestSellerProductService = async (output) => {
       p.name, 
       p.category_id, 
       p.status, 
-      p.product_deleted,
+      p.deleted,
       pv.description, 
       pv.size,
       pv.type,
@@ -644,7 +644,7 @@ const getBestSellerProductService = async (output) => {
     JOIN productvariant pv
       ON pv.product_id = p.product_id
     WHERE (pi.image_tag = "product" OR pi.image_tag = "PRODUCT") 
-      AND p.product_deleted = "N" 
+      AND p.deleted = "N" 
       AND p.status = True 
       AND p.best_Seller = 1
   `;
@@ -671,7 +671,7 @@ const getBestSellerProductService = async (output) => {
             price: row.price,
             quantity_in_stock: row.quantity_in_stock,
             status: row.status,
-            product_deleted: row.product_deleted,
+            deleted: row.deleted,
             images: [],
           };
         }
@@ -716,7 +716,7 @@ const getProductsToCSVService = (callback) => {
   const ProductQuery = `
     SELECT * 
     FROM product 
-    WHERE product_deleted = "N" 
+    WHERE deleted = "N" 
     AND status = True
   `;
 
@@ -733,14 +733,26 @@ const getProductsToCSVService = (callback) => {
 };
 
 const getProductByProductNameService = async (productName, output) => {
-    const getQuery = `SELECT product_id, brand FROM product WHERE name LIKE ?`;
+    const getQuery = `SELECT product_id, name, category_id FROM product WHERE name LIKE ?`;
     db.query(getQuery, [`%${productName}%`], (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
       } else {
-        output(null, { result });
+        output(null, result );
       } 
     })
+}
+
+const updateProductAndCategoryMapService = async (input, output) => {
+  const { categoryId, productId } = input;
+      const updateQuery = `UPDATE product SET category_id = ? WHERE product_id = ?;`;
+      db.query(updateQuery, [categoryId, productId], (err, result) => {
+        if (err) {
+          output({ error: { description: err.message } }, null);
+        } else {
+          output(null, { message : "Product And Category mapping Successfully completed"} );
+        } 
+      })
 }
 
 
@@ -759,5 +771,6 @@ module.exports = {
   getBestSellerProductService,
   updateBestSellerProductService,
   getProductsToCSVService,
-  getProductByProductNameService
+  getProductByProductNameService,
+  updateProductAndCategoryMapService
 };

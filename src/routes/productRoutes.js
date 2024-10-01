@@ -1,7 +1,7 @@
 const express = require("express");
 const multer = require('multer');
 const path = require('path');
-const { GetSearchProducts, GetCategoryIdProducts, addNewProductController, getProductByProductIdController, getAllProductController, updateProductController, updateProductStatusController, deleteProductController, getProductBarCodeController, getBestSellerProductController, updateBestSellerProductController, exportProductsToCSVController, getProductByCategoryIdController, updateProductImageController, getProductByProductNameController } = require("../controllers/Product/productControllers");
+const { GetSearchProducts, GetCategoryIdProducts, addNewProductController, getProductByProductIdController, getAllProductController, updateProductController, updateProductStatusController, deleteProductController, getProductBarCodeController, getBestSellerProductController, updateBestSellerProductController, exportProductsToCSVController, getProductByCategoryIdController, updateProductImageController, getProductByProductNameController, updateProductAndCategoryMapController } = require("../controllers/Product/productControllers");
 
 const ProductRoutes = express.Router();
 
@@ -32,6 +32,7 @@ ProductRoutes.get("/getproductByScan", getProductBarCodeController);
 ProductRoutes.get("/getBestSellerProduct", getBestSellerProductController);
 ProductRoutes.put("/updateBestSellerProduct", updateBestSellerProductController)
 ProductRoutes.get("/exportProductsCSV", exportProductsToCSVController);
-ProductRoutes.get('/getProductByProductName', getProductByProductNameController)
+ProductRoutes.get('/getProductByProductName', getProductByProductNameController);
+ProductRoutes.put('/ProductAndCategoryMap', updateProductAndCategoryMapController);
 
 module.exports = ProductRoutes;
