@@ -134,11 +134,16 @@ const getProductByProductIdController = async (req, res) => {
 };
 
 const getAllProductController = async (req, res) => {
+  const { limit, offset } = req.query;
   try {
-    await getAllProductService(req, (err, data) => {
-      if (err) res.status(400).send(err.error);
-      else res.send(data);
-    });
+    if (!limit || !offset) {
+      res.status(400).send({ message: "Required All Fields" });
+    } else {
+      await getAllProductService(req.query, (err, data) => {
+        if (err) res.status(400).send(err.error);
+        else res.send(data);
+      });
+    }
   } catch (error) {
     throw error;
   }
@@ -253,11 +258,16 @@ const getProductBarCodeController = async (req, res) => {
   }
 };
 const getBestSellerProductController = async (req, res) => {
+  const { limit, offset } = req.query;
   try {
-    await getBestSellerProductService((err, data) => {
-      if (err) res.status(400).send(err.error);
-      else res.send(data);
-    });
+    if (!limit || !offset) {
+      res.status(400).send({ message: "Required All Fields" });
+    } else {
+      await getBestSellerProductService(req.query, (err, data) => {
+        if (err) res.status(400).send(err.error);
+        else res.send(data);
+      });
+    }
   } catch (error) {
     throw error;
   }
@@ -318,14 +328,14 @@ const exportProductsToCSVController = async (req, res) => {
 };
 
 const getProductByProductNameController = async (req, res) => {
-  const { productName } = req.query;  
+  const { productName } = req.query;
   try {
     if (!productName) {
       res.status(400).send({ message: "Required All Fields" });
     } else {
       await getProductByProductNameService(productName, (err, data) => {
         if (err) res.status(400).send(err.error);
-        else res.send(data);        
+        else res.send(data);
       });
     }
   } catch (error) {
@@ -336,7 +346,7 @@ const getProductByProductNameController = async (req, res) => {
 const updateProductAndCategoryMapController = async (req, res) => {
   const { categoryId, productId } = req.query;
   try {
-    if(!categoryId || !productId) {
+    if (!categoryId || !productId) {
       res.status(400).send({ message: "Required All Fields" });
     } else {
       await updateProductAndCategoryMapService(req.query, (err, data) => {
@@ -345,7 +355,7 @@ const updateProductAndCategoryMapController = async (req, res) => {
       });
     }
   } catch (error) {
-    throw (error);
+    throw error;
   }
 };
 

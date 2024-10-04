@@ -21,7 +21,7 @@ const productStorage = multer.diskStorage({
 ProductRoutes.get("/searchProduct", GetSearchProducts);
 ProductRoutes.get("/categoryId", GetCategoryIdProducts);
 ProductRoutes.get("/productByCategoryId", getProductByCategoryIdController)
-ProductRoutes.post("/addNewProduct", uploadProduct.array('image', 5), addNewProductController);
+ProductRoutes.post("/addNewProduct", uploadProduct.array('images', 5), addNewProductController);
 ProductRoutes.get("/getByProductId", getProductByProductIdController);
 ProductRoutes.get("/getAllProduct", getAllProductController);
 ProductRoutes.put("/updateProduct", updateProductController);

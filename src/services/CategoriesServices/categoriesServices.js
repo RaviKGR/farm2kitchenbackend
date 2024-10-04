@@ -8,25 +8,44 @@ const AddNewCategoryService = async (input, output) => {
   const imageTag = input.imageTag.toUpperCase();
   const image = `/uploads/${input.image}`;
 
-  const insertCategory = `
-  INSERT INTO category (name, description, parent_category_id, deleted)
-  VALUES (?, ?, ?, "N");
-  SET @last_category_id = LAST_INSERT_ID();
-  INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary)
-  VALUES (@last_category_id, ?, ?, ?, ?);
-  `;
-
-  db.query(
-    insertCategory,
-    [name, description, parent_category_id, image, imageTag, name, isPrimary],
-    (err, result) => {
-      if (err) {
-        output({ error: { description: err.message } }, null);
+  const verifiyCategory = `SELECT * FROM category WHERE name = ?`;
+  db.query(verifiyCategory, [name], (err, result) => {
+    if (err) {
+      output({ error: { description: err.message } }, null);
+    } else {
+      if (result.length > 0) {
+        output(null, { message: "Category Already exists" });
       } else {
-        output(null, { message: "Category added successfully" });
+        const insertCategory = `
+        INSERT INTO category (name, description, parent_category_id, deleted)
+        VALUES (?, ?, ?, "N");
+        SET @last_category_id = LAST_INSERT_ID();
+        INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary)
+        VALUES (@last_category_id, ?, ?, ?, ?);
+        `;
+
+        db.query(
+          insertCategory,
+          [
+            name,
+            description,
+            parent_category_id,
+            image,
+            imageTag,
+            name,
+            isPrimary,
+          ],
+          (err, result) => {
+            if (err) {
+              output({ error: { description: err.message } }, null);
+            } else {
+              output(null, { message: "Category added successfully" });
+            }
+          }
+        );
       }
     }
-  );
+  });
 };
 
 const getCategoryService = async (input, output) => {

@@ -69,98 +69,119 @@ const addNewProductService = async (input, output) => {
   const imageTag = input.imageTag.toUpperCase();
   // Step 1: Insert the product and capture `insertId` for `product_id`
   if (!productId) {
-    const insertProduct = `
-    INSERT INTO product (name, brand, category_id, status, best_seller, deleted) 
-    VALUES (?, ?, ?, True, False, 'N');
-  `;
-
-    db.query(insertProduct, [productName, brandName, categoryId], async (err, result) => {
+    const verifiyProduct = `SELECT * FROM product WHERE name = ?`;
+    db.query(verifiyProduct, [productName], (err, result) => {
       if (err) {
-        return output({ error: { description: err.message } }, null);
-      }
-      const last_product_id = result.insertId;
+        output({ error: { description: err.message } }, null);
+      } else {
+        if (result.length > 0) {
+          output(null, { message: "Product Already exists" });
+        } else {
+          const insertProduct = `
+          INSERT INTO product (name, brand, category_id, status, best_seller, deleted) 
+          VALUES (?, ?, ?, True, False, 'N');
+        `;
 
-      // Step 2: Insert into productvariant using `last_product_id`
-      const insertVariant = `
-      INSERT INTO productvariant (product_id, description, size, type, purchase_price, HST, barcode, purchase_date, status, best_seller, deleted)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, True, False, 'N');
-    `;
-
-      db.query(
-        insertVariant,
-        [
-          last_product_id,
-          description,
-          size,
-          type,
-          purchasePrice,
-          HST,
-          barcode,
-          purchaseDate,
-        ],
-        (err, result) => {
-          if (err) {
-            return output({ error: { description: err.message } }, null);
-          }
-          const last_variant_id = result.insertId; // Get the last inserted variant ID
-
-          // Step 3: Insert into inventory using `last_variant_id`
-          const insertInventory = `
-        INSERT INTO inventory (variant_id, quantity_in_stock, price, reorder_level, discount_percentage) 
-        VALUES (?, ?, ?, ?, ?);
-      `;
           db.query(
-            insertInventory,
-            [
-              last_variant_id,
-              quantityInStock,
-              price,
-              reorderLevel,
-              discountPercentage,
-            ],
+            insertProduct,
+            [productName, brandName, categoryId],
             async (err, result) => {
               if (err) {
                 return output({ error: { description: err.message } }, null);
               }
+              const last_product_id = result.insertId;
 
-              // Step 4: Insert images
-              const insertImage = `
-          INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) 
-          VALUES (?, ?, ?, ?, ?);
-        `;
+              // Step 2: Insert into productvariant using `last_product_id`
+              const insertVariant = `
+            INSERT INTO productvariant (product_id, description, size, type, purchase_price, HST, barcode, purchase_date, status, best_seller, deleted)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, True, False, 'N');
+          `;
 
-              try {
-                // Insert all images related to the product
-                await Promise.all(
-                  images.map((image, i) => {
-                    return new Promise((resolve, reject) => {
-                      db.query(
-                        insertImage,
-                        [
-                          last_product_id,
-                          image,
-                          imageTag,
-                          productName,
-                          i === 0 ? "Y": "N"
-                        ],
-                        (err, result) => {
-                          if (err) {
-                            return reject(err);
-                          }
-                          resolve(result);
-                        }
-                      );
-                    });
-                  })
-                );
-                output(null, { message: "Product added successfully" });
-              } catch (err) {
-                output({ error: { description: err.message } }, null);
-              }
+              db.query(
+                insertVariant,
+                [
+                  last_product_id,
+                  description,
+                  size,
+                  type,
+                  purchasePrice,
+                  HST,
+                  barcode,
+                  purchaseDate,
+                ],
+                (err, result) => {
+                  if (err) {
+                    return output(
+                      { error: { description: err.message } },
+                      null
+                    );
+                  }
+                  const last_variant_id = result.insertId; // Get the last inserted variant ID
+
+                  // Step 3: Insert into inventory using `last_variant_id`
+                  const insertInventory = `
+              INSERT INTO inventory (variant_id, quantity_in_stock, price, reorder_level, discount_percentage) 
+              VALUES (?, ?, ?, ?, ?);
+            `;
+                  db.query(
+                    insertInventory,
+                    [
+                      last_variant_id,
+                      quantityInStock,
+                      price,
+                      reorderLevel,
+                      discountPercentage,
+                    ],
+                    async (err, result) => {
+                      if (err) {
+                        return output(
+                          { error: { description: err.message } },
+                          null
+                        );
+                      }
+
+                      // Step 4: Insert images
+                      const insertImage = `
+                INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) 
+                VALUES (?, ?, ?, ?, ?);
+              `;
+
+                      try {
+                        // Insert all images related to the product
+                        await Promise.all(
+                          images.map((image, i) => {
+                            return new Promise((resolve, reject) => {
+                              db.query(
+                                insertImage,
+                                [
+                                  last_product_id,
+                                  image,
+                                  imageTag,
+                                  productName,
+                                  i === 0 ? "Y" : "N",
+                                ],
+                                (err, result) => {
+                                  if (err) {
+                                    return reject(err);
+                                  }
+                                  resolve(result);
+                                }
+                              );
+                            });
+                          })
+                        );
+                        output(null, { message: "Product added successfully" });
+                      } catch (err) {
+                        output({ error: { description: err.message } }, null);
+                      }
+                    }
+                  );
+                }
+              );
             }
           );
         }
-      );
+      }
     });
   } else {
     const insertVariant = `
@@ -257,45 +278,42 @@ const getProductByCategoryIdService = async (categoryId, output) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
-      const products = result.reduce((acc, row) => {
-        if (!acc[row.product_id]) {
-          // If not, create a new product object with an empty images array
-          acc[row.product_id] = {
-            product_id: row.product_id,
-            productName: row.name,
-            brandName: row.brand,
-            description: row.description,
-            price: row.price,
-            category_id: row.category_id,
-            barcode: row.barcode,
-            size: row.size,
-            type: row.type,
-            purchase_price: row.purchase_price,
-            HST: row.HST,
-            purchase_date: row.purchase_date,
-            price: row.price,
-            quantity_in_stock: row.quantity_in_stock,
-            status: row.status,
-            deleted: row.deleted,
-            images: [],
+      const productList = {};
+      result.forEach((list) => {
+        if (!productList[list.product_id]) {
+          productList[list.product_id] = {
+            product_id: list.product_id,
+            productName: list.name,
+            brandName: list.brand,
+            category_id: list.category_id,
+            status: list.status,
+            variant: [],
+            image: [],
           };
         }
-
-        // Add each image to the corresponding product's images array
-        acc[row.product_id].images.push({
-          id: row.id,
-          image_id: row.image_id,
-          image_url: row.image_url,
-          image_tag: row.image_tag,
-          alt_text: row.alt_text,
-          is_primary: row.is_primary,
+        productList[list.product_id].variant.push({
+          variant_id: list.variant_id,
+          description: list.description,
+          price: list.price,
+          size: list.size,
+          type: list.type,
+          barcode: list.barcode,
+          purchase_price: list.purchase_price,
+          HST: list.HST,
+          purchase_date: list.purchase_date,
         });
 
-        return acc;
-      }, {});
+        productList[list.product_id].image.push({
+          id: list.id,
+          image_id: list.image_id,
+          image_url: list.image_url,
+          image_tag: list.image_tag,
+          alt_text: list.alt_text,
+          is_primary: list.is_primary,
+        });
+      });
 
-      const productArray = Object.values(products);
-
+      const productArray = Object.values(productList);
       output(null, productArray);
     }
   });
@@ -335,51 +353,58 @@ const getProductByProductIdService = async (ProductId, output) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
-      const product = result.reduce((acc, row) => {
-        if (!acc.product_id) {
-          acc = {
-            product_id: row.product_id,
-            productName: row.name,
-            brandName: row.brand,
-            description: row.description,
-            price: row.price,
-            category_id: row.category_id,
-            barcode: row.barcode,
-            size: row.size,
-            type: row.type,
-            purchase_price: row.purchase_price,
-            HST: row.HST,
-            purchase_date: row.purchase_date,
-            price: row.price,
-            quantity_in_stock: row.quantity_in_stock,
-            status: row.status,
-            deleted: row.deleted,
-            images: [],
+      const productList = {};
+      result.forEach((list) => {
+        if (!productList[list.product_id]) {
+          productList[list.product_id] = {
+            product_id: list.product_id,
+            productName: list.name,
+            brandName: list.brand,
+            category_id: list.category_id,
+            status: list.status,
+            variant: [],
+            image: [],
           };
         }
-
-        // Add each image to the images array
-        acc.images.push({
-          id: row.id,
-          image_id: row.image_id,
-          image_url: row.image_url,
-          image_tag: row.image_tag,
-          alt_text: row.alt_text,
-          is_primary: row.is_primary,
+        productList[list.product_id].variant.push({
+          variant_id: list.variant_id,
+          description: list.description,
+          price: list.price,
+          size: list.size,
+          type: list.type,
+          barcode: list.barcode,
+          purchase_price: list.purchase_price,
+          HST: list.HST,
+          purchase_date: list.purchase_date,
         });
 
-        return acc;
-      }, {});
+        productList[list.product_id].image.push({
+          id: list.id,
+          image_id: list.image_id,
+          image_url: list.image_url,
+          image_tag: list.image_tag,
+          alt_text: list.alt_text,
+          is_primary: list.is_primary,
+        });
+      });
 
-      output(null, product);
+      const productArray = Object.values(productList);
+      output(null, productArray);
     }
   });
 };
 
 const getAllProductService = async (input, output) => {
-  // const GetAllProduct = `SELECT * FROM product WHERE deleted = "N" AND status = True`;
+  const { limit, offset } = input;
   const GetAllProduct = `
-    SELECT 
+    WITH ProductCTE AS (
+      SELECT DISTINCT p.product_id
+      FROM product p
+      WHERE p.deleted = 'N' 
+      AND p.status = True
+    )
+    SELECT
+      (SELECT COUNT(*) FROM ProductCTE) AS total_count,  -- Counts only distinct products
       p.product_id, 
       p.name, 
       p.brand,
@@ -400,61 +425,63 @@ const getAllProductService = async (input, output) => {
       pi.alt_text, 
       pi.is_primary
     FROM product p
-    JOIN productimage pi
-      ON pi.image_id = p.product_id
-    JOIN productvariant pv
-      ON pv.product_id = p.product_id
-    WHERE (pi.image_tag = "product" OR pi.image_tag = "PRODUCT")
-      AND p.deleted = "N" 
+    JOIN productimage pi ON pi.image_id = p.product_id
+    JOIN productvariant pv ON pv.product_id = p.product_id
+    WHERE (pi.image_tag = 'product' OR pi.image_tag = 'PRODUCT')
+      AND p.deleted = 'N' 
       AND p.status = True
+    LIMIT ? OFFSET ?;
 `;
 
-  db.query(GetAllProduct, (err, result) => {
-    if (err) {
-      output({ error: { description: err.message } }, null);
-    } else {
-      const products = result.reduce((acc, row) => {
-        if (!acc[row.product_id]) {
-          // If not, create a new product object with an empty images array
-          acc[row.product_id] = {
-            product_id: row.product_id,
-            productName: row.name,
-            brandName: row.brand,
-            description: row.description,
-            price: row.price,
-            category_id: row.category_id,
-            barcode: row.barcode,
-            size: row.size,
-            type: row.type,
-            purchase_price: row.purchase_price,
-            HST: row.HST,
-            purchase_date: row.purchase_date,
-            price: row.price,
-            quantity_in_stock: row.quantity_in_stock,
-            status: row.status,
-            deleted: row.deleted,
-            images: [],
-          };
-        }
 
-        // Add each image to the corresponding product's images array
-        acc[row.product_id].images.push({
-          id: row.id,
-          image_id: row.image_id,
-          image_url: row.image_url,
-          image_tag: row.image_tag,
-          alt_text: row.alt_text,
-          is_primary: row.is_primary,
+  db.query(
+    GetAllProduct,
+    [parseInt(limit), parseInt(offset)],
+    (err, result) => {
+      if (err) {
+        output({ error: { description: err.message } }, null);
+      } else {
+        const productList = {};
+        result.forEach((list) => {
+          if (!productList[list.product_id]) {
+            productList[list.product_id] = {
+              total_count:list.total_count,
+              product_id: list.product_id,
+              productName: list.name,
+              brandName: list.brand,
+              category_id: list.category_id,
+              status: list.status,
+              variant: [],
+              image: [],
+            };
+          }
+          productList[list.product_id].variant.push({
+            variant_id: list.variant_id,
+            description: list.description,
+            price: list.price,
+            size: list.size,
+            type: list.type,
+            barcode: list.barcode,
+            purchase_price: list.purchase_price,
+            HST: list.HST,
+            purchase_date: list.purchase_date,
+          });
+
+          productList[list.product_id].image.push({
+            id: list.id,
+            image_id: list.image_id,
+            image_url: list.image_url,
+            image_tag: list.image_tag,
+            alt_text: list.alt_text,
+            is_primary: list.is_primary,
+          });
         });
 
-        return acc;
-      }, {});
-
-      const productArray = Object.values(products);
-
-      output(null, productArray);
+        const productArray = Object.values(productList);
+        output(null, productArray);
+      }
     }
-  });
+  );
 };
 
 const updateProductService = async (input, output) => {
@@ -478,7 +505,20 @@ const updateProductService = async (input, output) => {
   `;
   db.query(
     UpdateProduct,
-    [productName, productBrand, categoryId, productId, description, size, type, purchasePrice, HST, barcode, purchaseDate, variantId],
+    [
+      productName,
+      productBrand,
+      categoryId,
+      productId,
+      description,
+      size,
+      type,
+      purchasePrice,
+      HST,
+      barcode,
+      purchaseDate,
+      variantId,
+    ],
     (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
@@ -577,47 +617,49 @@ const getProductBarCodeService = async (barCode, output) => {
     } else if (result.length === 0) {
       output(null, null); // No product found
     } else {
-      const product = result.reduce((acc, row) => {
-        if (!acc.product_id) {
-          acc = {
-            product_id: row.product_id,
-            name: row.name,
-            description: row.description,
-            price: row.price,
-            category_id: row.category_id,
-            barcode: row.barcode,
-            size: row.size,
-            type: row.type,
-            purchase_price: row.purchase_price,
-            HST: row.HST,
-            purchase_date: row.purchase_date,
-            price: row.price,
-            quantity_in_stock: row.quantity_in_stock,
-            status: row.status,
-            deleted: row.deleted,
-            images: [],
+      const productList = {};
+      result.forEach((list) => {
+        if (!productList[list.product_id]) {
+          productList[list.product_id] = {
+            product_id: list.product_id,
+            productName: list.name,
+            brandName: list.brand,
+            category_id: list.category_id,
+            status: list.status,
+            variant: [],
+            image: [],
           };
         }
-
-        // Add each image to the images array
-        acc.images.push({
-          id: row.id,
-          image_id: row.image_id,
-          image_url: row.image_url,
-          image_tag: row.image_tag,
-          alt_text: row.alt_text,
-          is_primary: row.is_primary,
+        productList[list.product_id].variant.push({
+          variant_id: list.variant_id,
+          description: list.description,
+          price: list.price,
+          size: list.size,
+          type: list.type,
+          barcode: list.barcode,
+          purchase_price: list.purchase_price,
+          HST: list.HST,
+          purchase_date: list.purchase_date,
         });
 
-        return acc;
-      }, {});
+        productList[list.product_id].image.push({
+          id: list.id,
+          image_id: list.image_id,
+          image_url: list.image_url,
+          image_tag: list.image_tag,
+          alt_text: list.alt_text,
+          is_primary: list.is_primary,
+        });
+      });
 
-      output(null, product);
+      const productArray = Object.values(productList);
+      output(null, productArray);
     }
   });
 };
 
-const getBestSellerProductService = async (output) => {
+const getBestSellerProductService = async (input, output) => {
+  const { limit, offset } = input;
   const GetAllProduct = `
     SELECT 
       p.product_id, 
@@ -647,53 +689,56 @@ const getBestSellerProductService = async (output) => {
       AND p.deleted = "N" 
       AND p.status = True 
       AND p.best_Seller = 1
+      LIMIT ? OFFSET ?
   `;
 
-  db.query(GetAllProduct, (err, result) => {
-    if (err) {
-      output({ error: { description: err.message } }, null);
-    } else {
-      const products = result.reduce((acc, row) => {
-        if (!acc[row.product_id]) {
-          // If not, create a new product object with an empty images array
-          acc[row.product_id] = {
-            product_id: row.product_id,
-            name: row.name,
-            description: row.description,
-            price: row.price,
-            category_id: row.category_id,
-            barcode: row.barcode,
-            size: row.size,
-            type: row.type,
-            purchase_price: row.purchase_price,
-            HST: row.HST,
-            purchase_date: row.purchase_date,
-            price: row.price,
-            quantity_in_stock: row.quantity_in_stock,
-            status: row.status,
-            deleted: row.deleted,
-            images: [],
-          };
-        }
+  db.query(
+    GetAllProduct,
+    [parseInt(limit), parseInt(offset)],
+    (err, result) => {
+      if (err) {
+        output({ error: { description: err.message } }, null);
+      } else {
+        const productList = {};
+        result.forEach((list) => {
+          if (!productList[list.product_id]) {
+            productList[list.product_id] = {
+              product_id: list.product_id,
+              productName: list.name,
+              brandName: list.brand,
+              category_id: list.category_id,
+              status: list.status,
+              variant: [],
+              image: [],
+            };
+          }
+          productList[list.product_id].variant.push({
+            variant_id: list.variant_id,
+            description: list.description,
+            price: list.price,
+            size: list.size,
+            type: list.type,
+            barcode: list.barcode,
+            purchase_price: list.purchase_price,
+            HST: list.HST,
+            purchase_date: list.purchase_date,
+          });
 
-        // Add each image to the corresponding product's images array
-        acc[row.product_id].images.push({
-          id: row.id,
-          image_id: row.image_id,
-          image_url: row.image_url,
-          image_tag: row.image_tag,
-          alt_text: row.alt_text,
-          is_primary: row.is_primary,
+          productList[list.product_id].image.push({
+            id: list.id,
+            image_id: list.image_id,
+            image_url: list.image_url,
+            image_tag: list.image_tag,
+            alt_text: list.alt_text,
+            is_primary: list.is_primary,
+          });
         });
 
-        return acc;
-      }, {});
-
-      const productArray = Object.values(products);
-
-      output(null, productArray);
+        const productArray = Object.values(productList);
+        output(null, productArray);
+      }
     }
-  });
+  );
 };
 
 const updateBestSellerProductService = async (input, output) => {
@@ -733,28 +778,33 @@ const getProductsToCSVService = (callback) => {
 };
 
 const getProductByProductNameService = async (productName, output) => {
-    const getQuery = `SELECT product_id, name, category_id FROM product WHERE name LIKE ?`;
-    db.query(getQuery, [`%${productName}%`], (err, result) => {
-      if (err) {
-        output({ error: { description: err.message } }, null);
-      } else {
-        output(null, result );
-      } 
-    })
-}
+  const getQuery = `
+  SELECT p.product_id, p.name, p.brand, p.category_id, pv.description, pv.type
+  FROM product p
+  JOIN productvariant pv ON pv.product_id = p.product_id
+  WHERE p.name LIKE ?`;
+  db.query(getQuery, [`%${productName}%`], (err, result) => {
+    if (err) {
+      output({ error: { description: err.message } }, null);
+    } else {
+      output(null, result);
+    }
+  });
+};
 
 const updateProductAndCategoryMapService = async (input, output) => {
   const { categoryId, productId } = input;
-      const updateQuery = `UPDATE product SET category_id = ? WHERE product_id = ?;`;
-      db.query(updateQuery, [categoryId, productId], (err, result) => {
-        if (err) {
-          output({ error: { description: err.message } }, null);
-        } else {
-          output(null, { message : "Product And Category mapping Successfully completed"} );
-        } 
-      })
-}
-
+  const updateQuery = `UPDATE product SET category_id = ? WHERE product_id = ?;`;
+  db.query(updateQuery, [categoryId, productId], (err, result) => {
+    if (err) {
+      output({ error: { description: err.message } }, null);
+    } else {
+      output(null, {
+        message: "Product And Category mapping Successfully completed",
+      });
+    }
+  });
+};
 
 module.exports = {
   SearchProduct,
@@ -772,5 +822,5 @@ module.exports = {
   updateBestSellerProductService,
   getProductsToCSVService,
   getProductByProductNameService,
-  updateProductAndCategoryMapService
+  updateProductAndCategoryMapService,
 };

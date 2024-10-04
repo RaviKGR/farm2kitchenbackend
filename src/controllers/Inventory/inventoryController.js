@@ -3,10 +3,10 @@ const { updateInventoryService, getInventoryService } = require("../../services/
 
 const updateInventoryController = async (req, res) => {
     
-    const {inventoryId, quantityInStock, price, discountPercentage} = req.body;
+    const {inventoryId, quantityInStock, price, reorderLevel, discountPercentage} = req.body;
     
     try {
-      if (!inventoryId || !quantityInStock || !price || !discountPercentage) {
+      if (!inventoryId || !quantityInStock || !price || !reorderLevel || !discountPercentage) {
         res.status(400).send({ message: "Required All Fields" });
       } else {
         await updateInventoryService(req.body, (err, data) => {
