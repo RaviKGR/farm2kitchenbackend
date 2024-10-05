@@ -282,27 +282,24 @@ const getProductByCategoryIdService = async (categoryId, output) => {
       result.forEach((list) => {
         if (!productList[list.product_id]) {
           productList[list.product_id] = {
+            total_count: list.total_count,
             product_id: list.product_id,
             productName: list.name,
             brandName: list.brand,
             category_id: list.category_id,
             status: list.status,
-            variant: [],
+            variant_id: list.variant_id,
+            description: list.description,
+            price: list.price,
+            size: list.size,
+            type: list.type,
+            barcode: list.barcode,
+            purchase_price: list.purchase_price,
+            HST: list.HST,
+            purchase_date: list.purchase_date,
             image: [],
           };
         }
-        productList[list.product_id].variant.push({
-          variant_id: list.variant_id,
-          description: list.description,
-          price: list.price,
-          size: list.size,
-          type: list.type,
-          barcode: list.barcode,
-          purchase_price: list.purchase_price,
-          HST: list.HST,
-          purchase_date: list.purchase_date,
-        });
-
         productList[list.product_id].image.push({
           id: list.id,
           image_id: list.image_id,
@@ -357,27 +354,24 @@ const getProductByProductIdService = async (ProductId, output) => {
       result.forEach((list) => {
         if (!productList[list.product_id]) {
           productList[list.product_id] = {
+            total_count: list.total_count,
             product_id: list.product_id,
             productName: list.name,
             brandName: list.brand,
             category_id: list.category_id,
             status: list.status,
-            variant: [],
+            variant_id: list.variant_id,
+            description: list.description,
+            price: list.price,
+            size: list.size,
+            type: list.type,
+            barcode: list.barcode,
+            purchase_price: list.purchase_price,
+            HST: list.HST,
+            purchase_date: list.purchase_date,
             image: [],
           };
         }
-        productList[list.product_id].variant.push({
-          variant_id: list.variant_id,
-          description: list.description,
-          price: list.price,
-          size: list.size,
-          type: list.type,
-          barcode: list.barcode,
-          purchase_price: list.purchase_price,
-          HST: list.HST,
-          purchase_date: list.purchase_date,
-        });
-
         productList[list.product_id].image.push({
           id: list.id,
           image_id: list.image_id,
@@ -394,92 +388,225 @@ const getProductByProductIdService = async (ProductId, output) => {
   });
 };
 
+// const getAllProductService = async (input, output) => {
+//   const { limit, offset } = input;
+//   const GetAllProduct = `
+//   SELECT
+//     p.product_id,
+//     p.name AS productName,
+//     p.brand AS brandName,
+//     p.category_id,
+//     p.status,
+//     p.deleted,
+//     pv.variant_id,
+//     pv.description,
+//     pv.size,
+//     pv.type,
+//     pv.purchase_price,
+//     pv.HST,
+//     pv.barcode,
+//     pv.purchase_date,
+//     pi.id AS image_id,
+//     pi.image_url,
+//     pi.image_tag,
+//     pi.alt_text,
+//     pi.is_primary
+// FROM product p
+// JOIN productimage pi ON pi.image_id = p.product_id
+// JOIN productvariant pv ON pv.product_id = p.product_id
+// WHERE (pi.image_tag = 'product' OR pi.image_tag = 'PRODUCT')
+//   AND p.deleted = 'N'
+//   AND p.status = True
+// LIMIT ? OFFSET ?;
+
+// `;
+
+//   db.query(
+//     GetAllProduct,
+//     [parseInt(limit), parseInt(offset)],
+//     (err, result) => {
+//       if (err) {
+//         output({ error: { description: err.message } }, null);
+//       } else {
+//         const productList = {};
+//         result.forEach((list) => {
+//           if (!productList[list.product_id]) {
+//             productList[list.product_id] = {
+//               total_count: list.total_count,
+//               product_id: list.product_id,
+//               productName: list.name,
+//               brandName: list.brand,
+//               category_id: list.category_id,
+//               status: list.status,
+//               variant_id: list.variant_id,
+//               description: list.description,
+//               price: list.price,
+//               size: list.size,
+//               type: list.type,
+//               barcode: list.barcode,
+//               purchase_price: list.purchase_price,
+//               HST: list.HST,
+//               purchase_date: list.purchase_date,
+//               image: [],
+//             };
+//           }
+//           productList[list.product_id].image.push({
+//             id: list.id,
+//             image_id: list.image_id,
+//             image_url: list.image_url,
+//             image_tag: list.image_tag,
+//             alt_text: list.alt_text,
+//             is_primary: list.is_primary,
+//           });
+//         });
+
+//         const productArray = Object.values(productList);
+//         output(null, productArray);
+//       }
+//     }
+//   );
+// };
+
 const getAllProductService = async (input, output) => {
   const { limit, offset } = input;
-  const GetAllProduct = `
-    WITH ProductCTE AS (
-      SELECT DISTINCT p.product_id
-      FROM product p
-      WHERE p.deleted = 'N' 
-      AND p.status = True
-    )
+
+  const getProductVariantsQuery = `
     SELECT
-      (SELECT COUNT(*) FROM ProductCTE) AS total_count,  -- Counts only distinct products
-      p.product_id, 
-      p.name, 
-      p.brand,
-      p.category_id, 
-      p.status, 
-      p.deleted,
+    COUNT(*) OVER() AS total_count,
+      pv.product_id,
+      pv.variant_id,
       pv.description, 
       pv.size,
       pv.type,
       pv.purchase_price,
       pv.HST,
       pv.barcode,
-      pv.purchase_date, 
-      pi.id,
-      pi.image_id, 
+      pv.purchase_date,
+      c.category_id,
+      c.name AS category_name,
+      ca.name AS parent_category_name,
+      p.product_id, 
+      p.name AS productName, 
+      p.brand AS brandName,
+      p.status, 
+      p.deleted
+    FROM productvariant pv
+    JOIN product p ON p.product_id = pv.product_id
+    JOIN category c ON c.category_id = p.category_id
+    LEFT JOIN category ca ON ca.category_id = c.parent_category_id
+    LIMIT ? OFFSET ?;
+  `;
+  const getProductImagesQuery = `
+    SELECT 
+      pi.id AS image_id,
       pi.image_url, 
       pi.image_tag, 
       pi.alt_text, 
-      pi.is_primary
-    FROM product p
-    JOIN productimage pi ON pi.image_id = p.product_id
-    JOIN productvariant pv ON pv.product_id = p.product_id
-    WHERE (pi.image_tag = 'product' OR pi.image_tag = 'PRODUCT')
-      AND p.deleted = 'N' 
-      AND p.status = True
-    LIMIT ? OFFSET ?;
-`;
-
-
+      pi.is_primary,
+      pi.image_id
+    FROM productimage pi
+    WHERE (pi.image_tag = 'product' OR pi.image_tag = 'PRODUCT');
+  `;
   db.query(
-    GetAllProduct,
+    getProductVariantsQuery,
     [parseInt(limit), parseInt(offset)],
-    (err, result) => {
+    (err, productResult) => {
       if (err) {
-        output({ error: { description: err.message } }, null);
-      } else {
-        const productList = {};
-        result.forEach((list) => {
-          if (!productList[list.product_id]) {
-            productList[list.product_id] = {
-              total_count:list.total_count,
-              product_id: list.product_id,
-              productName: list.name,
-              brandName: list.brand,
-              category_id: list.category_id,
-              status: list.status,
-              variant: [],
-              image: [],
-            };
-          }
-          productList[list.product_id].variant.push({
-            variant_id: list.variant_id,
-            description: list.description,
-            price: list.price,
-            size: list.size,
-            type: list.type,
-            barcode: list.barcode,
-            purchase_price: list.purchase_price,
-            HST: list.HST,
-            purchase_date: list.purchase_date,
-          });
-
-          productList[list.product_id].image.push({
-            id: list.id,
-            image_id: list.image_id,
-            image_url: list.image_url,
-            image_tag: list.image_tag,
-            alt_text: list.alt_text,
-            is_primary: list.is_primary,
-          });
-        });
-
-        const productArray = Object.values(productList);
-        output(null, productArray);
+        return output({ error: { description: err.message } }, null);
       }
+      if (productResult.length === 0) {
+        return output(null, []);
+      }
+
+      db.query(getProductImagesQuery, (err, imageResult) => {
+        if (err) {
+          output({ error: { description: err.message } }, null);
+        } else {
+          const products = productResult.map((i) => {
+            const image = imageResult.filter(
+              (j) => j.image_id === i.product_id
+            );
+            return {
+              ...i,
+              image,
+            };
+          });
+
+          output(null, products);
+        }
+      });
+    }
+  );
+};
+
+const getFilterProductService = async (input, output) => {
+  const { categoryId, productName, limit, offset } = input;
+  const getProductVariantsQuery = `
+  SELECT
+  COUNT(*) OVER() AS total_count,
+    pv.product_id,
+    pv.variant_id,
+    pv.description, 
+    pv.size,
+    pv.type,
+    pv.purchase_price,
+    pv.HST,
+    pv.barcode,
+    pv.purchase_date,
+    c.category_id,
+    c.name AS category_name,
+    ca.name AS parent_category_name,
+    p.product_id, 
+    p.name AS productName, 
+    p.brand AS brandName,
+    p.status, 
+    p.deleted
+  FROM productvariant pv
+  JOIN product p ON p.product_id = pv.product_id
+  JOIN category c ON c.category_id = p.category_id
+  LEFT JOIN category ca ON ca.category_id = c.parent_category_id
+  WHERE c.category_id = ? OR p.name LIKE ?
+  LIMIT ? OFFSET ?;
+`;
+  const getProductImagesQuery = `
+  SELECT 
+    pi.id AS image_id,
+    pi.image_url, 
+    pi.image_tag, 
+    pi.alt_text, 
+    pi.is_primary,
+    pi.image_id
+  FROM productimage pi
+  WHERE (pi.image_tag = 'product' OR pi.image_tag = 'PRODUCT');
+`;
+  db.query(
+    getProductVariantsQuery,
+    [categoryId, [`${productName}`], parseInt(limit), parseInt(offset)],
+    (err, productResult) => {
+      if (err) {
+        return output({ error: { description: err.message } }, null);
+      }
+      if (productResult.length === 0) {
+        return output(null, []);
+      }
+
+      db.query(getProductImagesQuery, (err, imageResult) => {
+        if (err) {
+          output({ error: { description: err.message } }, null);
+        } else {
+          const products = productResult.map((i) => {
+            const image = imageResult.filter(
+              (j) => j.image_id === i.product_id
+            );
+            return {
+              ...i,
+              image,
+            };
+          });
+
+          output(null, products);
+        }
+      });
     }
   );
 };
@@ -621,27 +748,24 @@ const getProductBarCodeService = async (barCode, output) => {
       result.forEach((list) => {
         if (!productList[list.product_id]) {
           productList[list.product_id] = {
+            total_count: list.total_count,
             product_id: list.product_id,
             productName: list.name,
             brandName: list.brand,
             category_id: list.category_id,
             status: list.status,
-            variant: [],
+            variant_id: list.variant_id,
+            description: list.description,
+            price: list.price,
+            size: list.size,
+            type: list.type,
+            barcode: list.barcode,
+            purchase_price: list.purchase_price,
+            HST: list.HST,
+            purchase_date: list.purchase_date,
             image: [],
           };
         }
-        productList[list.product_id].variant.push({
-          variant_id: list.variant_id,
-          description: list.description,
-          price: list.price,
-          size: list.size,
-          type: list.type,
-          barcode: list.barcode,
-          purchase_price: list.purchase_price,
-          HST: list.HST,
-          purchase_date: list.purchase_date,
-        });
-
         productList[list.product_id].image.push({
           id: list.id,
           image_id: list.image_id,
@@ -703,27 +827,24 @@ const getBestSellerProductService = async (input, output) => {
         result.forEach((list) => {
           if (!productList[list.product_id]) {
             productList[list.product_id] = {
+              total_count: list.total_count,
               product_id: list.product_id,
               productName: list.name,
               brandName: list.brand,
               category_id: list.category_id,
               status: list.status,
-              variant: [],
+              variant_id: list.variant_id,
+              description: list.description,
+              price: list.price,
+              size: list.size,
+              type: list.type,
+              barcode: list.barcode,
+              purchase_price: list.purchase_price,
+              HST: list.HST,
+              purchase_date: list.purchase_date,
               image: [],
             };
           }
-          productList[list.product_id].variant.push({
-            variant_id: list.variant_id,
-            description: list.description,
-            price: list.price,
-            size: list.size,
-            type: list.type,
-            barcode: list.barcode,
-            purchase_price: list.purchase_price,
-            HST: list.HST,
-            purchase_date: list.purchase_date,
-          });
-
           productList[list.product_id].image.push({
             id: list.id,
             image_id: list.image_id,
@@ -823,4 +944,5 @@ module.exports = {
   getProductsToCSVService,
   getProductByProductNameService,
   updateProductAndCategoryMapService,
+  getFilterProductService,
 };

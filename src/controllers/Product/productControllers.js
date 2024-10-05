@@ -16,6 +16,7 @@ const {
   updateProductImageService,
   getProductByProductNameService,
   updateProductAndCategoryMapService,
+  getFilterProductService,
 } = require("../../services/Product/productServices");
 
 const addNewProductController = async (req, res) => {
@@ -57,9 +58,7 @@ const addNewProductController = async (req, res) => {
       !quantityInStock ||
       !price ||
       !reorderLevel ||
-      !discountPercentage ||
-      !files ||
-      files.length === 0
+      !discountPercentage
     ) {
       res.status(400).send({ message: "Required All Fields" });
     } else {
@@ -134,15 +133,22 @@ const getProductByProductIdController = async (req, res) => {
 };
 
 const getAllProductController = async (req, res) => {
-  const { limit, offset } = req.query;
+  const { categoryId, productName, limit, offset } = req.query;
   try {
-    if (!limit || !offset) {
-      res.status(400).send({ message: "Required All Fields" });
-    } else {
-      await getAllProductService(req.query, (err, data) => {
+    if (!categoryId) {
+      if (!limit || !offset) {
+        res.status(400).send({ message: "Required All Fields" });
+      } else {
+        await getAllProductService(req.query, (err, data) => {
+          if (err) res.status(400).send(err.error);
+          else res.send(data);
+        });
+      }
+    } else if(productName || categoryId) {
+      await getFilterProductService(req.query, (err, data) => {
         if (err) res.status(400).send(err.error);
-        else res.send(data);
-      });
+          else res.send(data);
+      })
     }
   } catch (error) {
     throw error;
