@@ -1,7 +1,11 @@
 const { db } = require("../../confic/db");
 
-const AddCartService = async () => {
-
+const AddCartService = async (input, output) => {
+    const productId = input.productId;
+    const inventorystock = `UPDATE Inventory 
+SET quantity_in_stock = ? 
+WHERE variant_id = ?;
+`;
 }
 
 // const getCartService = async () => {
@@ -105,97 +109,94 @@ const getCartService = async (offerId) => {
         LEFT JOIN
             Category c ON p.category_id = c.category_id;
     `;
-        // First query: Get cart data
+
         db.query(getCartQuery, (err, cartResult) => {
             if (err) {
                 console.error('Database error in getCartService (cart data):', err);
                 return reject(new Error('Failed to retrieve cart data from database'));
             }
 
-            // Second query: Get offer data
             const getOfferQuery = `
-                SELECT 
-                    o.offer_id,
-                    o.name AS offer_name,
-                    o.description AS offer_description,
-                    o.discountType,
-                    o.discountValue,
-                    od.offer_tag,
-                    od.tag_id
-                FROM 
-                    Offer o
-                JOIN 
-                    Offer_Details od ON o.offer_id = od.offer_id
-            `;
+                        SELECT 
+                            o.offer_id,
+                            o.name AS offer_name,
+                            o.description AS offer_description,
+                            o.discountType,
+                            o.discountValue,
+                            o.start_date,
+                            o.end_date,
+                            od.offer_tag,
+                            od.tag_id
+                        FROM 
+                            Offer o
+                        JOIN 
+                            Offer_Details od ON o.offer_id = od.offer_id 
+                        AND o.deleted = 'n'  
+                        AND CURDATE() BETWEEN o.start_date AND o.end_date
+                    `;
+
 
             db.query(getOfferQuery, [offerId], (err, offerResult) => {
                 if (err) {
                     console.error('Database error in getCartService (offer data):', err);
                     return reject(new Error('Failed to retrieve offer data from database'));
                 }
-                const offerTagId = offerResult.length ? offerResult[0].tag_id : null;
-                const offerTagType = offerResult.length ? offerResult[0].offer_tag : null; // e.g., 'product' or 'category'
-                const discountType = offerResult.length ? offerResult[0].discountType : null;
+                console.log(!offerResult.length)
+                // If no valid offer is found, handle gracefully
+                if (!offerResult.length) {
+                    return resolve(cartResult); // No offer, return the original cart
+                }
+
+                const offerTagId = offerResult[0].tag_id;
+                const offerTagType = offerResult[0].offer_tag || ''; // Ensure it's a valid string
+                const discountType = offerResult[0].discountType;
                 let filteredCartData = [];
-                console.log(discountType);
+                let noOfferCartData = [];
 
                 if (offerTagType.toLowerCase() === 'product') {
-                    // If the offer is for a specific product, filter by product_id
                     filteredCartData = cartResult.filter(product => product.product_id === offerTagId);
-                } else if (offerTagType.toLowerLase() === 'category') {
-                    // If the offer is for a specific category, filter by category_id
+                    noOfferCartData = cartResult.filter(product => product.product_id !== offerTagId);
+                } else if (offerTagType.toLowerCase() === 'category') {
                     filteredCartData = cartResult.filter(product => product.category_id === offerTagId);
+                    noOfferCartData = cartResult.filter(product => product.product_id !== offerTagId);
                 }
-
 
                 if (discountType.toLowerCase() === 'flat') {
-                    const discountValue = parseFloat(offerResult[0].discountValue); // Assuming discountValue is stored as a string
-
+                    const discountValue = parseFloat(offerResult[0].discountValue);
                     filteredCartData = filteredCartData.map(product => {
-                        const originalPrice = parseFloat(product.price); // Convert product price to a number
-                        const discountedPrice = Math.max(0, originalPrice - discountValue); // Ensure price doesn't go below 0
-
+                        const originalPrice = parseFloat(product.price);
+                        const discountedPrice = Math.max(0, originalPrice - discountValue);
                         return {
                             ...product,
-                            discountValue, // Keep all existing properties of the product
-                            originalPrice, // Store original price (optional)
-                            price: discountedPrice.toFixed(2) // Update the price with the discounted value
+                            discountValue,
+                            originalPrice,
+                            price: discountedPrice.toFixed(2)
                         };
                     });
                 }
-
-
 
                 if (discountType.toLowerCase() === 'percentage') {
-                    const discountValue = parseFloat(offerResult[0].discountValue); // Discount percentage value (e.g., 10 for 10%)
-
+                    const discountValue = parseFloat(offerResult[0].discountValue);
                     filteredCartData = filteredCartData.map(product => {
-                        const originalPrice = parseFloat(product.price); // Convert product price to a number
-                        const discountAmount = (originalPrice * discountValue) / 100; // Calculate the discount amount
-                        const discountedPrice = Math.max(0, originalPrice - discountAmount); // Ensure price doesn't go below 0
+                        const originalPrice = parseFloat(product.price);
+                        const discountAmount = (originalPrice * discountValue) / 100;
+                        const discountedPrice = Math.max(0, originalPrice - discountAmount);
                         return {
                             ...product,
-                            discountAmount, // Keep all existing properties of the product
-                            originalPrice, // Store original price (optional)
-                            price: discountedPrice.toFixed(2) // Update the price with the discounted value
+                            discountAmount,
+                            originalPrice,
+                            price: discountedPrice.toFixed(2)
                         };
                     });
                 }
 
-                console.log(filteredCartData);
-
-
-                // Combine both results
-                const result = {
-                    cartData: filteredCartData,
-                    // offerData: offerResult
-                };
-
+                const result = [...filteredCartData, ...noOfferCartData];
                 resolve(result);
             });
         });
     });
 };
+
 
 
 
