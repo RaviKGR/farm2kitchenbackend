@@ -237,7 +237,16 @@ CREATE TABLE IF NOT EXISTS otps (
     FOREIGN KEY (user_id) REFERENCES users_credentials (user_id)
 );`
 
+const cart = `CREATE TABLE IF NOT EXISTS cart (
+    cart_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    variant_id BIGINT NOT NULL,
+    quantity_count BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (variant_id) REFERENCES productvariant(variant_id),
+    FOREIGN KEY (user_id) REFERENCES users_credentials (user_id)
 
+);`;
 // Function to execute the queries
 async function createTables() {
     try {
@@ -267,6 +276,7 @@ async function createTables() {
         await db.promise().query(otps);
         await db.promise().query(role_permissions);
         await db.promise().query(favorites);
+        await db.promise().query(cart);
         console.log("All tables created successfully.");
     } catch (error) {
         console.error("Error creating tables:", error.message);
