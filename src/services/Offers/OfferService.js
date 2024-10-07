@@ -9,32 +9,66 @@ const addNewOfferServer = async (input, output) => {
     startDate,
     endDate,
     tagId,
+    isPrimary,
   } = input;
   const offerTag = input.offerTag.toUpperCase();
+  const image = `/uploads/${input.image}`;
 
-  const insertQuery = `INSERT INTO offer (name, description, discountType, discountValue, start_date, end_date, deleted) VALUES (?, ?, ?, ?, ?, ?, "N");
+  if (!image) {
+    const insertQuery = `INSERT INTO offer (name, description, discountType, discountValue, start_date, end_date, deleted) VALUES (?, ?, ?, ?, ?, ?, "N");
     SET @last_offer_id = LAST_INSERT_ID();
     INSERT INTO offer_details (offer_id, offer_tag, tag_id) VALUES (@last_offer_id, ?, ?)`;
-  db.query(
-    insertQuery,
-    [
-      offerName,
-      description,
-      discountType,
-      discountValue,
-      startDate,
-      endDate,
-      offerTag,
-      tagId,
-    ],
-    (err, result) => {
-      if (err) {
-        output({ error: { description: err.message } }, null);
-      } else {
-        output(null, { message: "Offer created Successfully" });
+    db.query(
+      insertQuery,
+      [
+        offerName,
+        description,
+        discountType,
+        discountValue,
+        startDate,
+        endDate,
+        offerTag,
+        tagId,
+      ],
+      (err, result) => {
+        if (err) {
+          output({ error: { description: err.message } }, null);
+        } else {
+          output(null, { message: "Offer created Successfully" });
+        }
       }
-    }
-  );
+    );
+  } else {
+    const insertQuery = `INSERT INTO offer (name, description, discountType, discountValue, start_date, end_date, deleted) VALUES (?, ?, ?, ?, ?, ?, "N");
+    SET @last_offer_id = LAST_INSERT_ID();
+    INSERT INTO offer_details (offer_id, offer_tag, tag_id) VALUES (@last_offer_id, ?, ?);
+    INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) VALUES (@last_offer_id, ?, ?, ?, ?);`;
+
+    db.query(
+      insertQuery,
+      [
+        offerName,
+        description,
+        discountType,
+        discountValue,
+        startDate,
+        endDate,
+        offerTag,
+        tagId,
+        image,
+        offerTag,
+        offerName,
+        isPrimary,
+      ],
+      (err, result) => {
+        if (err) {
+          output({ error: { description: err.message } }, null);
+        } else {
+          output(null, { message: "Offer created Successfully" });
+        }
+      }
+    );
+  }
 };
 
 const getOfferService = async (input, output) => {

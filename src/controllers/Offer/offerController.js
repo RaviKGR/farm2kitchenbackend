@@ -15,7 +15,9 @@ const addNewOfferController = async (req, res) => {
     endDate,
     offerTag,
     tagId,
+    isPrimary
   } = req.body;
+  const image = req.file ? req.file.filename : null;
   try {
     if (
       !offerName ||
@@ -29,7 +31,7 @@ const addNewOfferController = async (req, res) => {
     ) {
       res.status(400).send({ message: "Required All Fields" });
     } else {
-      await addNewOfferServer(req.body, (err, data) => {
+      await addNewOfferServer({...req.body, image},(err, data) => {
         if (err) res.status(400).send(err.error);
         else res.status(201).send(data);
       });
@@ -108,6 +110,7 @@ const deleteOfferController = async (req, res) => {
     throw error;
   }
 };
+
 
 module.exports = {
   addNewOfferController,
