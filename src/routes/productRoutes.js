@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require('multer');
 const path = require('path');
 const { GetSearchProducts, GetCategoryIdProducts, addNewProductController, getProductByProductIdController, getAllProductController, updateProductController, updateProductStatusController, deleteProductController, getProductBarCodeController, getBestSellerProductController, updateBestSellerProductController, exportProductsToCSVController, getProductByCategoryIdController, updateProductImageController, getProductByProductNameController, updateProductAndCategoryMapController } = require("../controllers/Product/productControllers");
+const { addNewPurchaseController } = require("../controllers/Product/productPurchaseController");
 
 const ProductRoutes = express.Router();
 
@@ -17,7 +18,7 @@ const productStorage = multer.diskStorage({
 
    // Multer instances
    const uploadProduct = multer({ storage: productStorage });
-
+// productRoutes
 ProductRoutes.get("/searchProduct", GetSearchProducts);
 ProductRoutes.get("/categoryId", GetCategoryIdProducts);
 ProductRoutes.get("/productByCategoryId", getProductByCategoryIdController)
@@ -34,5 +35,9 @@ ProductRoutes.put("/updateBestSellerProduct", updateBestSellerProductController)
 ProductRoutes.get("/exportProductsCSV", exportProductsToCSVController);
 ProductRoutes.get('/getProductByProductName', getProductByProductNameController);
 ProductRoutes.put('/ProductAndCategoryMap', updateProductAndCategoryMapController);
+
+//  product Purchase Routes
+
+ProductRoutes.post("/addNewPurchase", addNewPurchaseController)
 
 module.exports = ProductRoutes;

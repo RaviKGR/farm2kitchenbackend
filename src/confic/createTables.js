@@ -74,10 +74,7 @@ const productvariant = `CREATE TABLE IF NOT EXISTS productVariant (
     description TEXT,
     size INT NOT NULL,
     type VARCHAR(255),
-    purchase_price decimal(10,2) NOT NULL,
-    HST DECIMAL(5, 2),
     barcode VARCHAR(100) NOT NULL,
-    purchase_date date, 
     status BOOLEAN DEFAULT TRUE,
     best_Seller BOOLEAN DEFAULT FALSE NOT NULL,
     deleted VARCHAR(5),
@@ -96,6 +93,15 @@ const Inventory = `CREATE TABLE IF NOT EXISTS Inventory (
     FOREIGN KEY (variant_id) REFERENCES productvariant(variant_id),
     FOREIGN KEY (supplier_id) REFERENCES Supplier(supplier_id)
 );`;
+
+const productPurchase = `CREATE TABLE IF NOT EXISTS productPurchase (
+    purchase_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    variant_id BIGINT NOT NULL,
+    purchase_price decimal(10,2) NOT NULL,
+    HST DECIMAL(5, 2),
+    purchase_date date, 
+    FOREIGN KEY (variant_id) REFERENCES productvariant(variant_id)
+)`;
 
 const favorites = `CREATE TABLE IF NOT EXISTS favorites (
     favorite_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -260,6 +266,7 @@ async function createTables() {
         await db.promise().query(Supplier);
         await db.promise().query(productvariant);
         await db.promise().query(Inventory);
+        await db.promise().query(productPurchase);
         await db.promise().query(Offer);
         await db.promise().query(offerDetails);
         await db.promise().query(Order);
