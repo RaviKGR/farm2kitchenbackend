@@ -54,10 +54,10 @@ const addNewProductService = async (input, output) => {
     description,
     size,
     type,
-    purchasePrice,
-    HST,
+    // purchasePrice,
+    // HST,
     barcode,
-    purchaseDate,
+    // purchaseDate,
     quantityInStock,
     price,
     reorderLevel,
@@ -93,8 +93,8 @@ const addNewProductService = async (input, output) => {
 
               // Step 2: Insert into productvariant using `last_product_id`
               const insertVariant = `
-            INSERT INTO productvariant (product_id, description, size, type, purchase_price, HST, barcode, purchase_date, status, best_seller, deleted)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, True, False, 'N');
+            INSERT INTO productvariant (product_id, description, size, type, barcode, status, best_seller, deleted)
+            VALUES (?, ?, ?, ?, ?, True, False, 'N');
           `;
 
               db.query(
@@ -104,10 +104,7 @@ const addNewProductService = async (input, output) => {
                   description,
                   size,
                   type,
-                  purchasePrice,
-                  HST,
                   barcode,
-                  purchaseDate,
                 ],
                 (err, result) => {
                   if (err) {
@@ -185,8 +182,8 @@ const addNewProductService = async (input, output) => {
     });
   } else {
     const insertVariant = `
-    INSERT INTO productvariant (product_id, description, size, type, purchase_price, HST, barcode, purchase_date, status, best_seller, deleted)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, True, False, 'N');
+    INSERT INTO productvariant (product_id, description, size, type, barcode, status, best_seller, deleted)
+    VALUES (?, ?, ?, ?, ?, True, False, 'N');
   `;
     db.query(
       insertVariant,
@@ -195,10 +192,7 @@ const addNewProductService = async (input, output) => {
         description,
         size,
         type,
-        purchasePrice,
-        HST,
         barcode,
-        purchaseDate,
       ],
       (err, result) => {
         if (err) {
@@ -257,10 +251,7 @@ const getProductByCategoryIdService = async (categoryId, output) => {
       pv.description, 
       pv.size,
       pv.type,
-      pv.purchase_price,
-      pv.HST,
-      pv.barcode,
-      pv.purchase_date, 
+      pv.barcode, 
       pi.id,
       pi.image_id, 
       pi.image_url, 
@@ -294,9 +285,9 @@ const getProductByCategoryIdService = async (categoryId, output) => {
             size: list.size,
             type: list.type,
             barcode: list.barcode,
-            purchase_price: list.purchase_price,
-            HST: list.HST,
-            purchase_date: list.purchase_date,
+            // purchase_price: list.purchase_price,
+            // HST: list.HST,
+            // purchase_date: list.purchase_date,
             image: [],
           };
         }
@@ -329,10 +320,7 @@ const getProductByProductIdService = async (ProductId, output) => {
       pv.description, 
       pv.size,
       pv.type,
-      pv.purchase_price,
-      pv.HST,
-      pv.barcode,
-      pv.purchase_date,  
+      pv.barcode, 
       pi.id,
       pi.image_id, 
       pi.image_url, 
@@ -366,9 +354,9 @@ const getProductByProductIdService = async (ProductId, output) => {
             size: list.size,
             type: list.type,
             barcode: list.barcode,
-            purchase_price: list.purchase_price,
-            HST: list.HST,
-            purchase_date: list.purchase_date,
+            // purchase_price: list.purchase_price,
+            // HST: list.HST,
+            // purchase_date: list.purchase_date,
             image: [],
           };
         }
@@ -478,10 +466,7 @@ const getAllProductService = async (input, output) => {
       pv.description, 
       pv.size,
       pv.type,
-      pv.purchase_price,
-      pv.HST,
       pv.barcode,
-      pv.purchase_date,
       c.category_id,
       c.name AS category_name,
       ca.name AS parent_category_name,
@@ -549,10 +534,7 @@ const getFilterProductService = async (input, output) => {
     pv.description, 
     pv.size,
     pv.type,
-    pv.purchase_price,
-    pv.HST,
     pv.barcode,
-    pv.purchase_date,
     c.category_id,
     c.name AS category_name,
     ca.name AS parent_category_name,
@@ -621,14 +603,11 @@ const updateProductService = async (input, output) => {
     description,
     size,
     type,
-    purchasePrice,
-    HST,
     barcode,
-    purchaseDate,
   } = input;
 
   const UpdateProduct = `UPDATE product SET name = ?, brand = ?, category_id = ? WHERE product_id = ?;
-  UPDATE productvariant SET description = ?, size = ?, type = ?, purchase_price = ?, HST = ?, barcode = ?, purchase_date = ? WHERE variant_id = ?;
+  UPDATE productvariant SET description = ?, size = ?, type = ?, barcode = ? WHERE variant_id = ?;
   `;
   db.query(
     UpdateProduct,
@@ -640,10 +619,7 @@ const updateProductService = async (input, output) => {
       description,
       size,
       type,
-      purchasePrice,
-      HST,
       barcode,
-      purchaseDate,
       variantId,
     ],
     (err, result) => {
@@ -717,10 +693,7 @@ const getProductBarCodeService = async (barCode, output) => {
       pv.description, 
       pv.size,
       pv.type,
-      pv.purchase_price,
-      pv.HST,
       pv.barcode,
-      pv.purchase_date, 
       pi.id,
       pi.image_id, 
       pi.image_url, 
@@ -760,9 +733,9 @@ const getProductBarCodeService = async (barCode, output) => {
             size: list.size,
             type: list.type,
             barcode: list.barcode,
-            purchase_price: list.purchase_price,
-            HST: list.HST,
-            purchase_date: list.purchase_date,
+            // purchase_price: list.purchase_price,
+            // HST: list.HST,
+            // purchase_date: list.purchase_date,
             image: [],
           };
         }
@@ -794,10 +767,7 @@ const getBestSellerProductService = async (input, output) => {
       pv.description, 
       pv.size,
       pv.type,
-      pv.purchase_price,
-      pv.HST,
-      pv.barcode,
-      pv.purchase_date, 
+      pv.barcode, 
       pi.id,
       pi.image_id, 
       pi.image_url, 
@@ -839,9 +809,9 @@ const getBestSellerProductService = async (input, output) => {
               size: list.size,
               type: list.type,
               barcode: list.barcode,
-              purchase_price: list.purchase_price,
-              HST: list.HST,
-              purchase_date: list.purchase_date,
+              // purchase_price: list.purchase_price,
+              // HST: list.HST,
+              // purchase_date: list.purchase_date,
               image: [],
             };
           }
@@ -900,7 +870,7 @@ const getProductsToCSVService = (callback) => {
 
 const getProductByProductNameService = async (productName, output) => {
   const getQuery = `
-  SELECT p.product_id, p.name, p.brand, p.category_id, pv.description, pv.type
+  SELECT p.product_id, p.name, p.brand, p.category_id, pv.description, pv.type, pv.variant_id
   FROM product p
   JOIN productvariant pv ON pv.product_id = p.product_id
   WHERE p.name LIKE ?`;

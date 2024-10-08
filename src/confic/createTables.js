@@ -97,6 +97,7 @@ const Inventory = `CREATE TABLE IF NOT EXISTS Inventory (
 const productPurchase = `CREATE TABLE IF NOT EXISTS productPurchase (
     purchase_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     variant_id BIGINT NOT NULL,
+    quantity_in_stock INT NOT NULL,
     purchase_price decimal(10,2) NOT NULL,
     HST DECIMAL(5, 2),
     purchase_date date, 
@@ -118,6 +119,20 @@ const Offer = `CREATE TABLE IF NOT EXISTS Offer (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     deleted VARCHAR(5) NOT NULL
+);`
+
+const couponOffer = `CREATE TABLE IF NOT EXISTS Coupon (
+    coupon_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    coupon_code VARCHAR(30) NOT NULL,
+    name VARCHAR(100),
+    description TEXT,
+	coupon_type VARCHAR(50) NOT NULL, 
+    coupon_value DECIMAL(10, 2) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    deleted VARCHAR(5) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );`
 
 const offerDetails = `CREATE TABLE IF NOT EXISTS Offer_Details (
@@ -269,6 +284,7 @@ async function createTables() {
         await db.promise().query(productPurchase);
         await db.promise().query(Offer);
         await db.promise().query(offerDetails);
+        await db.promise().query(couponOffer);
         await db.promise().query(Order);
         await db.promise().query(OrderItem);
         await db.promise().query(DeliveryPerson);
