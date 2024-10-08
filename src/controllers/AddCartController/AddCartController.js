@@ -2,7 +2,7 @@ const { AddCartService, getCartService } = require("../../services/AddCartServic
 
 const AddCartController = async (req, res) => {
     try {
-        const { productId } = req.body;
+        const { productId} = req.body;
         if (!productId) {
             return res.status(400).json({ message: 'Check the data' })
         }
