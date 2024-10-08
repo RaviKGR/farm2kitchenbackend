@@ -8,6 +8,7 @@ const {
   updateOfferConteroller,
   deleteOfferController,
 } = require("../controllers/Offer/offerController");
+const { addNewCouponConnteroller, getCouponOfferController, getCouponOfferByIdController, getCouponOfferByUserIdController, updateCouponOfferConteroller, deleteCouponOfferController } = require("../controllers/Offer/couponOfferController");
 const OfferRouters = express.Router();
 
 const offerStorage = multer.diskStorage({
@@ -26,5 +27,14 @@ OfferRouters.post("/createOffers", uploadOffer.single('image'), addNewOfferContr
 OfferRouters.get("/getOffers", getOfferController);
 OfferRouters.put("/updateOffer", updateOfferConteroller);
 OfferRouters.delete("/deleteOffer", deleteOfferController);
+
+//        Coupon offer routers
+
+OfferRouters.post("/createCouponOffer", addNewCouponConnteroller);
+OfferRouters.get("/getCouponOffer", getCouponOfferController);
+OfferRouters.get("/getCouponOfferById", getCouponOfferByIdController);
+OfferRouters.get("/getCouponOfferByUserId", getCouponOfferByUserIdController);
+OfferRouters.put("/updateCouponOffer", updateCouponOfferConteroller);
+OfferRouters.delete("/deleteCouponoffer", deleteCouponOfferController)
 
 module.exports = OfferRouters;

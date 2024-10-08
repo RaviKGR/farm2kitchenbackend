@@ -2,7 +2,7 @@ const express = require("express");
 const multer = require('multer');
 const path = require('path');
 const { GetSearchProducts, GetCategoryIdProducts, addNewProductController, getProductByProductIdController, getAllProductController, updateProductController, updateProductStatusController, deleteProductController, getProductBarCodeController, getBestSellerProductController, updateBestSellerProductController, exportProductsToCSVController, getProductByCategoryIdController, updateProductImageController, getProductByProductNameController, updateProductAndCategoryMapController } = require("../controllers/Product/productControllers");
-const { addNewPurchaseController } = require("../controllers/Product/productPurchaseController");
+const { addNewPurchaseController, getPurchaseDetailController } = require("../controllers/Product/productPurchaseController");
 
 const ProductRoutes = express.Router();
 
@@ -38,6 +38,7 @@ ProductRoutes.put('/ProductAndCategoryMap', updateProductAndCategoryMapControlle
 
 //  product Purchase Routes
 
-ProductRoutes.post("/addNewPurchase", addNewPurchaseController)
+ProductRoutes.post("/addNewPurchase", addNewPurchaseController);
+ProductRoutes.get("/getPurchaseProduct", getPurchaseDetailController)
 
 module.exports = ProductRoutes;

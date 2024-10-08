@@ -33,8 +33,6 @@ const getInventoryService = async (input, output) => {
   PV.description,
   PV.size,
   PV.type,
-  PV.purchase_price,
-  PV.HST,
   PV.barcode,
   I.quantity_in_stock,
   I.price,

@@ -30,10 +30,10 @@ const addNewProductController = async (req, res) => {
     description,
     size,
     type,
-    purchasePrice,
-    HST,
+    // purchasePrice,
+    // HST,
     barcode,
-    purchaseDate,
+    // purchaseDate,
     quantityInStock,
     price,
     reorderLevel,
@@ -51,14 +51,16 @@ const addNewProductController = async (req, res) => {
       !description ||
       !size ||
       !type ||
-      !purchasePrice ||
-      !HST ||
+      // !purchasePrice ||
+      // !HST ||
       !barcode ||
-      !purchaseDate ||
+      // !purchaseDate ||
       !quantityInStock ||
       !price ||
       !reorderLevel ||
-      !discountPercentage
+      !discountPercentage || 
+      !files || 
+      files.length <= 0
     ) {
       res.status(400).send({ message: "Required All Fields" });
     } else {
