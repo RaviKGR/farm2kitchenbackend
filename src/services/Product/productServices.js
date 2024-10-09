@@ -469,6 +469,7 @@ const getAllProductService = async (input, output) => {
       pv.barcode,
       c.category_id,
       c.name AS category_name,
+      c.parent_category_id,
       ca.name AS parent_category_name,
       p.product_id, 
       p.name AS productName, 
@@ -483,7 +484,7 @@ const getAllProductService = async (input, output) => {
   `;
   const getProductImagesQuery = `
     SELECT 
-      pi.id AS image_id,
+      pi.id,
       pi.image_url, 
       pi.image_tag, 
       pi.alt_text, 
@@ -633,8 +634,9 @@ const updateProductService = async (input, output) => {
 };
 
 const updateProductImageService = async (id, image, output) => {
+  const Image = `/uploads/${image}`;
   const updateimage = `UPDATE productimage SET image_url = ? WHERE id = ?`;
-  db.query(updateimage, [image, id], (err, result) => {
+  db.query(updateimage, [Image, id], (err, result) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {

@@ -167,13 +167,9 @@ const updateProductController = async (req, res) => {
     description,
     size,
     type,
-    purchasePrice,
-    HST,
-    barcode,
-    purchaseDate,
+    barcode
   } = req.body;
 
-  console.log("Request Body: ", req.body); // Log the request body
 
   try {
     if (
@@ -185,10 +181,7 @@ const updateProductController = async (req, res) => {
       !description ||
       !size ||
       !type ||
-      !purchasePrice ||
-      !HST ||
-      !barcode ||
-      !purchaseDate
+      !barcode
     ) {
       res.status(400).send({ message: "Required All Fields" });
     } else {

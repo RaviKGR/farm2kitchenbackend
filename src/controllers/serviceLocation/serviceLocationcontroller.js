@@ -1,19 +1,40 @@
-const { NewServieLocationService } = require("../../services/serviceLocation/serviceLocationService");
+const {
+  NewServieLocationService,
+  getServiceLocationService,
+} = require("../../services/serviceLocation/serviceLocationService");
 
 const NewServieLocationController = async (req, res) => {
-  const { city, postalCode, devileryDay } = req.body;
+  const { city, postalCode } = req.body;
+  const devileryDay = req.body.devileryDay
+    .split("")
+    .slice(0, 3)
+    .join("")
+    .toUpperCase();
+
   try {
     if (!city || !postalCode || !devileryDay) {
       res.status(400).send({ message: "Required All Fields" });
     } else {
-      await NewServieLocationService(req.body, (err, data) => {
-        if (err) res.status(400).send(err.error);
-        else res.status(201).send(data);
+      const result = await NewServieLocationService({
+        ...req.body,
+        devileryDay,
       });
+      return res.status(result.success ? 201 : 400).json(result);
     }
   } catch (error) {
-    throw error;
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-module.exports = { NewServieLocationController };
+const getServiceLocationController = async (req, res) => {
+  try {
+    const result = await getServiceLocationService();
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+module.exports = { NewServieLocationController, getServiceLocationController };
