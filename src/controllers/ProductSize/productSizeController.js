@@ -1,4 +1,4 @@
-const { addNewProductSizeSerivce } = require("../../services/ProductSize/productSizeService");
+const { addNewProductSizeSerivce, getAllProuctSizeService } = require("../../services/ProductSize/productSizeService");
 
 const addNewProductSizeController = async (req, res) => {
     const {productSize} = req.body;
@@ -7,15 +7,23 @@ const addNewProductSizeController = async (req, res) => {
             res.status(400).send({message: "Require All Feilds"})
         } else {
             const result = await addNewProductSizeSerivce(productSize);
-            console.log(result);
-            return res.status(201).json(result);
+            return res.status(result.success ? 201 : 400).json(result);
         }
     } catch (error) {
         console.error(error);
-        return res.status(500).send({ message: "Internal Server Error" });
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
-module.exports = {addNewProductSizeController}
+const getAllProuctSizeConttroler = async (req, res) => {
+    try {
+        const result = await getAllProuctSizeService();
+            return res.status(200).json(result);
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+}
 
-  
+module.exports = {addNewProductSizeController, getAllProuctSizeConttroler}
+

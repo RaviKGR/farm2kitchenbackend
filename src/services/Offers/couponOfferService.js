@@ -8,12 +8,13 @@ const addNewCouponService = async (input, output) => {
     description,
     couponType,
     couponValue,
-    // tagId,
+    maxDiscountAmt,
+    minAmount,
     startDate,
     endDate,
   } = input;
-//   const couponTag = input.couponTag.toUpperCase();
-  const insertQuery = `INSERT INTO coupon (user_id, coupon_code, name, description, coupon_type, coupon_value, start_date, end_date, deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "N")`;
+  //   const couponTag = input.couponTag.toUpperCase();
+  const insertQuery = `INSERT INTO coupon (user_id, coupon_code, name, description, coupon_type, coupon_value, max_discount_amt, min_amount, start_date, end_date, coupon_applied, deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "N", "N")`;
   db.query(
     insertQuery,
     [
@@ -23,6 +24,8 @@ const addNewCouponService = async (input, output) => {
       description,
       couponType,
       couponValue,
+      maxDiscountAmt,
+      minAmount,
       startDate,
       endDate,
     ],
@@ -46,6 +49,8 @@ const getCouponOfferService = async (input, output) => {
     c.description,
     c.coupon_type,
     c.coupon_value,
+    c.max_discount_amt,
+    c.min_amount,
     c.start_date,
     c.end_date
     FROM coupon c
@@ -75,6 +80,8 @@ const getCouponOfferByIdService = async (couponId, output) => {
     c.description,
     c.coupon_type,
     c.coupon_value,
+    c.max_discount_amt,
+    c.min_amount,
     c.start_date,
     c.end_date
     FROM coupon c
@@ -90,7 +97,7 @@ const getCouponOfferByIdService = async (couponId, output) => {
 };
 
 const getCouponOfferByUserIdService = async (input, output) => {
-    const { userId, limit, offset } = input;
+  const { userId, limit, offset } = input;
   const getOfferQuery = `
     SELECT
     u.name AS customer_name,
@@ -100,45 +107,53 @@ const getCouponOfferByUserIdService = async (input, output) => {
     c.description,
     c.coupon_type,
     c.coupon_value,
+    c.max_discount_amt,
+    c.min_amount,
     c.start_date,
     c.end_date
     FROM coupon c
     JOIN users u ON u.user_id = c.user_id    
     WHERE c.user_id = ? AND deleted = "N"
     LIMIT ? OFFSET ?`;
-  db.query(getOfferQuery, [userId, parseInt(limit), parseInt(offset)], (err, result) => {
-    if (err) {
-      output({ error: { description: err.message } }, null);
-    } else {
-      output(null, result);
+  db.query(
+    getOfferQuery,
+    [userId, parseInt(limit), parseInt(offset)],
+    (err, result) => {
+      if (err) {
+        output({ error: { description: err.message } }, null);
+      } else {
+        output(null, result);
+      }
     }
-  });
+  );
 };
 
 const updateCouponOfferService = async (input, output) => {
-    const { couponId, couponValue, startDate, endDate} = input;
-    const updateQuery = `UPDATE coupon SET coupon_value = ?, start_date = ?, end_date = ? WHERE coupon_id = ?`;
-    db.query(updateQuery, [couponValue, startDate, endDate, couponId], (err, result) => {
-        if (err) {
-          output({ error: { description: err.message } }, null);
-        } else {
-          output(null, { message: "Coupon offer updated successfully"});
-        }
-      });
-}
+  const { couponId, couponValue, startDate, endDate } = input;
+  const updateQuery = `UPDATE coupon SET coupon_value = ?, start_date = ?, end_date = ? WHERE coupon_id = ?`;
+  db.query(
+    updateQuery,
+    [couponValue, startDate, endDate, couponId],
+    (err, result) => {
+      if (err) {
+        output({ error: { description: err.message } }, null);
+      } else {
+        output(null, { message: "Coupon offer updated successfully" });
+      }
+    }
+  );
+};
 
 const deleteCouponOfferService = async (couponId, output) => {
-    const updateQuery = `UPDATE coupon SET deleted = "Y" WHERE coupon_id = ?`;
-    db.query(updateQuery, [couponId], (err, result) => {
-        if (err) {
-          output({ error: { description: err.message } }, null);
-        } else {
-          output(null, { message: "Coupon offer Deleted successfully"});
-        }
-      });
-}
-
-
+  const updateQuery = `UPDATE coupon SET deleted = "Y" WHERE coupon_id = ?`;
+  db.query(updateQuery, [couponId], (err, result) => {
+    if (err) {
+      output({ error: { description: err.message } }, null);
+    } else {
+      output(null, { message: "Coupon offer Deleted successfully" });
+    }
+  });
+};
 
 module.exports = {
   addNewCouponService,
@@ -146,5 +161,5 @@ module.exports = {
   getCouponOfferByIdService,
   getCouponOfferByUserIdService,
   updateCouponOfferService,
-  deleteCouponOfferService
+  deleteCouponOfferService,
 };

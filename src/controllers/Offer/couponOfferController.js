@@ -14,8 +14,8 @@ const addNewCouponConnteroller = async (req, res) => {
     description,
     couponType,
     couponValue,
-    // tagId,
-    // couponTag,
+    maxDiscountAmt,
+    minAmount,
     startDate,
     endDate,
   } = req.body;
@@ -26,8 +26,8 @@ const addNewCouponConnteroller = async (req, res) => {
       !description ||
       !couponType ||
       !couponValue ||
-      //   !tagId ||
-      //   !couponTag ||
+      !maxDiscountAmt ||
+      !minAmount ||
       !startDate ||
       !endDate
     ) {
@@ -123,7 +123,7 @@ const deleteCouponOfferController = async (req, res) => {
     if (!couponId) {
       res.status(400).send("Required All The Fields");
     } else {
-      await deleteCouponOfferService(couponId , (err, data) => {
+      await deleteCouponOfferService(couponId, (err, data) => {
         if (err) res.status(400).send(err.error);
         else res.send(data);
       });

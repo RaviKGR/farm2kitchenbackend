@@ -270,7 +270,7 @@ const serviceLocation = `CREATE TABLE IF NOT EXISTS serviceLocation (
     location_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     city VARCHAR(100) NOT NULL,
     postal_code VARCHAR(20) NOT NULL,
-    devilery_day DATE NOT NULL
+    devilery_day VARCHAR(30) NOT NULL
 )`;
 
 const ProductSize = `CREATE TABLE IF NOT EXISTS ProductSize(
@@ -297,7 +297,7 @@ async function createTables() {
     await db.promise().query(couponOffer);
     await db.promise().query(Order);
     await db.promise().query(OrderItem);
-    await db.promise().query(DeliveryPerson);
+    // await db.promise().query(DeliveryPerson);
     await db.promise().query(Delivery);
     await db.promise().query(ProductImage);
     await db.promise().query(users_credentials);

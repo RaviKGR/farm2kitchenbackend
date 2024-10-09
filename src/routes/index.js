@@ -8,6 +8,7 @@ const AddCartRouters = require("./AddCartRouters");
 const InventoryRouters = require("./inventoryRouters");
 const OfferRouters = require("./OfferRouters");
 const userDetailRouters = require("./userDetailsRouters");
+const serviceLocationRouters = require("./serviceLocation");
 const routes = express.Router();
 
 routes.use('/category', categoryRoutes);
@@ -19,5 +20,6 @@ routes.use('/carts', AddCartRouters)
 routes.use('/inventory', InventoryRouters);
 routes.use('/offer', OfferRouters);
 routes.use('/userDetails', userDetailRouters)
+routes.use('/serviceLocation', serviceLocationRouters)
 
 module.exports = routes;
