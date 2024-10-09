@@ -1,6 +1,5 @@
 const { db } = require("./db");
 
-
 // SQL statements for creating tables
 const Users = `CREATE TABLE IF NOT EXISTS Users (
     user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -8,8 +7,7 @@ const Users = `CREATE TABLE IF NOT EXISTS Users (
     email VARCHAR(255) UNIQUE NULL,
     phone_number VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);`
-
+);`;
 
 const createAddressTable = `CREATE TABLE IF NOT EXISTS  Address (
     address_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -21,7 +19,7 @@ const createAddressTable = `CREATE TABLE IF NOT EXISTS  Address (
     country VARCHAR(100) NOT NULL,
     is_default BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
-);`
+);`;
 
 const Category = `CREATE TABLE IF NOT EXISTS  Category (
     category_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -30,8 +28,7 @@ const Category = `CREATE TABLE IF NOT EXISTS  Category (
     parent_category_id BIGINT,
     deleted VARCHAR(5),
     FOREIGN KEY (parent_category_id) REFERENCES Category(category_id)
-);`
-
+);`;
 
 const SubCategory = `CREATE TABLE IF NOT EXISTS  SubCategory (
     subcategory_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -39,15 +36,14 @@ const SubCategory = `CREATE TABLE IF NOT EXISTS  SubCategory (
     description TEXT,
     category_id BIGINT NOT NULL,
     FOREIGN KEY (category_id) REFERENCES Category(category_id)
-);`
+);`;
 
 const Packaging = `CREATE TABLE IF NOT EXISTS Packaging (
     packaging_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     type VARCHAR(100) NOT NULL,
     material VARCHAR(100) NOT NULL,
     size VARCHAR(50) NOT NULL
-);`
-
+);`;
 
 const Product = `CREATE TABLE IF NOT EXISTS Product (
     product_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -108,7 +104,7 @@ const favorites = `CREATE TABLE IF NOT EXISTS favorites (
     favorite_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     product_id INT NOT NULL
-);`
+);`;
 
 const Offer = `CREATE TABLE IF NOT EXISTS Offer (
     offer_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -119,7 +115,7 @@ const Offer = `CREATE TABLE IF NOT EXISTS Offer (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     deleted VARCHAR(5) NOT NULL
-);`
+);`;
 
 const couponOffer = `CREATE TABLE IF NOT EXISTS Coupon (
     coupon_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -129,11 +125,14 @@ const couponOffer = `CREATE TABLE IF NOT EXISTS Coupon (
     description TEXT,
 	coupon_type VARCHAR(50) NOT NULL, 
     coupon_value DECIMAL(10, 2) NOT NULL,
+    max_discount_amt DECIMAL(10, 2) NOT NULL,
+    min_amount DECIMAL(10, 2) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
+    coupon_applied VARCHAR(5),
     deleted VARCHAR(5) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
-);`
+);`;
 
 const offerDetails = `CREATE TABLE IF NOT EXISTS Offer_Details (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -141,18 +140,18 @@ const offerDetails = `CREATE TABLE IF NOT EXISTS Offer_Details (
     offer_tag VARCHAR(255) NOT NULL,
     tag_id BIGINT NOT NULL,
     FOREIGN KEY (offer_id) REFERENCES Offer(offer_id)
-);`
-
+);`;
 
 const Order = `CREATE TABLE IF NOT EXISTS Orders (
     order_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
+    coupon_id BIGINT,
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total_amount DECIMAL(10, 2) NOT NULL,
 	order_status VARCHAR(100) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id)
-);`
-
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (coupon_id) REFERENCES Coupon(coupon_id)
+);`;
 
 const OrderItem = `CREATE TABLE IF NOT EXISTS OrderItem (
     order_item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -162,7 +161,7 @@ const OrderItem = `CREATE TABLE IF NOT EXISTS OrderItem (
     price_at_purchase DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (order_id) REFERENCES Orders(order_id),
     FOREIGN KEY (product_id) REFERENCES Product(product_id)
-);`
+);`;
 
 const DeliveryPerson = `CREATE TABLE IF NOT EXISTS DeliveryPerson (
     delivery_person_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -170,7 +169,7 @@ const DeliveryPerson = `CREATE TABLE IF NOT EXISTS DeliveryPerson (
     contact_info VARCHAR(255),
     vehicle_details VARCHAR(255)
 );
-`
+`;
 
 const Delivery = `CREATE TABLE IF NOT EXISTS Delivery (
     delivery_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -182,8 +181,7 @@ const Delivery = `CREATE TABLE IF NOT EXISTS Delivery (
     FOREIGN KEY (order_id) REFERENCES Orders(order_id),
     FOREIGN KEY (delivery_address_id) REFERENCES Address(address_id),
     FOREIGN KEY (delivery_person_id) REFERENCES DeliveryPerson(delivery_person_id)
-);`
-
+);`;
 
 const ProductImage = `CREATE TABLE IF NOT EXISTS ProductImage (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -192,8 +190,7 @@ const ProductImage = `CREATE TABLE IF NOT EXISTS ProductImage (
     image_tag VARCHAR(255) NOT NULL,
     alt_text VARCHAR(255),
     is_primary VARCHAR(5) NOT NULL
-);`
-
+);`;
 
 // Authentication Tables
 
@@ -256,7 +253,7 @@ CREATE TABLE IF NOT EXISTS otps (
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users_credentials (user_id)
-);`
+);`;
 
 const cart = `CREATE TABLE IF NOT EXISTS cart (
     cart_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -268,42 +265,57 @@ const cart = `CREATE TABLE IF NOT EXISTS cart (
     FOREIGN KEY (user_id) REFERENCES users_credentials (user_id)
 
 );`;
+
+const serviceLocation = `CREATE TABLE IF NOT EXISTS serviceLocation (
+    location_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    city VARCHAR(100) NOT NULL,
+    postal_code VARCHAR(20) NOT NULL,
+    devilery_day DATE NOT NULL
+)`;
+
+const ProductSize = `CREATE TABLE IF NOT EXISTS ProductSize(
+    sizeID INT AUTO_INCREMENT PRIMARY KEY,
+    sizeName VARCHAR(50) NOT NULL
+)`;
+
 // Function to execute the queries
 async function createTables() {
-    try {
-        await db.promise().query(Users);
-        await db.promise().query(createAddressTable);
-        await db.promise().query(Category);
-        await db.promise().query(createAddressTable);
-        await db.promise().query(SubCategory);
-        await db.promise().query(Packaging);
-        await db.promise().query(Product);
-        await db.promise().query(Supplier);
-        await db.promise().query(productvariant);
-        await db.promise().query(Inventory);
-        await db.promise().query(productPurchase);
-        await db.promise().query(Offer);
-        await db.promise().query(offerDetails);
-        await db.promise().query(couponOffer);
-        await db.promise().query(Order);
-        await db.promise().query(OrderItem);
-        await db.promise().query(DeliveryPerson);
-        await db.promise().query(Delivery);
-        await db.promise().query(ProductImage);
-        await db.promise().query(users_credentials);
-        await db.promise().query(tokens);
-        await db.promise().query(roles);
-        await db.promise().query(user_roles);
-        await db.promise().query(permissions);
-        await db.promise().query(role_permissions);
-        await db.promise().query(otps);
-        await db.promise().query(role_permissions);
-        await db.promise().query(favorites);
-        await db.promise().query(cart);
-        console.log("All tables created successfully.");
-    } catch (error) {
-        console.error("Error creating tables:", error.message);
-    }
+  try {
+    await db.promise().query(Users);
+    await db.promise().query(createAddressTable);
+    await db.promise().query(Category);
+    await db.promise().query(createAddressTable);
+    await db.promise().query(SubCategory);
+    await db.promise().query(Packaging);
+    await db.promise().query(Product);
+    await db.promise().query(Supplier);
+    await db.promise().query(productvariant);
+    await db.promise().query(Inventory);
+    await db.promise().query(productPurchase);
+    await db.promise().query(Offer);
+    await db.promise().query(offerDetails);
+    await db.promise().query(couponOffer);
+    await db.promise().query(Order);
+    await db.promise().query(OrderItem);
+    await db.promise().query(DeliveryPerson);
+    await db.promise().query(Delivery);
+    await db.promise().query(ProductImage);
+    await db.promise().query(users_credentials);
+    await db.promise().query(tokens);
+    await db.promise().query(roles);
+    await db.promise().query(user_roles);
+    await db.promise().query(permissions);
+    await db.promise().query(role_permissions);
+    await db.promise().query(otps);
+    await db.promise().query(role_permissions);
+    await db.promise().query(favorites);
+    await db.promise().query(cart);
+    await db.promise().query(serviceLocation);
+    await db.promise().query(ProductSize);
+    console.log("All tables created successfully.");
+  } catch (error) {
+    console.error("Error creating tables:", error.message);
+  }
 }
 
 // Run the function to create tables

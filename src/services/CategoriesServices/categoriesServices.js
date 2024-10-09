@@ -145,9 +145,9 @@ const updateCategoryService = async (input, output) => {
     description,
     parentCategoryId,
     id,
-    isPrimary,
-    image,
+    isPrimary
   } = input;
+  const image = `/uploads/${input.image}`;
 
   const updateCategory = `
   UPDATE category 
