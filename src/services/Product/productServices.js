@@ -59,13 +59,13 @@ const addNewProductService = async (input, output) => {
     barcode,
     // purchaseDate,
     quantityInStock,
-    price,
-    reorderLevel,
     discountPercentage,
     images,
   } = input;
   const categoryId = input.categoryId || null;
-
+  const price = input.price || null;
+  const reorderLevel = input.reorderLevel || null;
+  
   const imageTag = input.imageTag.toUpperCase();
   // Step 1: Insert the product and capture `insertId` for `product_id`
   if (!productId) {

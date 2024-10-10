@@ -6,24 +6,43 @@ const createTables = require("./src/confic/createTables");
 const bodyParser = require("body-parser");
 const routes = require("./src/routes");
 const app = express();
-var session = require('express-session');
+var session = require("express-session");
 
 connectDB();
 createTables();
-app.use(cors());
+const allowedOrigins = [
+  "https://farm2kitchen.vercel.app", // Add your frontend URL here
+];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  })
+);
+app.options("*");
+
+app.get("/home", (req, res) => {
+  res.status(200).json("Welcome, your app is working well");
+});
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    maxAge: 1000 * 60 * 15,
+    cookie: {
+      secure: false,
+    },
+  })
+);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-
-// Session middleware
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: true,
-}));
-// Test route to fetch data from a table (e.g., 'users' table)
-app.use("/api", routes);
-// Start the server
 app.use("/uploads", express.static(path.join(__dirname, "./uploads")));
+app.get("/", (req, res) => {
+  res.status(200).json("Welcome to the Farm2Kitchen backend API");
+});
 
 const log = (req, res, next) => {
   const { originalUrl, method, query, body } = req;
@@ -36,7 +55,8 @@ const log = (req, res, next) => {
   );
   next();
 };
-app.use("/api",log, routes);
+app.use("/api", log, routes);
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on http://localhost:${process.env.PORT}`);
 });
+module.exports = app;

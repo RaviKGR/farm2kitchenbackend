@@ -1,5 +1,10 @@
 const express = require('express');
-const getOrderHistoryController = require('../controllers/OrderHistory/OrderHistoryController');
+const {getOrderHistoryController, getAllOrderHistoryController, getAllOrderHistoryByIdController, updateOrderStatusController} = require('../controllers/OrderHistory/OrderHistoryController');
 const OrderHistoryRouters = express.Router();
+
 OrderHistoryRouters.get('/getorderhistory', getOrderHistoryController);
+OrderHistoryRouters.get("/getAllOrderHistory", getAllOrderHistoryController);
+OrderHistoryRouters.get("/getAllOrderHistoryById", getAllOrderHistoryByIdController);
+OrderHistoryRouters.get("/updateOrderStatus", updateOrderStatusController);
+
 module.exports = OrderHistoryRouters;
