@@ -81,8 +81,8 @@ const Inventory = `CREATE TABLE IF NOT EXISTS Inventory (
     inventory_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     variant_id BIGINT NOT NULL,
     quantity_in_stock INT NOT NULL,
-    price DECIMAL(10, 2) NOT NULL,
-    reorder_level INT NOT NULL,
+    price DECIMAL(10, 2),
+    reorder_level INT,
     discount_percentage decimal(5, 2),
     supplier_id BIGINT,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -290,14 +290,14 @@ async function createTables() {
     await db.promise().query(Product);
     await db.promise().query(Supplier);
     await db.promise().query(productvariant);
-    await db.promise().query(Inventory);
+    await db.promise().query(Inventory);    
     await db.promise().query(productPurchase);
     await db.promise().query(Offer);
     await db.promise().query(offerDetails);
     await db.promise().query(couponOffer);
     await db.promise().query(Order);
     await db.promise().query(OrderItem);
-    // await db.promise().query(DeliveryPerson);
+    await db.promise().query(DeliveryPerson);
     await db.promise().query(Delivery);
     await db.promise().query(ProductImage);
     await db.promise().query(users_credentials);
@@ -307,7 +307,6 @@ async function createTables() {
     await db.promise().query(permissions);
     await db.promise().query(role_permissions);
     await db.promise().query(otps);
-    await db.promise().query(role_permissions);
     await db.promise().query(favorites);
     await db.promise().query(cart);
     await db.promise().query(serviceLocation);

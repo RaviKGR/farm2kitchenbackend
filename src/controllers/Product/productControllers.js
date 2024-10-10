@@ -45,20 +45,12 @@ const addNewProductController = async (req, res) => {
     if (
       !productName ||
       !brandName ||
-      // !categoryId ||
-      // !isPrimary ||
       !imageTag ||
       !description ||
       !size ||
       !type ||
-      // !purchasePrice ||
-      // !HST ||
       !barcode ||
-      // !purchaseDate ||
       !quantityInStock ||
-      !price ||
-      !reorderLevel ||
-      !discountPercentage || 
       !files || 
       files.length <= 0
     ) {
