@@ -52,7 +52,9 @@ const getPurchaseDetailService = async (input, output) => {
         pp.purchase_date,
         p.product_id,
         p.name,
-        p.brand
+        p.brand,
+        pv.size,
+        pv.type
     FROM productPurchase pp
     JOIN productvariant pv ON pv.variant_id = pp.variant_id
     LEFT JOIN product p ON p.product_id = pv.product_id
@@ -66,7 +68,21 @@ const getPurchaseDetailService = async (input, output) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
-      output(null, result);
+      const productPurchase = result.map((list) => ({
+        total_count: list.total_count,
+        variant_id: list.variant_id,
+        purchase_id: list.purchase_id,
+        purchase_price: list.purchase_price,
+        quantity_in_stock: list.quantity_in_stock,
+        HST: list.HST,
+        purchase_date: list.purchase_date,
+        product_id: list.product_id,
+        name: `${list.name} (${list.size}${list.type})`,
+        brand: list.brand,
+        size: list.size,
+        type: list.type
+      }))
+      output(null, productPurchase);
     }
   });
 };

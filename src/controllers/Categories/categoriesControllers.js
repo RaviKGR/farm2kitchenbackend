@@ -15,11 +15,11 @@ const AddNewCategoryController = async (req, res) => {
 
   try {
     if (!categoryName || !description || !image || !isPrimary || !imageTag) {
-      return res.status(400).send({ message: "Check the data" });
+      return res.status(400).send({ message: "All fields are required" });
     } else {
       await AddNewCategoryService({ ...req.body, image }, (err, data) => {
         if (err) res.status(400).send(err.error);
-        else res.status(201).send(data);
+        else res.status(data.status === 400 ? 400 : 201).send(data);
       });
     }
   } catch (e) {
@@ -53,7 +53,7 @@ const GetCategoryByIdConteroller = async (req, res) => {
 
   try {
     if (!CategoryId) {
-      res.status(400).send({ message: "Check the data" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await getCategoryByIdService(req.query, (err, data) => {
         if (err) res.status(400).send(err.error);
@@ -70,7 +70,7 @@ const GetChildByCategoryIdController = async (req, res) => {
 
   try {
     if (!CategoryId) {
-      res.status(400).send({ message: "Check the data" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await getChildByCategoryIdService(req.query, (err, data) => {
         if (err) res.status(400).send(err.error);
@@ -106,7 +106,7 @@ const updateCategoryConteroller = async (req, res) => {
 
   try {
     if (!categoryId || !categoryName || !description || !id || !isPrimary) {
-      res.status(400).send({ message: "Check the data" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await updateCategoryService({ ...req.body, image }, (err, data) => {
         if (err) res.status(400).send(err.error);
@@ -124,7 +124,7 @@ const deleteCategoryController = async (req, res) => {
 
   try {
     if (!CategoryId) {
-      res.status(400).send({ message: "Check the data" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await deleteCategoryService(CategoryId, (err, data) => {
         if (err) res.status(400).send(err.error);

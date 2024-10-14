@@ -11,7 +11,7 @@ var session = require("express-session");
 connectDB();
 createTables();
 const allowedOrigins = [
-  "https://farm2kitchen.vercel.app", // Add your frontend URL here
+  "https://farm2kitchen.vercel.app", "http://localhost:3000"
 ];
 
 app.use(
@@ -55,7 +55,7 @@ const log = (req, res, next) => {
   );
   next();
 };
-app.use("/api", log, routes);
+app.use("/api", routes);
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on http://localhost:${process.env.PORT}`);
 });

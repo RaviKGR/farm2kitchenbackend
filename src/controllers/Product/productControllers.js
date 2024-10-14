@@ -50,18 +50,17 @@ const addNewProductController = async (req, res) => {
       !size ||
       !type ||
       !barcode ||
-      !quantityInStock ||
       !files || 
       files.length <= 0
     ) {
-      res.status(400).send({ message: "Required All Fields" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       const imageUrls = files.map((file) => `/uploads/${file.filename}`);
       await addNewProductService(
         { ...req.body, images: imageUrls },
         (err, data) => {
           if (err) res.status(400).send(err.error);
-          else res.status(201).send(data);
+          else res.status(data.status === 400 ? 400 : 201).send(data);
         }
       );
     }
@@ -114,7 +113,7 @@ const getProductByProductIdController = async (req, res) => {
 
   try {
     if (!ProductId) {
-      res.status(400).send({ message: "Required All Fields" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await getProductByProductIdService(ProductId, (err, data) => {
         if (err) res.status(400).send(err.error);
@@ -129,16 +128,16 @@ const getProductByProductIdController = async (req, res) => {
 const getAllProductController = async (req, res) => {
   const { categoryId, productName, limit, offset } = req.query;
   try {
-    if (!categoryId) {
       if (!limit || !offset) {
-        res.status(400).send({ message: "Required All Fields" });
-      } else {
+        res.status(400).send({ message: "All fields are required" });
+      } else if(!productName && !categoryId) {
+       
         await getAllProductService(req.query, (err, data) => {
           if (err) res.status(400).send(err.error);
           else res.send(data);
         });
       }
-    } else if(productName || categoryId) {
+     else if(productName || categoryId) {      
       await getFilterProductService(req.query, (err, data) => {
         if (err) res.status(400).send(err.error);
           else res.send(data);
@@ -175,7 +174,7 @@ const updateProductController = async (req, res) => {
       !type ||
       !barcode
     ) {
-      res.status(400).send({ message: "Required All Fields" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await updateProductService(req.body, (err, data) => {
         if (err) res.status(400).send(err.error);
@@ -192,7 +191,7 @@ const updateProductImageController = async (req, res) => {
   const image = req.file ? req.file.filename : null;
   try {
     if (!id) {
-      res.status(400).send({ message: "Required All Fields" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await updateProductImageService(id, image, (err, data) => {
         if (err) res.status(400).send(err.error);
@@ -207,7 +206,7 @@ const updateProductStatusController = async (req, res) => {
   const { productId, productStatus } = req.query;
   try {
     if (!productId || !productStatus) {
-      res.status(400).send({ message: "Required All Fields" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await updateProductStatusService(req.query, (err, data) => {
         if (err) res.status(400).send(err.error);
@@ -223,7 +222,7 @@ const deleteProductController = async (req, res) => {
   const { productId } = req.query;
   try {
     if (!productId) {
-      res.status(400).send({ message: "Required All Fields" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await deleteProductService(productId, (err, data) => {
         if (err) res.status(400).send(err.error);
@@ -239,7 +238,7 @@ const getProductBarCodeController = async (req, res) => {
   const { barCode } = req.query;
   try {
     if (!barCode) {
-      res.status(400).send({ message: "Required All Fields" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await getProductBarCodeService(barCode, (err, data) => {
         if (err) res.status(400).send(err.error);
@@ -254,7 +253,7 @@ const getBestSellerProductController = async (req, res) => {
   const { limit, offset } = req.query;
   try {
     if (!limit || !offset) {
-      res.status(400).send({ message: "Required All Fields" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await getBestSellerProductService(req.query, (err, data) => {
         if (err) res.status(400).send(err.error);
@@ -269,7 +268,7 @@ const updateBestSellerProductController = async (req, res) => {
   const { productId, bestSeller } = req.query;
   try {
     if (!productId || !bestSeller) {
-      res.status(400).send({ message: "Required All Fields" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await updateBestSellerProductService(req.query, (err, data) => {
         if (err) res.status(400).send(err.error);
@@ -324,7 +323,7 @@ const getProductByProductNameController = async (req, res) => {
   const { productName } = req.query;
   try {
     if (!productName) {
-      res.status(400).send({ message: "Required All Fields" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await getProductByProductNameService(productName, (err, data) => {
         if (err) res.status(400).send(err.error);
@@ -340,7 +339,7 @@ const updateProductAndCategoryMapController = async (req, res) => {
   const { categoryId, productId } = req.query;
   try {
     if (!categoryId || !productId) {
-      res.status(400).send({ message: "Required All Fields" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       await updateProductAndCategoryMapService(req.query, (err, data) => {
         if (err) res.status(400).send(err.error);

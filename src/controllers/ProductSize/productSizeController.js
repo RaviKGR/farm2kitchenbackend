@@ -4,7 +4,7 @@ const addNewProductSizeController = async (req, res) => {
     const {productSize} = req.body;
     try {
         if(!productSize) {
-            res.status(400).send({message: "Require All Feilds"})
+            res.status(400).send({message: "All fields are required"})
         } else {
             const result = await addNewProductSizeSerivce(productSize);
             return res.status(result.success ? 201 : 400).json(result);

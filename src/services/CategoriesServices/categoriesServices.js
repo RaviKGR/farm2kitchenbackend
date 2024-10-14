@@ -14,7 +14,7 @@ const AddNewCategoryService = async (input, output) => {
       output({ error: { description: err.message } }, null);
     } else {
       if (result.length > 0) {
-        output(null, { message: "Category Already exists" });
+        output(null, {status: 400, message: "Category Already exists" });
       } else {
         const insertCategory = `
         INSERT INTO category (name, description, parent_category_id, deleted)

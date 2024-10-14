@@ -13,7 +13,7 @@ const NewServieLocationController = async (req, res) => {
 
   try {
     if (!city || !postalCode || !devileryDay) {
-      res.status(400).send({ message: "Required All Fields" });
+      res.status(400).send({ message: "All fields are required" });
     } else {
       const result = await NewServieLocationService({
         ...req.body,
