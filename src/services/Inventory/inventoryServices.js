@@ -1,7 +1,13 @@
 const { db } = require("../../confic/db");
 
 const updateInventoryService = async (input, output) => {
-  const { inventoryId, quantityInStock, price, reorderLevel, discountPercentage } = input;
+  const {
+    inventoryId,
+    quantityInStock,
+    price,
+    reorderLevel,
+    discountPercentage,
+  } = input;
   const updateQuery = `UPDATE inventory SET quantity_in_stock = ?, price = ?, reorder_level = ? , discount_percentage = ? WHERE inventory_id = ?`;
   db.query(
     updateQuery,
@@ -52,7 +58,11 @@ LIMIT ? OFFSET ?;
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
-      output(null, result);
+      const results = result.map((i) => ({
+        ...i,
+        product_name: `${i.product_name}(${i.size}${i.type})`,
+      }));
+      output(null, results);
     }
   });
 };

@@ -80,7 +80,7 @@ const productvariant = `CREATE TABLE IF NOT EXISTS productVariant (
 const Inventory = `CREATE TABLE IF NOT EXISTS Inventory (
     inventory_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     variant_id BIGINT NOT NULL,
-    quantity_in_stock INT NOT NULL,
+    quantity_in_stock INT,
     price DECIMAL(10, 2),
     reorder_level INT,
     discount_percentage decimal(5, 2),
