@@ -3,6 +3,7 @@ const {
   updateUserDetailServices,
   addNewUserByAdminService,
   getUserService,
+  SearchUserDetailServices,
 } = require("../../services/UserDetails/UserDetailServieces");
 
 const getUserDetailController = async (req, res) => {
@@ -104,9 +105,25 @@ const getUserController = async (req, res) => {
     throw error;
   }
 };
+const SearchUserDetailController = async (req, res) => {
+  const userName = req.query.customer;
+  try {
+    if (!userName) {
+      return res.status(400).json({ error: "Check the UserName" });
+    }
+    const userDetails = await SearchUserDetailServices({ userName });
+    return res.status(200).json(userDetails);
+  } catch (error) {
+    if (error.error) {
+      return res.status(404).json(error);
+    }
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   getUserDetailController,
   updateUserDetailController,
   addNewUserByAdminController,
-  getUserController,
+  getUserController, SearchUserDetailController
 };

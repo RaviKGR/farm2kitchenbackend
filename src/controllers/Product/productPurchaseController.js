@@ -4,9 +4,9 @@ const {
 } = require("../../services/Product/productPurchaseServices");
 
 const addNewPurchaseController = async (req, res) => {
-  const { variantId, quantity, purchasePrice, HST, purchaseDate } = req.body;
+  const { variantId, quantity, purchasePrice, HST, purchaseDate, vendor } = req.body;
   try {
-    if (!variantId || !quantity || !purchasePrice || !HST || !purchaseDate) {
+    if (!variantId || !quantity || !purchasePrice || !HST || !purchaseDate || !vendor) {
       res.status(400).send({ message: "All fields are required" });
     } else {
       await addNewPurchaseService(req.body, (err, data) => {
