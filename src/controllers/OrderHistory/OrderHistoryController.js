@@ -1,4 +1,4 @@
-const {getOrderHistoryServieces, getAllOrderHistoryService, getAllOrderHistoryByIdService} = require("../../services/OrderHistory/OrderHistoryServieces");
+const {getOrderHistoryServieces, getAllOrderHistoryService, getAllOrderHistoryByIdService, updateOrderStatusService} = require("../../services/OrderHistory/OrderHistoryServieces");
 
 const getOrderHistoryController = async (req, res) => {
   try {

@@ -78,7 +78,11 @@ const addNewProductService = async (input, output) => {
         INSERT INTO product (name, brand, category_id, status, best_seller, deleted) 
         VALUES (?, ?, ?, True, False, 'N');
       `;
-      const productInsertResult = await query(insertProduct, [productName, brandName, categoryId]);
+      const productInsertResult = await query(insertProduct, [
+        productName,
+        brandName,
+        categoryId,
+      ]);
       const lastProductId = productInsertResult.insertId;
 
       // Step 2: Insert into productvariant using `lastProductId`
@@ -86,7 +90,13 @@ const addNewProductService = async (input, output) => {
         INSERT INTO productvariant (product_id, description, size, type, barcode, status, best_seller, deleted)
         VALUES (?, ?, ?, ?, ?, True, False, 'N');
       `;
-      const variantInsertResult = await query(insertVariant, [lastProductId, description, size, type, barcode]);
+      const variantInsertResult = await query(insertVariant, [
+        lastProductId,
+        description,
+        size,
+        type,
+        barcode,
+      ]);
       const lastVariantId = variantInsertResult.insertId;
 
       // Step 3: Insert into inventory using `lastVariantId`
@@ -94,21 +104,30 @@ const addNewProductService = async (input, output) => {
         INSERT INTO inventory (variant_id, quantity_in_stock, price, reorder_level, discount_percentage) 
         VALUES (?, ?, ?, ?, ?);
       `;
-      await query(insertInventory, [lastVariantId, quantityInStock, price, reorderLevel, discountPercentage]);
+      await query(insertInventory, [
+        lastVariantId,
+        quantityInStock,
+        price,
+        reorderLevel,
+        discountPercentage,
+      ]);
 
       // Step 4: Insert images
       await Promise.all(
         images.map((image, index) => {
-          return query(`
+          return query(
+            `
             INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) 
             VALUES (?, ?, ?, ?, ?);
-          `, [
-            lastProductId,
-            image,
-            imageTag,
-            productName,
-            index === 0 ? "Y" : "N",
-          ]);
+          `,
+            [
+              lastProductId,
+              image,
+              imageTag,
+              productName,
+              index === 0 ? "Y" : "N",
+            ]
+          );
         })
       );
 
@@ -119,28 +138,43 @@ const addNewProductService = async (input, output) => {
         INSERT INTO productvariant (product_id, description, size, type, barcode, status, best_seller, deleted)
         VALUES (?, ?, ?, ?, ?, True, False, 'N');
       `;
-      const variantInsertResult = await query(insertVariant, [productId, description, size, type, barcode]);
+      const variantInsertResult = await query(insertVariant, [
+        productId,
+        description,
+        size,
+        type,
+        barcode,
+      ]);
       const lastVariantId = variantInsertResult.insertId;
 
       const insertInventory = `
         INSERT INTO inventory (variant_id, quantity_in_stock, price, reorder_level, discount_percentage) 
         VALUES (?, ?, ?, ?, ?);
       `;
-      await query(insertInventory, [lastVariantId, quantityInStock, price, reorderLevel, discountPercentage]);
+      await query(insertInventory, [
+        lastVariantId,
+        quantityInStock,
+        price,
+        reorderLevel,
+        discountPercentage,
+      ]);
 
       // Insert images for the existing product
       await Promise.all(
         images.map((image, index) => {
-          return query(`
+          return query(
+            `
             INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) 
             VALUES (?, ?, ?, ?, ?);
-          `, [
-            productId,
-            image,
-            imageTag,
-            productName,
-            index === 0 ? "Y" : "N",
-          ]);
+          `,
+            [
+              lastVariantId,
+              image,
+              imageTag,
+              productName,
+              index === 0 ? "Y" : "N",
+            ]
+          );
         })
       );
 
@@ -162,7 +196,6 @@ const query = (sql, params) => {
     });
   });
 };
-
 
 const GetCategoryIdProduct = async (input, output) => {
   const category_id = input.query.category_Id;
@@ -246,120 +279,97 @@ const getProductByCategoryIdService = async (categoryId, output) => {
   });
 };
 
-const getProductByProductIdService = async (ProductId, output) => {
-  // Step 1: Get the products with limit and offset
-  const getProductsQuery = `
-    SELECT
-      p.product_id, 
-      p.name AS productName, 
-      p.brand AS brandName,
-      p.category_id, 
-      p.status, 
-      p.deleted
-    FROM product p
-    WHERE p.product_id = ? AND p.deleted = 'N' 
-      AND p.status = True
-  `;
+const getProductByProductIdService = async (ProductId) => {
+  try {
+    const getProductsQuery = `
+      SELECT
+        p.product_id, 
+        p.name AS productName, 
+        p.brand AS brandName,
+        p.category_id, 
+        p.status, 
+        p.deleted
+      FROM product p
+      WHERE p.product_id = ? AND p.deleted = 'N' 
+        AND p.status = True
+    `;
+    const [productResult] = await db
+      .promise()
+      .query(getProductsQuery, [ProductId]);
 
-  // Step 2: Once we have the products, we will fetch the associated images and variants
-  const getProductImagesQuery = `
-    SELECT 
-      pi.id,
-      pi.image_url, 
-      pi.image_tag, 
-      pi.alt_text, 
-      pi.is_primary,
-      pi.image_id
-    FROM productimage pi
-    WHERE pi.image_id IN (?)
-      AND (pi.image_tag = 'product' OR pi.image_tag = 'PRODUCT');
-  `;
+    if (productResult.length > 0) {
+      let productData = {
+        product_id: productResult[0].product_id,
+        productName: productResult[0].productName,
+        brandName: productResult[0].brandName,
+        category_id: productResult[0].category_id,
+        status: productResult[0].status,
+        variants: [],
+        images: [],
+      };
 
-  const getProductVariantsQuery = `
-  SELECT
-    pv.product_id,
-    pv.variant_id,
-    pv.description, 
-    pv.size,
-    pv.type,
-    pv.barcode
-  FROM productvariant pv
-  WHERE pv.product_id IN (?);
-`;
+      const getProductVariantsQuery = `
+        SELECT
+          pv.product_id,
+          pv.variant_id,
+          pv.description, 
+          pv.size,
+          pv.type,
+          pv.barcode,
+          i.variant_id,
+          i.quantity_in_stock,
+          i.price,
+          i.discount_percentage
+        FROM productvariant pv
+        JOIN inventory i ON i.variant_id = pv.variant_id
+        WHERE pv.product_id IN (?);
+      `;
+      const [variantResult] = await db
+        .promise()
+        .query(getProductVariantsQuery, [ProductId]);
+      const getProductImagesQuery = `
+        SELECT 
+          pi.id,
+          pi.image_url, 
+          pi.image_tag, 
+          pi.alt_text, 
+          pi.is_primary,
+          pi.image_id
+        FROM productimage pi
+        WHERE pi.image_id IN (?)
+          AND (pi.image_tag = ? OR pi.image_tag = ?);
+      `;
+      if (variantResult.length > 0) {
+        for (let variant of variantResult) {
+          const [imageQuery] = await db
+            .promise()
+            .query(getProductImagesQuery, [
+              variant.variant_id,
+              "variant",
+              "VARIANT",
+            ]);
+          // Add images to the variant
+          variant.images = imageQuery.length > 0 ? imageQuery : [];
 
-  db.query(getProductsQuery, [ProductId], (err, productResult) => {
-    if (err) {
-      return output({ error: { description: err.message } }, null);
-    }
-
-    if (productResult.length === 0) {
-      return output(null, []);
-    }
-
-    const productIds = productResult.map((product) => product.product_id);
-
-    // Fetch images and variants for the products we retrieved
-    db.query(getProductImagesQuery, [productIds], (err, imageResult) => {
-      console.log(imageResult);
-
-      if (err) {
-        return output({ error: { description: err.message } }, null);
+          productData.variants.push(variant);
+        }
       }
 
-      db.query(getProductVariantsQuery, [productIds], (err, variantResult) => {
-        if (err) {
-          return output({ error: { description: err.message } }, null);
-        }
+      const [productImageQuery] = await db
+        .promise()
+        .query(getProductImagesQuery, [ProductId, "product", "PRODUCT"]);
 
-        // Build the product list
-        const productList = {};
-        productResult.forEach((product) => {
-          productList[product.product_id] = {
-            product_id: product.product_id,
-            productName: product.productName,
-            brandName: product.brandName,
-            category_id: product.category_id,
-            status: product.status,
-            image: [],
-            variants: [],
-          };
-        });
+      productData.images =
+        productImageQuery.length > 0 ? productImageQuery : [];
 
-        // Assign images to the respective products
-        imageResult.forEach((image) => {
-          if (productList[image.image_id]) {
-            productList[image.image_id].image.push({
-              image_id: image.image_id,
-              image_url: image.image_url,
-              image_tag: image.image_tag,
-              alt_text: image.alt_text,
-              is_primary: image.is_primary,
-            });
-          }
-        });
-
-        // Assign variants to the respective products
-        variantResult.forEach((variant) => {
-          if (productList[variant.product_id]) {
-            productList[variant.product_id].variants.push({
-              variant_id: variant.variant_id,
-              description: variant.description,
-              size: variant.size,
-              type: variant.type,
-              purchase_price: variant.purchase_price,
-              HST: variant.HST,
-              barcode: variant.barcode,
-              purchase_date: variant.purchase_date,
-            });
-          }
-        });
-
-        // Convert the product list object into an array
-        const productArray = Object.values(productList);
-        output(null, productArray);
-      });
-    });
-  });
+      return [productData];
+    } else {
+      return { message: "Result not found" };
+    }
+  } catch (e) {
+    console.error(e);
+    return { success: false, message: "Database error" };
+  }
 };
 
 // const getAllProductService = async (input, output) => {
@@ -453,6 +463,10 @@ const getAllProductService = async (input, output) => {
       pv.size,
       pv.type,
       pv.barcode,
+      i.variant_id,
+      i.quantity_in_stock,
+      i.price,
+      i.discount_percentage,
       c.category_id,
       c.name AS category_name,
       c.parent_category_id,
@@ -464,6 +478,7 @@ const getAllProductService = async (input, output) => {
       p.deleted
     FROM productvariant pv
     JOIN product p ON p.product_id = pv.product_id
+    JOIN inventory i ON i.variant_id = pv.variant_id
     JOIN category c ON c.category_id = p.category_id
     LEFT JOIN category ca ON ca.category_id = c.parent_category_id
     LIMIT ? OFFSET ?;
@@ -538,6 +553,10 @@ const getFilterProductService = async (input, output) => {
       pv.size,
       pv.type,
       pv.barcode,
+      i.variant_id,
+      i.quantity_in_stock,
+      i.price,
+      i.discount_percentage,
       c.category_id,
       c.name AS category_name,
       ca.name AS parent_category_name,
@@ -548,6 +567,7 @@ const getFilterProductService = async (input, output) => {
       p.deleted
     FROM productvariant pv
     JOIN product p ON p.product_id = pv.product_id
+    JOIN inventory i ON i.variant_id = pv.variant_id
     JOIN category c ON c.category_id = p.category_id
     LEFT JOIN category ca ON ca.category_id = c.parent_category_id
     ${whereClause} 
@@ -699,6 +719,10 @@ const getProductBarCodeService = async (barCode, output) => {
       pv.size,
       pv.type,
       pv.barcode,
+      i.variant_id,
+      i.quantity_in_stock,
+      i.price,
+      i.discount_percentage,
       pi.id,
       pi.image_id, 
       pi.image_url, 
@@ -710,6 +734,7 @@ const getProductBarCodeService = async (barCode, output) => {
       ON pi.image_id = p.product_id
     JOIN productvariant pv
       ON pv.product_id = p.product_id
+    JOIN inventory i ON i.variant_id = pv.variant_id
     WHERE pv.barcode = ? AND (pi.image_tag = "product" OR pi.image_tag = "PRODUCT") 
       AND p.deleted = "N" 
       AND p.status = True 
@@ -773,6 +798,10 @@ const getBestSellerProductService = async (input, output) => {
       pv.size,
       pv.type,
       pv.barcode, 
+      i.variant_id,
+      i.quantity_in_stock,
+      i.price,
+      i.discount_percentage,
       pi.id,
       pi.image_id, 
       pi.image_url, 
@@ -784,6 +813,7 @@ const getBestSellerProductService = async (input, output) => {
       ON pi.image_id = p.product_id
     JOIN productvariant pv
       ON pv.product_id = p.product_id
+    JOIN inventory i ON i.variant_id = pv.variant_id
     WHERE (pi.image_tag = "product" OR pi.image_tag = "PRODUCT") 
       AND p.deleted = "N" 
       AND p.status = True 
@@ -814,9 +844,6 @@ const getBestSellerProductService = async (input, output) => {
               size: list.size,
               type: list.type,
               barcode: list.barcode,
-              // purchase_price: list.purchase_price,
-              // HST: list.HST,
-              // purchase_date: list.purchase_date,
               image: [],
             };
           }
@@ -912,6 +939,28 @@ const updateProductAndCategoryMapService = async (input, output) => {
   });
 };
 
+const addNewProductImageService = async (input) => {
+  const { imageId , images, altText } = input;
+  const imageTag = input.imageTag.toUpperCase();
+  const isPrimary = input.isPrimary.toUpperCase();
+  try {
+    await Promise.all(
+      images.map((image) => {
+        return db.promise().query(
+          `INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) VALUES (?, ?, ?, ?, ?)`,
+          [
+            imageId, image, imageTag, altText, isPrimary
+          ]
+        )
+      })
+    )
+    return { success: true, message: "All images inserted successfully." };
+  } catch (e) {
+    console.error(e);
+    return { success: false, message: "Database error" };
+  }
+
+}
 module.exports = {
   SearchProduct,
   GetCategoryIdProduct,
@@ -930,4 +979,5 @@ module.exports = {
   getProductByProductNameService,
   updateProductAndCategoryMapService,
   getFilterProductService,
+  addNewProductImageService
 };

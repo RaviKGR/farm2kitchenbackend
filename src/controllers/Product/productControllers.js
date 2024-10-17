@@ -17,6 +17,7 @@ const {
   getProductByProductNameService,
   updateProductAndCategoryMapService,
   getFilterProductService,
+  addNewProductImageService,
 } = require("../../services/Product/productServices");
 
 const addNewProductController = async (req, res) => {
@@ -50,7 +51,7 @@ const addNewProductController = async (req, res) => {
       !size ||
       !type ||
       !barcode ||
-      !files || 
+      !files ||
       files.length <= 0
     ) {
       res.status(400).send({ message: "All fields are required" });
@@ -115,10 +116,8 @@ const getProductByProductIdController = async (req, res) => {
     if (!ProductId) {
       res.status(400).send({ message: "All fields are required" });
     } else {
-      await getProductByProductIdService(ProductId, (err, data) => {
-        if (err) res.status(400).send(err.error);
-        else res.send(data);
-      });
+      const result = await getProductByProductIdService(ProductId);
+      return res.status(200).json(result);
     }
   } catch (e) {
     throw e;
@@ -128,20 +127,18 @@ const getProductByProductIdController = async (req, res) => {
 const getAllProductController = async (req, res) => {
   const { categoryId, productName, limit, offset } = req.query;
   try {
-      if (!limit || !offset) {
-        res.status(400).send({ message: "All fields are required" });
-      } else if(!productName && !categoryId) {
-       
-        await getAllProductService(req.query, (err, data) => {
-          if (err) res.status(400).send(err.error);
-          else res.send(data);
-        });
-      }
-     else if(productName || categoryId) {      
+    if (!limit || !offset) {
+      res.status(400).send({ message: "All fields are required" });
+    } else if (!productName && !categoryId) {
+      await getAllProductService(req.query, (err, data) => {
+        if (err) res.status(400).send(err.error);
+        else res.send(data);
+      });
+    } else if (productName || categoryId) {
       await getFilterProductService(req.query, (err, data) => {
         if (err) res.status(400).send(err.error);
-          else res.send(data);
-      })
+        else res.send(data);
+      });
     }
   } catch (error) {
     throw error;
@@ -158,9 +155,8 @@ const updateProductController = async (req, res) => {
     description,
     size,
     type,
-    barcode
+    barcode,
   } = req.body;
-
 
   try {
     if (
@@ -351,6 +347,23 @@ const updateProductAndCategoryMapController = async (req, res) => {
   }
 };
 
+const addNewProductImageController = async (req, res) => {
+  const { imageId, imageTag , altText, isPrimary} = req.body;
+  const files = req.files;
+  try {
+    if (!imageId || !imageTag || !altText || !isPrimary || !files || files.length <= 0) {
+      res.status(400).send({ message: "All fields are required" });
+    } else {
+      const imageUrls = files.map((file) => `/uploads/${file.filename}`);
+      const result = await addNewProductImageService({ ...req.body, images: imageUrls});
+      return res.status(result.success ? 201 : 400).json(result);
+    }
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   GetSearchProducts,
   GetCategoryIdProducts,
@@ -368,4 +381,5 @@ module.exports = {
   exportProductsToCSVController,
   getProductByProductNameController,
   updateProductAndCategoryMapController,
+  addNewProductImageController,
 };

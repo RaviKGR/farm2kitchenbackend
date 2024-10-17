@@ -77,13 +77,14 @@ const getAllOrderHistoryByIdService = async (orderId) => {
 const updateOrderStatusService = async (input) => {  
     const {orderId, orderStatus} = input;
   try {
-    const updateQuery = ` `;
+    const updateQuery = `UPDATE orders SET order_status = ? WHERE order_id = ?`;
     const [result] = await db
       .promise()
       .query(updateQuery, [orderStatus, orderId]);
+console.log(result);
 
-    if (result.length > 0) {
-      return result;
+    if (result.affectedRows > 0) {
+      return { message: "Order status updated successfully" };
     } else {
       return { message: "No results found" };
     }
