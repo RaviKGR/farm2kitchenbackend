@@ -1,11 +1,11 @@
 const { db } = require("../../confic/db");
 
 const addNewPurchaseService = async (input, output) => {
-  const { variantId, quantity, purchasePrice, HST, purchaseDate } = input;
-  const insertQuery = `INSERT INTO productPurchase (variant_id, quantity_in_stock, purchase_price, HST, purchase_date) VALUES (?, ?, ?, ?, ?)`;
+  const { variantId, quantity, purchasePrice, HST, purchaseDate, vendor } = input;
+  const insertQuery = `INSERT INTO productPurchase (variant_id,vendor, quantity_in_stock, purchase_price, HST, purchase_date) VALUES (?, ?, ?,?, ?, ?)`;
   db.query(
     insertQuery,
-    [variantId, quantity, purchasePrice, HST, purchaseDate],
+    [variantId, vendor, quantity, purchasePrice, HST, purchaseDate],
     (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);

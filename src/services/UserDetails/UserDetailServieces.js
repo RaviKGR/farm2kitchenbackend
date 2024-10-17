@@ -1,6 +1,6 @@
 const { db } = require("../../confic/db");
 
-const getUerDetailServieces = async (input, output) => {
+const getUserDetailServieces = async (input, output) => {
   const userId = input.userId;
   const getuserIdquery = `SELECT user_id,name,email,phone_number FROM users `;
   db.query(getuserIdquery, [userId], (err, result) => {
@@ -11,8 +11,43 @@ const getUerDetailServieces = async (input, output) => {
     }
   });
 };
-const { promisify } = require("util");
 
+const SearchUserDetailServices = (input) => {
+  const userName = input.userName;
+
+  const getUserQuery = `
+  SELECT 
+    u.user_id, 
+    u.name, 
+    u.email, 
+    u.phone_number
+  FROM 
+    Users u 
+  WHERE 
+    u.name LIKE ?;
+`;
+
+  return new Promise((resolve, reject) => {
+    // Ensure that the `userName` is correctly formatted for the LIKE clause
+    // const searchValue = `%${userName}%`;
+
+    db.query(getUserQuery, [`%${userName}%`], (err, result) => {
+      if (err) {
+        console.log("Error while fetching user details:", err);
+        return reject({ Description: err.message });
+      }
+      if (result.length === 0) {
+        console.log("No user found:", result);
+        return reject({ error: { Description: 'No user found with the provided username' } });
+      }
+      console.log("User details found:", result);
+      resolve(result);
+    });
+  });
+};
+
+
+const { promisify } = require("util");
 const updateUserDetailServices = async (input) => {
   const { name, password, userId } = input;
   const updateUserQuery =
@@ -63,8 +98,8 @@ const addNewUserByAdminService = async (input, output) => {
 };
 
 const getUserService = async (input, output) => {
-    const {limit, offset } = input;
-    const getQuery = `
+  const { limit, offset } = input;
+  const getQuery = `
     SELECT
     us.user_id,
     us.name,
@@ -81,19 +116,20 @@ const getUserService = async (input, output) => {
     JOIN address ad
     ON ad.user_id = us.user_id
     LIMIT ? OFFSET ?;
-    `; 
-    db.query(getQuery, [parseInt(limit), parseInt(offset) ], (err, result) => {
-        if (err) {
-            output({ error: { Description: err.message } }, null);
-          } else {
-            output(null, result);
-          }
-    })
+    `;
+  db.query(getQuery, [parseInt(limit), parseInt(offset)], (err, result) => {
+    if (err) {
+      output({ error: { Description: err.message } }, null);
+    } else {
+      output(null, result);
+    }
+  })
 }
 
 module.exports = {
-  getUerDetailServieces,
+  getUserDetailServieces,
   updateUserDetailServices,
   addNewUserByAdminService,
-  getUserService
+  getUserService,
+  SearchUserDetailServices
 };

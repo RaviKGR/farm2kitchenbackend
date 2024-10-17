@@ -93,6 +93,7 @@ const Inventory = `CREATE TABLE IF NOT EXISTS Inventory (
 const productPurchase = `CREATE TABLE IF NOT EXISTS productPurchase (
     purchase_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     variant_id BIGINT NOT NULL,
+    vendor VARCHAR(50) NOT NULL,
     quantity_in_stock INT NOT NULL,
     purchase_price decimal(10,2) NOT NULL,
     HST DECIMAL(5, 2),
@@ -280,41 +281,41 @@ const ProductSize = `CREATE TABLE IF NOT EXISTS ProductSize(
 
 // Function to execute the queries
 async function createTables() {
-  try {
-    await db.promise().query(Users);
-    await db.promise().query(createAddressTable);
-    await db.promise().query(Category);
-    await db.promise().query(createAddressTable);
-    await db.promise().query(SubCategory);
-    await db.promise().query(Packaging);
-    await db.promise().query(Product);
-    await db.promise().query(Supplier);
-    await db.promise().query(productvariant);
-    await db.promise().query(Inventory);    
-    await db.promise().query(productPurchase);
-    await db.promise().query(Offer);
-    await db.promise().query(offerDetails);
-    await db.promise().query(couponOffer);
-    await db.promise().query(Order);
-    await db.promise().query(OrderItem);
-    await db.promise().query(DeliveryPerson);
-    await db.promise().query(Delivery);
-    await db.promise().query(ProductImage);
-    await db.promise().query(users_credentials);
-    await db.promise().query(tokens);
-    await db.promise().query(roles);
-    await db.promise().query(user_roles);
-    await db.promise().query(permissions);
-    await db.promise().query(role_permissions);
-    await db.promise().query(otps);
-    await db.promise().query(favorites);
-    await db.promise().query(cart);
-    await db.promise().query(serviceLocation);
-    await db.promise().query(ProductSize);
-    console.log("All tables created successfully.");
-  } catch (error) {
-    console.error("Error creating tables:", error.message);
-  }
+    try {
+        await db.promise().query(Users);
+        await db.promise().query(createAddressTable);
+        await db.promise().query(Category);
+        await db.promise().query(createAddressTable);
+        await db.promise().query(SubCategory);
+        await db.promise().query(Packaging);
+        await db.promise().query(Product);
+        await db.promise().query(Supplier);
+        await db.promise().query(productvariant);
+        await db.promise().query(Inventory);
+        await db.promise().query(productPurchase);
+        await db.promise().query(Offer);
+        await db.promise().query(offerDetails);
+        await db.promise().query(couponOffer);
+        await db.promise().query(Order);
+        await db.promise().query(OrderItem);
+        await db.promise().query(DeliveryPerson);
+        await db.promise().query(Delivery);
+        await db.promise().query(ProductImage);
+        await db.promise().query(users_credentials);
+        await db.promise().query(tokens);
+        await db.promise().query(roles);
+        await db.promise().query(user_roles);
+        await db.promise().query(permissions);
+        await db.promise().query(role_permissions);
+        await db.promise().query(otps);
+        await db.promise().query(favorites);
+        await db.promise().query(cart);
+        await db.promise().query(serviceLocation);
+        await db.promise().query(ProductSize);
+        console.log("All tables created successfully.");
+    } catch (error) {
+        console.error("Error creating tables:", error.message);
+    }
 }
 
 // Run the function to create tables
