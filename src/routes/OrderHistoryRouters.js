@@ -5,6 +5,6 @@ const OrderHistoryRouters = express.Router();
 OrderHistoryRouters.get('/getorderhistory', getOrderHistoryController);
 OrderHistoryRouters.get("/getAllOrderHistory", getAllOrderHistoryController);
 OrderHistoryRouters.get("/getAllOrderHistoryById", getAllOrderHistoryByIdController);
-OrderHistoryRouters.get("/updateOrderStatus", updateOrderStatusController);
+OrderHistoryRouters.put("/updateOrderStatus", updateOrderStatusController);
 
 module.exports = OrderHistoryRouters;
