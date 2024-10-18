@@ -272,7 +272,8 @@ const serviceLocation = `CREATE TABLE IF NOT EXISTS serviceLocation (
     location_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     city VARCHAR(100) NOT NULL,
     postal_code VARCHAR(20) NOT NULL,
-    devilery_day VARCHAR(30) NOT NULL
+    devilery_day VARCHAR(30) NOT NULL,
+    Notification VARCHAR(250) NOT NULL
 )`;
 
 const ProductSize = `CREATE TABLE IF NOT EXISTS ProductSize(
