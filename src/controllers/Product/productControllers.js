@@ -18,6 +18,7 @@ const {
   updateProductAndCategoryMapService,
   getFilterProductService,
   addNewProductImageService,
+  getProductvariantByproService,
 } = require("../../services/Product/productServices");
 
 const addNewProductController = async (req, res) => {
@@ -167,8 +168,7 @@ const updateProductController = async (req, res) => {
       !variantId ||
       !description ||
       !size ||
-      !type ||
-      !barcode
+      !type 
     ) {
       res.status(400).send({ message: "All fields are required" });
     } else {
@@ -348,15 +348,40 @@ const updateProductAndCategoryMapController = async (req, res) => {
 };
 
 const addNewProductImageController = async (req, res) => {
-  const { imageId, imageTag , altText, isPrimary} = req.body;
+  const { imageId, imageTag, altText, isPrimary } = req.body;
   const files = req.files;
   try {
-    if (!imageId || !imageTag || !altText || !isPrimary || !files || files.length <= 0) {
+    if (
+      !imageId ||
+      !imageTag ||
+      !altText ||
+      !isPrimary ||
+      !files ||
+      files.length <= 0
+    ) {
       res.status(400).send({ message: "All fields are required" });
     } else {
       const imageUrls = files.map((file) => `/uploads/${file.filename}`);
-      const result = await addNewProductImageService({ ...req.body, images: imageUrls});
+      const result = await addNewProductImageService({
+        ...req.body,
+        images: imageUrls,
+      });
       return res.status(result.success ? 201 : 400).json(result);
+    }
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const getProductvariantByproController = async (req, res) => {
+  const { limit, offset, categoryId, productName } = req.query;
+  try {
+    if(!limit || !offset) {
+      res.status(400).send({ message: "All fields are required" });
+    } else {
+      const result = await getProductvariantByproService(req.query);
+      return res.status(200).send(result);
     }
   } catch (e) {
     console.error(e);
@@ -382,4 +407,5 @@ module.exports = {
   getProductByProductNameController,
   updateProductAndCategoryMapController,
   addNewProductImageController,
+  getProductvariantByproController,
 };
