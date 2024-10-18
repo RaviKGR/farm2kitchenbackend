@@ -33,7 +33,7 @@ const addNewCouponService = async (input, output) => {
       if (err) {
         output({ error: { description: err.message } }, null);
       } else {
-        output(null, { message: "copon created Successfully" });
+        output(null, { message: "coupon created Successfully" });
       }
     }
   );
@@ -43,6 +43,7 @@ const getCouponOfferService = async (input, output) => {
   const { limit, offset } = input;
   const getOfferQuery = `
     SELECT
+    COUNT(*) OVER() AS total_count,
     u.name AS customer_name,
     c.coupon_code,
     c.name AS coupon_name,

@@ -316,12 +316,12 @@ const exportProductsToCSVController = async (req, res) => {
 };
 
 const getProductByProductNameController = async (req, res) => {
-  const { productName } = req.query;
+  const { productName, categoryId } = req.query;
   try {
     if (!productName) {
       res.status(400).send({ message: "All fields are required" });
     } else {
-      await getProductByProductNameService(productName, (err, data) => {
+      await getProductByProductNameService(req.query, (err, data) => {
         if (err) res.status(400).send(err.error);
         else res.send(data);
       });

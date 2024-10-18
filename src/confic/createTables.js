@@ -99,6 +99,7 @@ const productPurchase = `CREATE TABLE IF NOT EXISTS productPurchase (
     purchase_price decimal(10,2) NOT NULL,
     HST DECIMAL(5, 2),
     purchase_date date, 
+    deleted VARCHAR(5) NOT NULL,
     FOREIGN KEY (variant_id) REFERENCES productvariant(variant_id)
 )`;
 
