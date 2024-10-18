@@ -72,6 +72,7 @@ const productvariant = `CREATE TABLE IF NOT EXISTS productVariant (
     type VARCHAR(255),
     barcode VARCHAR(100) NOT NULL,
     status BOOLEAN DEFAULT TRUE,
+    is_primary VARCHAR(5) NOT NULL,
     best_Seller BOOLEAN DEFAULT FALSE NOT NULL,
     deleted VARCHAR(5),
     FOREIGN KEY (product_id) REFERENCES Product(product_id)
