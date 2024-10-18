@@ -909,13 +909,28 @@ const getProductsToCSVService = (callback) => {
   });
 };
 
-const getProductByProductNameService = async (productName, output) => {
+const getProductByProductNameService = async (input, output) => {
+  const {productName, categoryId} = input;
+
+  let whereClause = "";
+  const queryParams =[];
+  const hasConditions = productName || categoryId;
+  if(hasConditions) {
+    if(productName) {
+      whereClause += "p.name LIKE ?";
+      queryParams.push(`%${productName}%`);
+    }
+    if(categoryId) {
+      whereClause += (whereClause ? "AND " : "") + "p.category_id = ?";
+      queryParams.push(categoryId)
+    }
+  }
   const getQuery = `
   SELECT p.product_id, p.name, p.brand, p.category_id, pv.description, pv.type, pv.size, pv.variant_id
   FROM product p
   JOIN productvariant pv ON pv.product_id = p.product_id
-  WHERE p.name LIKE ?`;
-  db.query(getQuery, [`%${productName}%`], (err, result) => {
+  ${hasConditions ? `WHERE ${whereClause}` : ""}`;
+  db.query(getQuery, [...queryParams], (err, result) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {

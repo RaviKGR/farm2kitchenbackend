@@ -101,6 +101,7 @@ const getUserService = async (input, output) => {
   const { limit, offset } = input;
   const getQuery = `
     SELECT
+    COUNT(*) OVER() AS total_count,
     us.user_id,
     us.name,
     us.email,
