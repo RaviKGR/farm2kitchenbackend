@@ -282,7 +282,6 @@ const getProductByCategoryIdService = async (categoryId, output) => {
 };
 
 const getProductByProductIdService = async (ProductId) => {
-  
   try {
     const getProductsQuery = `
       SELECT
@@ -299,7 +298,6 @@ const getProductByProductIdService = async (ProductId) => {
     const [productResult] = await db
       .promise()
       .query(getProductsQuery, [ProductId]);
-console.log(productResult);
 
     if (productResult.length > 0) {
       let productData = {
@@ -498,7 +496,7 @@ const getAllProductService = async (input, output) => {
       pi.is_primary,
       pi.image_id
     FROM productimage pi
-    WHERE (pi.image_tag = 'product' OR pi.image_tag = 'PRODUCT');
+    WHERE (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT');
   `;
   db.query(
     getProductVariantsQuery,
@@ -518,7 +516,7 @@ const getAllProductService = async (input, output) => {
           const products = productResult.map((i) => {
             const productName = `${i.productName} (${i.size}${i.type})`;
             const image = imageResult.filter(
-              (j) => j.image_id === i.product_id
+              (j) => j.image_id === i.variant_id
             );
             return {
               ...i,
@@ -580,11 +578,11 @@ const getFilterProductService = async (input, output) => {
     ${whereClause} 
     LIMIT ? OFFSET ?;
   `;
-  queryParams.push(parseInt(limit), parseInt(offset)); // Add limit and offset to query params
+  queryParams.push(parseInt(limit), parseInt(offset));
 
   const getProductImagesQuery = `
     SELECT 
-      pi.id AS image_id,
+      pi.id,
       pi.image_url, 
       pi.image_tag, 
       pi.alt_text, 
@@ -609,7 +607,7 @@ const getFilterProductService = async (input, output) => {
         const products = productResult.map((product) => {
           const productName = `${product.productName} (${product.size}${product.type})`;
           const image = imageResult.filter(
-            (img) => img.image_id === product.product_id
+            (img) => img.image_id === product.variant_id
           );
           return {
             ...product,
@@ -712,90 +710,76 @@ const deleteProductService = async (productId, output) => {
   });
 };
 
-const getProductBarCodeService = async (barCode, output) => {
-  const getProductByBarcode = `
-    SELECT 
-      p.product_id, 
-      p.name, 
-      p.category_id, 
-      p.status, 
-      p.deleted,
+const getProductBarCodeService = async (input, output) => {
+  const { barCode, limit, offset } = input;
+  try {
+    const getProductVariantsQuery = `
+    SELECT
+      COUNT(*) OVER() AS total_count,
+      pv.product_id,
+      pv.variant_id,
       pv.description, 
       pv.size,
       pv.type,
       pv.barcode,
-      pv.is_primary,
       i.variant_id,
       i.quantity_in_stock,
       i.price,
       i.discount_percentage,
-      pi.id,
-      pi.image_id, 
-      pi.image_url, 
-      pi.image_tag, 
-      pi.alt_text, 
-      pi.is_primary
-    FROM product p
-    JOIN productimage pi
-      ON pi.image_id = p.product_id
-    JOIN productvariant pv
-      ON pv.product_id = p.product_id
+      p.product_id, 
+      p.name AS productName, 
+      p.brand AS brandName
+    FROM productvariant pv
+    JOIN product p ON p.product_id = pv.product_id
     JOIN inventory i ON i.variant_id = pv.variant_id
-    WHERE pv.barcode = ? AND (pi.image_tag = "product" OR pi.image_tag = "PRODUCT") 
-      AND p.deleted = "N" 
-      AND p.status = True 
-      AND p.best_Seller = 1
+    JOIN category c ON c.category_id = p.category_id
+    LEFT JOIN category ca ON ca.category_id = c.parent_category_id
+    WHERE pv.barcode LIKE ?
+    LIMIT ? OFFSET ?;
+  `;
+    const [variantResult] = await db
+      .promise()
+      .query(getProductVariantsQuery, [
+        `%${barCode}%`,
+        parseInt(limit),
+        parseInt(offset),
+      ]);
+    if (variantResult.length > 0) {
+      const getProductImagesQuery = `
+      SELECT 
+        pi.id,
+        pi.image_url,
+        pi.image_id
+      FROM productimage pi
+      WHERE pi.image_tag IN ('variant', 'VARIANT') 
+      AND pi.is_primary IN ('Y', 'y');
       `;
-
-  db.query(getProductByBarcode, [barCode], (err, result) => {
-    if (err) {
-      output({ error: { description: err.message } }, null);
-    } else if (result.length === 0) {
-      output(null, null); // No product found
-    } else {
-      const productList = {};
-      result.forEach((list) => {
-        if (!productList[list.product_id]) {
-          productList[list.product_id] = {
-            total_count: list.total_count,
-            product_id: list.product_id,
-            productName: list.name,
-            productName: `${list.name} (${list.size}${list.type})`,
-            category_id: list.category_id,
-            status: list.status,
-            variant_id: list.variant_id,
-            description: list.description,
-            price: list.price,
-            size: list.size,
-            type: list.type,
-            barcode: list.barcode,
-            isPrimary: list.is_primary,
-            // purchase_price: list.purchase_price,
-            // HST: list.HST,
-            // purchase_date: list.purchase_date,
-            image: [],
-          };
-        }
-        productList[list.product_id].image.push({
-          id: list.id,
-          image_id: list.image_id,
-          image_url: list.image_url,
-          image_tag: list.image_tag,
-          alt_text: list.alt_text,
-          is_primary: list.is_primary,
+      const [imageResult] = await db.promise().query(getProductImagesQuery);
+      if (imageResult.length > 0) {
+        const variantResults = variantResult.map((variant) => {
+          const primaryImage = imageResult.find(
+            (image) => image.image_id === variant.variant_id
+          );
+          return { ...variant, image_url: primaryImage ? primaryImage.image_url : null };
         });
-      });
-
-      const productArray = Object.values(productList);
-      output(null, productArray);
+        return variantResults;
+      } else {
+        return { success: false, message: "No images found" };
+      }
+    } else {
+      return { success: false, message: "No product variants found" };
     }
-  });
+  } catch (e) {
+    console.error(e);
+    return { success: false, message: "Database error" };
+  }
 };
 
 const getBestSellerProductService = async (input, output) => {
   const { limit, offset } = input;
   const GetAllProduct = `
-    SELECT 
+    SELECT
+      COUNT(pv.variant_id) OVER() AS toatal_count,
       p.product_id, 
       p.name, 
       p.category_id, 
@@ -910,19 +894,19 @@ const getProductsToCSVService = (callback) => {
 };
 
 const getProductByProductNameService = async (input, output) => {
-  const {productName, categoryId} = input;
+  const { productName, categoryId } = input;
 
   let whereClause = "";
-  const queryParams =[];
+  const queryParams = [];
   const hasConditions = productName || categoryId;
-  if(hasConditions) {
-    if(productName) {
+  if (hasConditions) {
+    if (productName) {
       whereClause += "p.name LIKE ?";
       queryParams.push(`%${productName}%`);
     }
-    if(categoryId) {
+    if (categoryId) {
       whereClause += (whereClause ? "AND " : "") + "p.category_id = ?";
-      queryParams.push(categoryId)
+      queryParams.push(categoryId);
     }
   }
   const getQuery = `

@@ -1,6 +1,7 @@
 const {
   addNewPurchaseService,
   getPurchaseDetailService,
+  deletePurchaseProductService,
 } = require("../../services/Product/productPurchaseServices");
 
 const addNewPurchaseController = async (req, res) => {
@@ -35,7 +36,22 @@ const getPurchaseDetailController = async (req, res) => {
   }
 };
 
+const deletePurchaseProductController = async (req, res) => {
+  const { purchaseId } = req.query;
+  try {
+    if(!purchaseId) {
+      res.status(400).send({message: "All fields are required"})
+    } else {
+     const result = await deletePurchaseProductService(purchaseId);
+     return res.status(result.success ? 200 : 400).json(result)
+    }
+  } catch (e) {
+    
+  }
+}
+
 module.exports = {
   addNewPurchaseController,
   getPurchaseDetailController,
+  deletePurchaseProductController
 };

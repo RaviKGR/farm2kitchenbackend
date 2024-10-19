@@ -231,15 +231,13 @@ const deleteProductController = async (req, res) => {
 };
 
 const getProductBarCodeController = async (req, res) => {
-  const { barCode } = req.query;
+  const { barCode, limit, offset } = req.query;
   try {
-    if (!barCode) {
+    if (!barCode || !limit || !offset) {
       res.status(400).send({ message: "All fields are required" });
     } else {
-      await getProductBarCodeService(barCode, (err, data) => {
-        if (err) res.status(400).send(err.error);
-        else res.send(data);
-      });
+      const result = await getProductBarCodeService(req.query)
+      return res.status(200).json(result);
     }
   } catch (error) {
     throw error;

@@ -4,7 +4,7 @@ const {
 } = require("../../services/serviceLocation/serviceLocationService");
 
 const NewServieLocationController = async (req, res) => {
-  const { city, postalCode ,Notification} = req.body;
+  const { city, postalCode, Notification} = req.body;
   const devileryDay = req.body.devileryDay
     .split("")
     .slice(0, 3)

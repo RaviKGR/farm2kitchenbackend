@@ -1,6 +1,8 @@
 const { db } = require("../../confic/db");
 
 const NewServieLocationService = async (input) => {
+  console.log(input);
+  
   try {
     const { city, postalCode, devileryDay, Notification } = input;
     const selectQuery = `SELECT * FROM servicelocation WHERE city = ? AND postal_code = ? AND devilery_day = ? AND Notification = ?`;
@@ -11,7 +13,7 @@ const NewServieLocationService = async (input) => {
     if (result.length > 0) {
       return { message: "service location already exists" };
     } else {
-      const insertQuery = `INSERT INTO servicelocation (city, postal_code, devilery_day,Notification) VALUES (?,?, ?, ?)`;
+      const insertQuery = `INSERT INTO servicelocation (city, postal_code, devilery_day, Notification) VALUES (?, ?, ?, ?)`;
       const [insert] = await db
         .promise()
         .query(insertQuery, [city, postalCode, devileryDay, Notification]);
@@ -19,7 +21,7 @@ const NewServieLocationService = async (input) => {
       if (insert.affectedRows > 0) {
         return {
           success: true,
-          message: "service Location Inserted successfully!",
+          message: "Added successfully!",
         };
       } else {
         return { success: false, message: "Failed to add service location" };

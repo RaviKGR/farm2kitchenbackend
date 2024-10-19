@@ -94,21 +94,20 @@ const GetParentCategoryController = async (req, res) => {
 };
 
 const updateCategoryConteroller = async (req, res) => {
+  console.log(req.body);
+  
   const {
     categoryId,
     categoryName,
     description,
-    parentCategoryId,
-    id,
-    isPrimary,
+    parentCategoryId
   } = req.body;
-  const image = req.file ? req.file.filename : null;
 
   try {
-    if (!categoryId || !categoryName || !description || !id || !isPrimary) {
+    if (!categoryId || !categoryName || !description ) {
       res.status(400).send({ message: "All fields are required" });
     } else {
-      await updateCategoryService({ ...req.body, image }, (err, data) => {
+      await updateCategoryService({ ...req.body}, (err, data) => {
         if (err) res.status(400).send(err.error);
         else res.send(data);
       });
