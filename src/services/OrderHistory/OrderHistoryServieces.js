@@ -28,17 +28,54 @@ const getOrderHistoryServieces = async (input) => {
 };
 
 const getAllOrderHistoryService = async (input) => {
-  const { limit, offset } = input;
+  const { limit, offset, orderNumber, deliveryDate, phoneNumber, email, status} = input;
   try {
+
+    let whereClause = ""
+    const queryParams = [];
+    const hasConditions = orderNumber || deliveryDate || phoneNumber || email || status
+
+    if(hasConditions) {
+      if(orderNumber) {
+        whereClause += 'o.order_id LIKE ?';
+        queryParams.push(`%${orderNumber}%`);
+      }
+
+      if(deliveryDate) {
+        whereClause += (whereClause ? "AND " : "") + 'o.deliveryDate = ?';
+        queryParams.push(deliveryDate)
+      }
+
+      if(phoneNumber) {
+        whereClause += (whereClause ? "AND " : "") + 'u.phone_number LIKE ?';
+        queryParams.push(`%${phoneNumber}%`)
+      }
+
+      if(email) {
+        whereClause += (whereClause ? "AND " : "") + 'u.email LIKE ?';
+        queryParams.push(`%${email}%`)
+      }
+
+      if(status) {
+        whereClause += (whereClause ? "AND " : "") + 'o.order_status LIKE ?';
+        queryParams.push(status)
+      }
+    }
+    
     const selectQuery = `
         SELECT * 
         FROM orders o 
         JOIN orderitem oi ON oi.order_id = o.order_id 
+        JOIN users u ON u.user_id = o.user_id
+        ${hasConditions ? `WHERE ${whereClause}` : ""}
         LIMIT ? OFFSET ?
       `;
+    
+    queryParams.push(parseInt(limit), parseInt(offset));
+
     const [result] = await db
       .promise()
-      .query(selectQuery, [parseInt(limit), parseInt(offset)]);
+      .query(selectQuery, [...queryParams]);
 
     if (result.length > 0) {
       return result;

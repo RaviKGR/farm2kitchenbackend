@@ -20,7 +20,7 @@ const updateInventoryController = async (req, res) => {
   };
 
   const getInventoryController = async (req, res) => {
-    const {limit, offset} = req.query;
+    const {limit, offset, categoryId, productName} = req.query;
         try {
             if(!limit || !offset) {
                 res.status(400).send({ message: "Required All Fields" });
