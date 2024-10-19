@@ -59,7 +59,10 @@ const getAllAdminUserEnabledService = async (input) => {
   const { limit, offset } = input;    
   try {
     const selectQuery = `
-    SELECT * 
+    SELECT
+    COUNT(*) OVER() AS total_count,
+    au.*,
+    r.*  
     FROM admin_user au
     JOIN user_roles ur ON ur.admin_user_id = au.admin_user_id
     JOIN roles r ON r.role_id = ur.role_id

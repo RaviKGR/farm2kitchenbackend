@@ -1,71 +1,99 @@
-const CreatePlaceOrder = async (input, output) => {
-    const { userId, productId, variantId, price, quantity, totalAmount, orderStatus } = input;
+const { db } = require("../../confic/db");
 
-    // SQL query to check if the product variant is available in stock
-    const checkStockQuery = `
-        SELECT quantity_in_stock 
-        FROM Inventory 
-        WHERE variant_id = ? 
-        AND quantity_in_stock >= ?
-    `;
+// const CreatePlaceOrder = async (input, output) => {
+//     const { userId, totalAmount, AllProduct  } = input;
+// try {
+//     // const checkQuantity = AllProduct.map((list) => {
+//     //     const checkInventory = `SELECT * FROM inventory WHERE variant_id = ? AND quantity_in_stock <= ?`;
+//     //     const [inventoryRes] = db.promise().query(checkInventory, [list.variantId, list.quantity]);
 
-    db.query(checkStockQuery, [variantId, quantity], (err, results) => {
-        if (err) {
-            output.status(500).send({ message: "Error checking inventory" });
-            return;
-        }
+//     // })
+//     const checkQuantity = await Promise.all(
+//         AllProduct.map(async (list) => {
+//           const checkInventory = `SELECT * FROM inventory WHERE variant_id = ? AND quantity_in_stock >= ?`;
+//           const [inventoryRes] = await db.promise().query(checkInventory, [list.variantId, list.quantity]);
 
-        if (results.length === 0) {
-            // No stock available
-            output.status(400).send({ message: "Product not available in the required quantity" });
-        } else {
-            // If stock is available, update the inventory
-            const updateStockQuery = `
-                UPDATE Inventory 
-                SET quantity_in_stock = quantity_in_stock - ? 
-                WHERE variant_id = ?
-            `;
+//           // Check if the product is in stock
+//           if (inventoryRes.length === 0) {
+//             return {success: false, status: 400, message: "Out of Stock"}
+//           }
+//           return inventoryRes;
+//         }))
 
-            db.query(updateStockQuery, [quantity, variantId], (err, updateResult) => {
-                if (err) {
-                    output.status(500).send({ message: "Error updating inventory" });
-                    return;
-                }
+// } catch (e) {
+//     console.error(e);
+//     return {success: false, status: 500, message: "DataBase error"}
+// }
 
-                // Insert the order into the Orders table
-                const insertOrderQuery = `
-                    INSERT INTO Orders (user_id, total_amount, order_status) 
-                    VALUES (?, ?, ?)
-                `;
+// };
 
-                db.query(insertOrderQuery, [userId, totalAmount, orderStatus], (err, orderResult) => {
-                    if (err) {
-                        output.status(500).send({ message: "Error placing order" });
-                        return;
-                    }
-
-                    // Get the newly inserted order ID
-                    const orderId = orderResult.insertId;
-
-                    // Insert into OrderItem with the orderId and product details
-                    const insertOrderItemQuery = `
-                        INSERT INTO OrderItem (order_id, product_id, quantity, price_at_purchase) 
-                        VALUES (?, ?, ?, ?)
-                    `;
-
-                    db.query(insertOrderItemQuery, [orderId, productId, quantity, price], (err, orderItemResult) => {
-                        if (err) {
-                            output.status(500).send({ message: "Error adding order items" });
-                            return;
-                        }
-
-                        // Order placed and items added successfully
-                        output.status(200).send({ message: "Order placed successfully" });
-                    });
-                });
-            });
-        }
+const CreatePlaceOrder = async (input) => {
+  const { userId, totalAmount, products } = input;
+  const couponId = input.couponId || null;
+  try {
+    const checkQuantityPromises = products.map(async (list) => {
+      const checkInventory = `SELECT * FROM inventory WHERE variant_id = ? AND quantity_in_stock >= ?`;
+      const [inventoryRes] = await db
+        .promise()
+        .query(checkInventory, [list.variantId, list.quantity]);
+      return inventoryRes;
     });
+
+    const inventoryResults = await Promise.all(checkQuantityPromises);
+    const outOfStockItems = inventoryResults.filter(
+      (result) => result.length === 0
+    );
+
+    if (outOfStockItems.length > 0) {
+      return {
+        success: false,
+        status: 400,
+        message: "Some products are out of stock.",
+      };
+    } else {
+      const insertOrder = `INSERT INTO orders (user_id, coupon_id, order_date, total_amount, order_status) VALUES (?, ?, CURRENT_DATE(), ?, "INPROGRESS")`;
+      const [createOrder] = await db
+        .promise()
+        .query(insertOrder, [userId, couponId, totalAmount]);
+
+      if (createOrder.affectedRows > 0) {
+        const lastInsertedId = createOrder.insertId;
+        console.log(lastInsertedId);
+
+        const insertOrderItems = products.map(async (list) => {
+          const insertOrderItems = `INSERT INTO orderitem (order_id, variant_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)`;
+          const [inventoryRes] = await db
+            .promise()
+            .query(insertOrderItems, [
+              lastInsertedId,
+              list.variantId,
+              list.quantity,
+              list.purchasePrice,
+            ]);
+          return inventoryRes;
+        });
+
+        const results = await Promise.all(insertOrderItems);
+        console.log(results);
+        if ((results.length === 0)) {
+            return {
+                success: false,
+                status: 500,
+                message: "failed to place order",
+              };
+        } else {
+          return {
+            success: true,
+            status: 200,
+            message: "Order placed successfully.",
+          };
+        }
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    return { success: false, status: 500, message: "Database error" };
+  }
 };
 
 module.exports = { CreatePlaceOrder };

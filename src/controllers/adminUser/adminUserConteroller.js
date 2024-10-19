@@ -40,7 +40,7 @@ const getAllAdminUserEnabledController = async (req, res) => {
         return res.status(400).json({ message: "All fields are required" });
     } else {
         const result = await getAllAdminUserEnabledService(req.query);
-      return res.status(result.success ? 200 : 400).json(result);
+      return res.status(200).json(result);
     }
   } catch (e) {
     console.error(e);
