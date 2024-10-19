@@ -14,7 +14,7 @@ const AddNewCategoryService = async (input, output) => {
       output({ error: { description: err.message } }, null);
     } else {
       if (result.length > 0) {
-        output(null, {status: 400, message: "Category Already exists" });
+        output(null, { status: 400, message: "Category Already exists" });
       } else {
         const insertCategory = `
         INSERT INTO category (name, description, parent_category_id, deleted)
@@ -139,44 +139,23 @@ const GetParentCategoryService = async (output) => {
 };
 
 const updateCategoryService = async (input, output) => {
-  const {
-    categoryId,
-    categoryName,
-    description,
-    parentCategoryId,
-    id,
-    isPrimary
-  } = input;
-  const image = `/uploads/${input.image}`;
+  const { categoryId, categoryName, description} =
+    input;
 
   const updateCategory = `
   UPDATE category 
   SET name = ?, description = ? 
   WHERE category_id = ?;
-
-  UPDATE productimage 
-  SET image_url = ?, image_tag = "category", alt_text = ?, is_primary = ? 
-  WHERE id = ?;
 `;
 
   db.query(
     updateCategory,
-    [categoryName, description, categoryId, image, categoryName, isPrimary, id],
+    [categoryName, description, categoryId],
     (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
       } else {
-        const SelectData = `SELECT * FROM category 
-  JOIN productimage
-  ON productimage.image_id = category.category_id
-  WHERE category.category_id`;
-        db.query(SelectData, [categoryId], (err, result) => {
-          if (err) {
-            output({ error: { description: err.message } }, null);
-          } else {
-            output(null, { message: "Updated Successfully", result });
-          }
-        });
+        output(null, { message: "Updated Successfully"});
       }
     }
   );

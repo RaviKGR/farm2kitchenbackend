@@ -1,8 +1,9 @@
 const { db } = require("../../confic/db");
 
 const addNewPurchaseService = async (input, output) => {
-  const { variantId, quantity, purchasePrice, HST, purchaseDate, vendor } = input;
-  const insertQuery = `INSERT INTO productPurchase (variant_id,vendor, quantity_in_stock, purchase_price, HST, purchase_date) VALUES (?, ?, ?,?, ?, ?)`;
+  const { variantId, quantity, purchasePrice, HST, purchaseDate, vendor } =
+    input;
+  const insertQuery = `INSERT INTO productPurchase (variant_id, vendor, quantity_in_stock, purchase_price, HST, purchase_date, deleted) VALUES (?, ?, ?, ?, ?, ?, "N")`;
   db.query(
     insertQuery,
     [variantId, vendor, quantity, purchasePrice, HST, purchaseDate],
@@ -10,7 +11,25 @@ const addNewPurchaseService = async (input, output) => {
       if (err) {
         output({ error: { description: err.message } }, null);
       } else {
-        output(null, { message: "Purchase details inserted successfully" });
+        const selectQuery = `SELECT variant_id, inventory_id, quantity_in_stock FROM inventory WHERE variant_id = ?`;
+        db.query(selectQuery, [variantId], (err, result) => {
+          if (err) {
+            output({ error: { description: err.message } }, null);
+          } else {
+            const inventoryId = result[0].inventory_id;
+            const Quantity = result[0].quantity_in_stock + quantity;
+            const insertQuery = `UPDATE inventory SET quantity_in_stock = ? WHERE inventory_id = ?`;
+            db.query(insertQuery, [Quantity, inventoryId], (err, results) => {
+              if (err) {
+                output({ error: { description: err.message } }, null);
+              } else {
+                output(null, {
+                  message: "Purchase details inserted successfully",
+                });
+              }
+            });
+          }
+        });
       }
     }
   );
@@ -82,11 +101,57 @@ const getPurchaseDetailService = async (input, output) => {
         name: `${list.name} (${list.size}${list.type})`,
         brand: list.brand,
         size: list.size,
-        type: list.type
-      }))
+        type: list.type,
+      }));
       output(null, productPurchase);
     }
   });
 };
 
-module.exports = { addNewPurchaseService, getPurchaseDetailService };
+const deletePurchaseProductService = async (purchaseId) => {
+  try {
+    const updateQuery = `UPDATE productpurchase SET deleted = "Y" WHERE purchase_id = ?`;
+    const [result] = await db.promise().query(updateQuery, [purchaseId]);
+    if (result.affectedRows > 0) {
+      const selectPurchase = `SELECT * FROM productpurchase WHERE purchase_id = ?`;
+      const [purchaseResult] = await db
+        .promise()
+        .query(selectPurchase, [purchaseId]);
+      if (purchaseResult.length > 0) {
+        const purchaseQuantity = purchaseResult[0].quantity_in_stock;
+        const variantId = purchaseResult[0].variant_id;
+
+        const selectInventory = `SELECT * FROM inventory WHERE variant_id = ?`;
+        const [inventoryResult] = await db.promise().query(selectInventory, [variantId]);
+        if(inventoryResult.length > 0) {
+          const inventoryQuantity = inventoryResult[0].quantity_in_stock;
+          const updateQuery = `UPDATE inventory SET quantity_in_stock = ? WHERE variant_id = ?`;
+          const [inventoryUpdate] = await db.promise().query(updateQuery, [inventoryQuantity - purchaseQuantity, variantId]);
+          if(inventoryUpdate.affectedRows > 0) {
+            return {
+              success: true,
+              message: "Purchase product deleted successfullf",
+            };
+          } 
+          // else {
+          //   return {
+          //     success: false,
+          //     message: "Purchase product deleted successfullf",
+          //   };
+          // }
+        }
+      }
+    } else {
+      return { success: false, message: "purchase product not found" };
+    }
+  } catch (e) {
+    console.error(e);
+    return { success: false, message: "Database error" };
+  }
+};
+
+module.exports = {
+  addNewPurchaseService,
+  getPurchaseDetailService,
+  deletePurchaseProductService,
+};

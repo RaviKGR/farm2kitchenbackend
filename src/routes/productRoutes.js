@@ -2,7 +2,7 @@ const express = require("express");
 const multer = require('multer');
 const path = require('path');
 const { GetSearchProducts, GetCategoryIdProducts, addNewProductController, getProductByProductIdController, getAllProductController, updateProductController, updateProductStatusController, deleteProductController, getProductBarCodeController, getBestSellerProductController, updateBestSellerProductController, exportProductsToCSVController, getProductByCategoryIdController, updateProductImageController, getProductByProductNameController, updateProductAndCategoryMapController, addNewProductImageController, getProductvariantByproController } = require("../controllers/Product/productControllers");
-const { addNewPurchaseController, getPurchaseDetailController } = require("../controllers/Product/productPurchaseController");
+const { addNewPurchaseController, getPurchaseDetailController, deletePurchaseProductController } = require("../controllers/Product/productPurchaseController");
 const { addNewProductSizeController, getAllProuctSizeConttroler } = require("../controllers/ProductSize/productSizeController");
 
 const ProductRoutes = express.Router();
@@ -43,6 +43,7 @@ ProductRoutes.get("/getProductisPrimary", getProductvariantByproController)
 
 ProductRoutes.post("/addNewPurchase", addNewPurchaseController);
 ProductRoutes.get("/getPurchaseProduct", getPurchaseDetailController);
+ProductRoutes.delete("/deletePurchaseProduct", deletePurchaseProductController)
 
 // Product Size Routes
 

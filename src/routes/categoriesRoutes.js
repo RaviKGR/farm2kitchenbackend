@@ -41,7 +41,6 @@ categoryRoutes.get(
 );
 categoryRoutes.put(
   "/updateCategory",
-  uploadCategory.single("image"),
   updateCategoryConteroller
 );
 categoryRoutes.delete("/deleteCategory", deleteCategoryController); // Delete category

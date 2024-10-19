@@ -159,11 +159,11 @@ const Order = `CREATE TABLE IF NOT EXISTS Orders (
 const OrderItem = `CREATE TABLE IF NOT EXISTS OrderItem (
     order_item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     order_id BIGINT NOT NULL,
-    product_id BIGINT NOT NULL,
+    variant_id BIGINT NOT NULL,
     quantity INT NOT NULL,
     price_at_purchase DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (order_id) REFERENCES Orders(order_id),
-    FOREIGN KEY (product_id) REFERENCES Product(product_id)
+    FOREIGN KEY (variant_id) REFERENCES productvariant(variant_id)
 );`;
 
 const DeliveryPerson = `CREATE TABLE IF NOT EXISTS DeliveryPerson (
@@ -208,6 +208,15 @@ CREATE TABLE IF NOT EXISTS users_credentials (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );`;
 
+const adminUser = `CREATE TABLE IF NOT EXISTS admin_user (
+    admin_user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    phone_number VARCHAR(20) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    enabled VARCHAR(5) NOT NULL
+)`;
+
 const tokens = `
 CREATE TABLE IF NOT EXISTS tokens (
     token_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -226,10 +235,10 @@ CREATE TABLE IF NOT EXISTS roles (
 
 const user_roles = `
 CREATE TABLE IF NOT EXISTS user_roles (
-    user_id BIGINT,
+    user_role_id INT AUTO_INCREMENT PRIMARY KEY, 
+    admin_user_id BIGINT,
     role_id INT,
-    PRIMARY KEY (user_id, role_id),
-    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (admin_user_id) REFERENCES admin_user(admin_user_id),
     FOREIGN KEY (role_id) REFERENCES roles(role_id)
 );`;
 
@@ -274,7 +283,7 @@ const serviceLocation = `CREATE TABLE IF NOT EXISTS serviceLocation (
     city VARCHAR(100) NOT NULL,
     postal_code VARCHAR(20) NOT NULL,
     devilery_day VARCHAR(30) NOT NULL,
-    Notification VARCHAR(250) NOT NULL
+    Notification TEXT NOT NULL
 )`;
 
 const ProductSize = `CREATE TABLE IF NOT EXISTS ProductSize(
@@ -306,6 +315,7 @@ async function createTables() {
         await db.promise().query(ProductImage);
         await db.promise().query(users_credentials);
         await db.promise().query(tokens);
+        await db.promise().query(adminUser);
         await db.promise().query(roles);
         await db.promise().query(user_roles);
         await db.promise().query(permissions);
