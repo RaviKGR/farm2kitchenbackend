@@ -11,7 +11,9 @@ var session = require("express-session");
 connectDB();
 createTables();
 const allowedOrigins = [
-  "https://farm2kitchen.vercel.app", "http://localhost:3000"
+  "https://farm2kitchen.vercel.app",
+  "http://localhost:3000",
+  "https://f1fd-27-5-203-63.ngrok-free.app/",
 ];
 
 app.use(
