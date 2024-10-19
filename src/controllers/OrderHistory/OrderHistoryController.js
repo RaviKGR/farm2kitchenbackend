@@ -24,7 +24,7 @@ const getOrderHistoryController = async (req, res) => {
 };
 
 const getAllOrderHistoryController = async (req, res) => {
-  const { limit, offset } = req.query;
+  const { limit, offset, orderNumber, deliveryDate, phoneNumber, email, status} = req.query;
   try {
     if (!limit || !offset) {
       res.status(400).send({ message: "Required All Fields" });

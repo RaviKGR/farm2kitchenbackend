@@ -12,6 +12,40 @@ const getUserDetailServieces = async (input, output) => {
   });
 };
 
+const getAllUserdetailsService = async (input, output) => {
+  const { limit, offset, name, phoneNumber } = input;
+  let whereClause = "";
+  const queryParams = [];
+  const hasConditions = name || phoneNumber;
+  if (hasConditions) {
+    if (name) {
+      whereClause += "name LIKE ?";
+      queryParams.push(`%${name}%`);
+    }
+    if (phoneNumber) {
+      whereClause += (whereClause ? "And " : "") + "phone_number LIKE ?";
+      queryParams.push(`%${phoneNumber}%`);
+    }
+  }
+  const getuserIdquery = `
+  SELECT 
+    user_id,
+    name,
+    email,
+    phone_number
+  FROM users
+  ${hasConditions ? `WHERE ${whereClause}` : ""}
+  LIMIT ? OFFSET ?`;
+  queryParams.push(parseInt(limit), parseInt(offset));
+  db.query(getuserIdquery, [...queryParams], (err, result) => {
+    if (err) {
+      return output({ error: { Description: err.message } }, null);
+    } else {
+      return output(null, result);
+    }
+  });
+};
+
 const SearchUserDetailServices = (input) => {
   const userName = input.userName;
 
@@ -38,14 +72,15 @@ const SearchUserDetailServices = (input) => {
       }
       if (result.length === 0) {
         console.log("No user found:", result);
-        return reject({ error: { Description: 'No user found with the provided username' } });
+        return reject({
+          error: { Description: "No user found with the provided username" },
+        });
       }
       console.log("User details found:", result);
       resolve(result);
     });
   });
 };
-
 
 const { promisify } = require("util");
 const updateUserDetailServices = async (input) => {
@@ -81,20 +116,34 @@ const addNewUserByAdminService = async (input, output) => {
     state,
     postalCode,
     country,
-    isDefault
+    isDefault,
   } = input;
   const insertQuery = `
     INSERT INTO users (name, email, phone_number) VALUES (?, ?, ?);
     SET @last_user_id = LAST_INSERT_ID();
     INSERT INTO address (user_id, street, city, state, postal_code, country, is_default) VALUES (@last_user_id, ?, ?, ?, ?, ?, ?);
     `;
-  db.query(insertQuery, [userName, userEmail, phoneNumber, street, city, state, postalCode, country, isDefault], (err, result) => {
-    if (err) {
-      output({ error: { Description: err.message } }, null);
-    } else {
-      output(null, { message: "User create Successfully" });
+  db.query(
+    insertQuery,
+    [
+      userName,
+      userEmail,
+      phoneNumber,
+      street,
+      city,
+      state,
+      postalCode,
+      country,
+      isDefault,
+    ],
+    (err, result) => {
+      if (err) {
+        output({ error: { Description: err.message } }, null);
+      } else {
+        output(null, { message: "User create Successfully" });
+      }
     }
-  });
+  );
 };
 
 const getUserService = async (input, output) => {
@@ -124,13 +173,14 @@ const getUserService = async (input, output) => {
     } else {
       output(null, result);
     }
-  })
-}
+  });
+};
 
 module.exports = {
   getUserDetailServieces,
   updateUserDetailServices,
   addNewUserByAdminService,
   getUserService,
-  SearchUserDetailServices
+  SearchUserDetailServices,
+  getAllUserdetailsService,
 };

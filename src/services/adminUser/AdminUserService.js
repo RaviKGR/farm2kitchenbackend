@@ -56,8 +56,32 @@ const UpdateAdminUserEnabledService = async (input) => {
 };
 
 const getAllAdminUserEnabledService = async (input) => {
-  const { limit, offset } = input;    
+  const { limit, offset, UserRoll, name, email, phoneNumber} = input;    
   try {
+    let whereClause = "";
+    const queryParams = []
+    const hasConditions = UserRoll || name || email || phoneNumber
+if(hasConditions) {
+  if(UserRoll) {
+    whereClause += 'r.role_name = ?';
+    queryParams.push(UserRoll);
+  }
+
+  if(name) {
+    whereClause += (whereClause ? "AND " : "") + 'au.name LIKE ?';
+    queryParams.push(`%${name}%`);
+  }
+
+  if(email) {
+    whereClause += (whereClause ? "AND " : "") + 'au.email LIKE ?';
+    queryParams.push(`%${email}%`);
+  }
+
+  if(phoneNumber){
+    whereClause += (whereClause ? "AND " : "") + 'au.phone_number LIKE ?';
+    queryParams.push(`%${phoneNumber}%`);
+  }
+}
     const selectQuery = `
     SELECT
     COUNT(*) OVER() AS total_count,
@@ -66,10 +90,13 @@ const getAllAdminUserEnabledService = async (input) => {
     FROM admin_user au
     JOIN user_roles ur ON ur.admin_user_id = au.admin_user_id
     JOIN roles r ON r.role_id = ur.role_id
+    ${hasConditions ? `WHERE ${whereClause}` : ""}
     LIMIT ? OFFSET ?`
+
+    queryParams.push(parseInt(limit), parseInt(offset))
     const [updateResult] = await db
           .promise()
-          .query(selectQuery, [parseInt(limit), parseInt(offset)]);
+          .query(selectQuery, [...queryParams]);
     if(selectQuery.length > 0) {
         return updateResult;
     } else {

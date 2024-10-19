@@ -4,6 +4,8 @@ const {
   addNewUserByAdminService,
   getUserService,
   SearchUserDetailServices,
+  getUserDetailServieces,
+  getAllUserdetailsService,
 } = require("../../services/UserDetails/UserDetailServieces");
 
 const getUserDetailController = async (req, res) => {
@@ -12,7 +14,7 @@ const getUserDetailController = async (req, res) => {
     if (!userId) {
       return res.status(400).send("Check the UserId");
     } else {
-      await getUerDetailServieces(req.query, (err, data) => {
+      await getUserDetailServieces(req.query, (err, data) => {
         if (err) {
           return res.status(500).send(err);
         } else {
@@ -49,6 +51,27 @@ const updateUserDetailController = async (req, res) => {
       message: "Internal server error",
       error: error.message,
     });
+  }
+};
+
+const getAllUserdetailsController = async (req, res) => {
+  console.log(req.query);
+  
+  const {limit, offset, name, phoneNumber} = req.query;
+  try {
+    if (!limit || !offset) {
+      return res.status(400).send("Required All Fields");
+    } else {
+      await getAllUserdetailsService(req.query, (err, data) => {
+        if (err) {
+          return res.status(500).send(err);
+        } else {
+          return res.status(200).send(data);
+        }
+      });
+    }
+  } catch (error) {
+    res.status(500).send({ error: "Internal server error" });
   }
 };
 
@@ -124,6 +147,7 @@ const SearchUserDetailController = async (req, res) => {
 module.exports = {
   getUserDetailController,
   updateUserDetailController,
+  getAllUserdetailsController,
   addNewUserByAdminController,
   getUserController, SearchUserDetailController
 };

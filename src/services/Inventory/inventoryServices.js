@@ -23,9 +23,19 @@ const updateInventoryService = async (input, output) => {
 };
 
 const getInventoryService = async (input, output) => {
-  const { limit, offset } = input;
-  const Limit = parseInt(limit);
-  const OffSet = parseInt(offset);
+  const { limit, offset, categoryId, productName } = input;
+  let whereClause = "WHERE 1=1";
+  const queryParams = [];
+
+  if (categoryId) {
+    whereClause += " AND p.category_id = ?";
+    queryParams.push(categoryId);
+  }
+
+  if (productName) {
+    whereClause += " AND p.name LIKE ?";
+    queryParams.push(`%${productName}%`);
+  }
   const getQuery = `
     SELECT
   COUNT(*) OVER() AS total_count, 
@@ -51,10 +61,11 @@ JOIN productvariant PV ON PV.variant_id = I.variant_id
 JOIN product P ON P.product_id = PV.product_id
 JOIN category C ON C.category_id = P.category_id
 LEFT JOIN category PC ON C.parent_category_id = PC.category_id
+${whereClause}
 LIMIT ? OFFSET ?;
 `;
-
-  db.query(getQuery, [Limit, OffSet], (err, result) => {
+queryParams.push(parseInt(limit), parseInt(offset));
+  db.query(getQuery, [...queryParams], (err, result) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
