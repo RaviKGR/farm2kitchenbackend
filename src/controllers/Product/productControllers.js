@@ -99,14 +99,31 @@ const GetCategoryIdProducts = async (req, res) => {
 };
 
 const getProductByCategoryIdController = async (req, res) => {
-  const { categoryId } = req.query;
+  // try {
+  //   await getProductByCategoryIdService(req.query, (err, data) => {
+  //     if (err) res.status(400).send(err.error);
+  //     else res.status(200).send(data);
+  //   });
+  // } catch (error) {
+  //   throw error;
+  // }
+
   try {
-    await getProductByCategoryIdService(categoryId, (err, data) => {
-      if (err) res.status(400).send(err.error);
-      else res.status(200).send(data);
-    });
+    const result = await getProductByCategoryIdService();
+    if (!result || result.error) {
+      console.error("Service error in getCartController:", result.error);
+      return res.status(400).json({
+        success: false,
+        message: result.error || "Error retrieving cart data",
+      });
+    }
+    return res.status(200).json(result);
   } catch (error) {
-    throw error;
+    console.error("Error in getCartController:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -168,7 +185,7 @@ const updateProductController = async (req, res) => {
       !variantId ||
       !description ||
       !size ||
-      !type 
+      !type
     ) {
       res.status(400).send({ message: "All fields are required" });
     } else {
@@ -236,7 +253,7 @@ const getProductBarCodeController = async (req, res) => {
     if (!barCode || !limit || !offset) {
       res.status(400).send({ message: "All fields are required" });
     } else {
-      const result = await getProductBarCodeService(req.query)
+      const result = await getProductBarCodeService(req.query);
       return res.status(200).json(result);
     }
   } catch (error) {
@@ -375,7 +392,7 @@ const addNewProductImageController = async (req, res) => {
 const getProductvariantByproController = async (req, res) => {
   const { limit, offset, categoryId, productName } = req.query;
   try {
-    if(!limit || !offset) {
+    if (!limit || !offset) {
       res.status(400).send({ message: "All fields are required" });
     } else {
       const result = await getProductvariantByproService(req.query);

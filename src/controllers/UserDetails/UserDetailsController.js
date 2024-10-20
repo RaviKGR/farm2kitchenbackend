@@ -6,6 +6,7 @@ const {
   SearchUserDetailServices,
   getUserDetailServieces,
   getAllUserdetailsService,
+  addAddressByUserIdService,
 } = require("../../services/UserDetails/UserDetailServieces");
 
 const getUserDetailController = async (req, res) => {
@@ -56,8 +57,8 @@ const updateUserDetailController = async (req, res) => {
 
 const getAllUserdetailsController = async (req, res) => {
   console.log(req.query);
-  
-  const {limit, offset, name, phoneNumber} = req.query;
+
+  const { limit, offset, name, phoneNumber } = req.query;
   try {
     if (!limit || !offset) {
       return res.status(400).send("Required All Fields");
@@ -134,7 +135,7 @@ const SearchUserDetailController = async (req, res) => {
     if (!userName) {
       return res.status(400).json({ error: "Check the UserName" });
     }
-    const userDetails = await SearchUserDetailServices({ userName });
+    const userDetails = await SearchUserDetailServices(userName);
     return res.status(200).json(userDetails);
   } catch (error) {
     if (error.error) {
@@ -144,10 +145,36 @@ const SearchUserDetailController = async (req, res) => {
   }
 };
 
+const addAddressByUserIdController = async (req, res) => {
+  const { userId, street, city, state, postal_code, country, is_default } =
+    req.body;
+  try {
+    if (
+      !userId ||
+      !street ||
+      !city ||
+      !state ||
+      !postal_code ||
+      !country ||
+      !is_default
+    ) {
+      return res.status(400).json({ message: "All fields are required" });
+    } else {
+      const result = await addAddressByUserIdService(req.body);
+      return res.status(result.success ? 201 : 400).json(result);
+    }
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   getUserDetailController,
   updateUserDetailController,
   getAllUserdetailsController,
   addNewUserByAdminController,
-  getUserController, SearchUserDetailController
+  getUserController,
+  SearchUserDetailController,
+  addAddressByUserIdController,
 };

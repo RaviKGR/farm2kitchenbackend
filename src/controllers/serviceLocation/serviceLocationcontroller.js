@@ -37,4 +37,7 @@ const getServiceLocationController = async (req, res) => {
   }
 };
 
-module.exports = { NewServieLocationController, getServiceLocationController };
+const getDeliveryDateController = async (req, res) => {
+  
+}
+module.exports = { NewServieLocationController, getServiceLocationController, getDeliveryDateController };

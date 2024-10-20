@@ -19,21 +19,31 @@ const getAllUserdetailsService = async (input, output) => {
   const hasConditions = name || phoneNumber;
   if (hasConditions) {
     if (name) {
-      whereClause += "name LIKE ?";
+      whereClause += "us.name LIKE ?";
       queryParams.push(`%${name}%`);
     }
     if (phoneNumber) {
-      whereClause += (whereClause ? "And " : "") + "phone_number LIKE ?";
+      whereClause += (whereClause ? "And " : "") + "us.phone_number LIKE ?";
       queryParams.push(`%${phoneNumber}%`);
     }
   }
   const getuserIdquery = `
-  SELECT 
-    user_id,
-    name,
-    email,
-    phone_number
-  FROM users
+   SELECT
+    COUNT(us.user_id) OVER() AS total_count,
+    us.user_id,
+    us.name,
+    us.email,
+    us.phone_number,
+    ad.address_id,
+    ad.street,
+    ad.city,
+    ad.state,
+    ad.postal_code,
+    ad.country,
+    ad.is_default
+    FROM users us
+    JOIN address ad
+    ON ad.user_id = us.user_id
   ${hasConditions ? `WHERE ${whereClause}` : ""}
   LIMIT ? OFFSET ?`;
   queryParams.push(parseInt(limit), parseInt(offset));
@@ -46,10 +56,9 @@ const getAllUserdetailsService = async (input, output) => {
   });
 };
 
-const SearchUserDetailServices = (input) => {
-  const userName = input.userName;
-
-  const getUserQuery = `
+const SearchUserDetailServices = async (userName) => {
+  try {
+    const getUserQuery = `
   SELECT 
     u.user_id, 
     u.name, 
@@ -60,26 +69,29 @@ const SearchUserDetailServices = (input) => {
   WHERE 
     u.name LIKE ?;
 `;
-
-  return new Promise((resolve, reject) => {
-    // Ensure that the `userName` is correctly formatted for the LIKE clause
-    // const searchValue = `%${userName}%`;
-
-    db.query(getUserQuery, [`%${userName}%`], (err, result) => {
-      if (err) {
-        console.log("Error while fetching user details:", err);
-        return reject({ Description: err.message });
-      }
-      if (result.length === 0) {
-        console.log("No user found:", result);
-        return reject({
-          error: { Description: "No user found with the provided username" },
+    const [result] = await db.promise().query(getUserQuery, [`%${userName}%`]);
+    if (result.length > 0) {
+      const userId = result[0].user_id;
+      const getUserAddress = `SELECT * FROM address WHERE user_id = ?`;
+      const [address] = await db.promise().query(getUserAddress, [userId]);
+      if (address.length > 0) {
+        const UserDetails = result.map((user) => {
+          const addresDetails = address.find(
+            (add) => add.user_id === user.user_id
+          );
+          return {...user, address : [addresDetails]}
         });
+        return UserDetails;
+      } else {
+        return [];
       }
-      console.log("User details found:", result);
-      resolve(result);
-    });
-  });
+    } else {
+      return [];
+    }
+  } catch (error) {
+    console.error(error);
+    return { success: false, status: 500, message: "DateBase error" };
+  }
 };
 
 const { promisify } = require("util");
@@ -176,6 +188,15 @@ const getUserService = async (input, output) => {
   });
 };
 
+const addAddressByUserIdService = async () => {
+    try {
+      
+    } catch (e) {
+      console.error(e);
+      return {success: false, status: 400}
+    }
+}
+
 module.exports = {
   getUserDetailServieces,
   updateUserDetailServices,
@@ -183,4 +204,5 @@ module.exports = {
   getUserService,
   SearchUserDetailServices,
   getAllUserdetailsService,
+  addAddressByUserIdService
 };

@@ -34,7 +34,7 @@ const UpdateAdminUserEnabledController = async (req, res) => {
   }
 };
 const getAllAdminUserEnabledController = async (req, res) => {
-  const { limit, offset, UserRoll, name, email, phoneNumber} = req.query;
+  const { limit, offset, rollId, name, email, phoneNumber} = req.query;
   try {
     if(!limit || !offset) {
         return res.status(400).json({ message: "All fields are required" });
