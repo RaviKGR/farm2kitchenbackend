@@ -28,59 +28,68 @@ const getOrderHistoryServieces = async (input) => {
 };
 
 const getAllOrderHistoryService = async (input) => {
-  const { limit, offset, orderNumber, deliveryDate, phoneNumber, email, status} = input;
+  const {
+    limit,
+    offset,
+    orderNumber,
+    deliveryDate,
+    phoneNumber,
+    email,
+    status,
+  } = input;
   try {
-
-    let whereClause = ""
+    let whereClause = "";
     const queryParams = [];
-    const hasConditions = orderNumber || deliveryDate || phoneNumber || email || status
+    const hasConditions = orderNumber || deliveryDate || phoneNumber || email || status;
 
-    if(hasConditions) {
-      if(orderNumber) {
-        whereClause += 'o.order_id LIKE ?';
+    if (hasConditions) {
+      if (orderNumber) {
+        whereClause += "o.order_id LIKE ?";
         queryParams.push(`%${orderNumber}%`);
       }
 
-      if(deliveryDate) {
-        whereClause += (whereClause ? "AND " : "") + 'o.deliveryDate = ?';
-        queryParams.push(deliveryDate)
+      if (deliveryDate) {
+        whereClause += (whereClause ? "AND " : "") + "o.delivery_date = ?";
+        queryParams.push(deliveryDate);
       }
 
-      if(phoneNumber) {
-        whereClause += (whereClause ? "AND " : "") + 'u.phone_number LIKE ?';
-        queryParams.push(`%${phoneNumber}%`)
+      if (phoneNumber) {
+        whereClause += (whereClause ? "AND " : "") + "u.phone_number LIKE ?";
+        queryParams.push(`%${phoneNumber}%`);
       }
 
-      if(email) {
-        whereClause += (whereClause ? "AND " : "") + 'u.email LIKE ?';
-        queryParams.push(`%${email}%`)
+      if (email) {
+        whereClause += (whereClause ? "AND " : "") + "u.email LIKE ?";
+        queryParams.push(`%${email}%`);
       }
 
-      if(status) {
-        whereClause += (whereClause ? "AND " : "") + 'o.order_status LIKE ?';
-        queryParams.push(status)
+      if (status) {
+        whereClause += (whereClause ? "AND " : "") + "o.order_status = ?";
+        queryParams.push(status);
       }
     }
-    
+
     const selectQuery = `
-        SELECT * 
+        SELECT
+          COUNT(*) OVER() AS total_count,
+          o.*, 
+          oi.*, 
+          u.* 
         FROM orders o 
         JOIN orderitem oi ON oi.order_id = o.order_id 
         JOIN users u ON u.user_id = o.user_id
         ${hasConditions ? `WHERE ${whereClause}` : ""}
         LIMIT ? OFFSET ?
       `;
-    
+
     queryParams.push(parseInt(limit), parseInt(offset));
 
-    const [result] = await db
-      .promise()
-      .query(selectQuery, [...queryParams]);
+    const [result] = await db.promise().query(selectQuery, [...queryParams]);
 
     if (result.length > 0) {
       return result;
     } else {
-      return { message: "No results found" };
+      return [];
     }
   } catch (error) {
     console.error(error);
@@ -88,17 +97,16 @@ const getAllOrderHistoryService = async (input) => {
   }
 };
 
-const getAllOrderHistoryByIdService = async (orderId) => {  
+const getAllOrderHistoryByIdService = async (orderId) => {
   try {
     const selectQuery = `
         SELECT * 
         FROM orders o 
         JOIN orderitem oi ON oi.order_id = o.order_id 
+        JOIN users u ON u.user_id = o.user_id 
         WHERE o.order_id = ?
       `;
-    const [result] = await db
-      .promise()
-      .query(selectQuery, [orderId]);
+    const [result] = await db.promise().query(selectQuery, [orderId]);
 
     if (result.length > 0) {
       return result;
@@ -111,14 +119,13 @@ const getAllOrderHistoryByIdService = async (orderId) => {
   }
 };
 
-const updateOrderStatusService = async (input) => {  
-    const {orderId, orderStatus} = input;
+const updateOrderStatusService = async (input) => {
+  const { orderId, orderStatus } = input;
   try {
     const updateQuery = `UPDATE orders SET order_status = ? WHERE order_id = ?`;
     const [result] = await db
       .promise()
       .query(updateQuery, [orderStatus, orderId]);
-console.log(result);
 
     if (result.affectedRows > 0) {
       return { message: "Order status updated successfully" };
@@ -131,4 +138,41 @@ console.log(result);
   }
 };
 
-module.exports = { getOrderHistoryServieces, getAllOrderHistoryService, getAllOrderHistoryByIdService, updateOrderStatusService };
+const getOrderItemsByOrderIdService = async (orderId) => {
+  try {
+    const selectQuery = `
+    SELECT
+      COUNT(pv.variant_id) OVER() AS total_count,
+      oi.*,
+      p.name AS productName,
+      p.brand AS productBrand,
+      pv.product_id,
+      pv.description,
+      pv.size,
+      pv.type,
+      pv.barcode
+    FROM orderitem oi
+    JOIN productvariant pv ON pv.variant_id = oi.variant_id
+    JOIN product p ON p.product_id = pv.product_id
+    WHERE oi.order_id = ?;
+    `;
+
+    const [result] = await db.promise().query(selectQuery, [orderId]);
+    if (result.length > 0) {
+      return result;
+    } else {
+      return [];
+    }
+  } catch (e) {
+    console.error(e);
+    return { success: false, message: "Database error" };
+  }
+};
+
+module.exports = {
+  getOrderHistoryServieces,
+  getAllOrderHistoryService,
+  getAllOrderHistoryByIdService,
+  updateOrderStatusService,
+  getOrderItemsByOrderIdService,
+};

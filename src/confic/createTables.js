@@ -152,6 +152,7 @@ const Order = `CREATE TABLE IF NOT EXISTS Orders (
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total_amount DECIMAL(10, 2) NOT NULL,
 	order_status VARCHAR(100) NOT NULL,
+    delivery_date DATE NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(user_id),
     FOREIGN KEY (coupon_id) REFERENCES Coupon(coupon_id)
 );`;
@@ -282,7 +283,7 @@ const serviceLocation = `CREATE TABLE IF NOT EXISTS serviceLocation (
     location_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     city VARCHAR(100) NOT NULL,
     postal_code VARCHAR(20) NOT NULL,
-    devilery_day VARCHAR(30) NOT NULL,
+    delivery_date DATE NOT NULL,
     Notification TEXT NOT NULL
 )`;
 
@@ -290,6 +291,16 @@ const ProductSize = `CREATE TABLE IF NOT EXISTS ProductSize(
     sizeID INT AUTO_INCREMENT PRIMARY KEY,
     sizeName VARCHAR(50) NOT NULL
 )`;
+
+const paymentHistory = `CREATE TABLE IF NOT EXISTS payment_history(
+    payment_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT NOT NULL,
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    payment_ref_id VARCHAR(100) NOT NULL,
+    user_name VARCHAR(50) NOT NULL,
+    payment_status VARCHAR(50) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES Orders(order_id)
+)`
 
 // Function to execute the queries
 async function createTables() {
@@ -308,6 +319,7 @@ async function createTables() {
         await db.promise().query(Offer);
         await db.promise().query(offerDetails);
         await db.promise().query(couponOffer);
+        await db.promise().query(serviceLocation);
         await db.promise().query(Order);
         await db.promise().query(OrderItem);
         await db.promise().query(DeliveryPerson);
@@ -323,8 +335,8 @@ async function createTables() {
         await db.promise().query(otps);
         await db.promise().query(favorites);
         await db.promise().query(cart);
-        await db.promise().query(serviceLocation);
         await db.promise().query(ProductSize);
+        await db.promise().query(paymentHistory);
         console.log("All tables created successfully.");
     } catch (error) {
         console.error("Error creating tables:", error.message);

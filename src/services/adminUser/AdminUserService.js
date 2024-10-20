@@ -37,8 +37,7 @@ const addNewAdminUserService = async (input) => {
 
 const UpdateAdminUserEnabledService = async (input) => {
     const { adminUserId} = input;
-    const enabled = input.enabled === true ? "Y" : "N";
-    
+    const enabled = input.enabled == "true" ? "Y" : "N";
   try {
     const updateQuery = `UPDATE admin_user SET enabled = ? WHERE admin_user_id = ?`
     const [updateResult] = await db
@@ -56,15 +55,16 @@ const UpdateAdminUserEnabledService = async (input) => {
 };
 
 const getAllAdminUserEnabledService = async (input) => {
-  const { limit, offset, UserRoll, name, email, phoneNumber} = input;    
+  const { limit, offset, rollId, name, email, phoneNumber} = input;
+    
   try {
     let whereClause = "";
     const queryParams = []
-    const hasConditions = UserRoll || name || email || phoneNumber
+    const hasConditions = rollId || name || email || phoneNumber
 if(hasConditions) {
-  if(UserRoll) {
-    whereClause += 'r.role_name = ?';
-    queryParams.push(UserRoll);
+  if(rollId) {
+    whereClause += 'r.role_id = ?';
+    queryParams.push(rollId);
   }
 
   if(name) {

@@ -11,6 +11,7 @@ const userDetailRouters = require("./userDetailsRouters");
 const serviceLocationRouters = require("./serviceLocation");
 const adminUserRouter = require("./adminUserRoutes");
 const placeOrderRouters = require("./placeOrderRouter");
+const imageRouters = require("./imageRouters");
 const routes = express.Router();
 
 routes.use('/category', categoryRoutes);
@@ -25,5 +26,6 @@ routes.use('/userDetails', userDetailRouters)
 routes.use('/serviceLocation', serviceLocationRouters)
 routes.use('/adminUser', adminUserRouter);
 routes.use('/placeOrder', placeOrderRouters);
+routes.use('/image', imageRouters)
 
 module.exports = routes;

@@ -1,4 +1,10 @@
-const {getOrderHistoryServieces, getAllOrderHistoryService, getAllOrderHistoryByIdService, updateOrderStatusService} = require("../../services/OrderHistory/OrderHistoryServieces");
+const {
+  getOrderHistoryServieces,
+  getAllOrderHistoryService,
+  getAllOrderHistoryByIdService,
+  updateOrderStatusService,
+  getOrderItemsByOrderIdService,
+} = require("../../services/OrderHistory/OrderHistoryServieces");
 
 const getOrderHistoryController = async (req, res) => {
   try {
@@ -24,7 +30,16 @@ const getOrderHistoryController = async (req, res) => {
 };
 
 const getAllOrderHistoryController = async (req, res) => {
-  const { limit, offset, orderNumber, deliveryDate, phoneNumber, email, status} = req.query;
+  console.log(req.query);
+  const {
+    limit,
+    offset,
+    orderNumber,
+    deliveryDate,
+    phoneNumber,
+    email,
+    status,
+  } = req.query;
   try {
     if (!limit || !offset) {
       res.status(400).send({ message: "Required All Fields" });
@@ -39,7 +54,7 @@ const getAllOrderHistoryController = async (req, res) => {
 };
 
 const getAllOrderHistoryByIdController = async (req, res) => {
-  const {orderId} = req.query;
+  const { orderId } = req.query;
   try {
     if (!orderId) {
       res.status(400).send({ message: "Required All Fields" });
@@ -54,7 +69,7 @@ const getAllOrderHistoryByIdController = async (req, res) => {
 };
 
 const updateOrderStatusController = async (req, res) => {
-  const {orderId, orderStatus} = req.query;
+  const { orderId, orderStatus } = req.query;
   try {
     if (!orderId || !orderStatus) {
       res.status(400).send({ message: "Required All Fields" });
@@ -68,4 +83,25 @@ const updateOrderStatusController = async (req, res) => {
   }
 };
 
-module.exports = { getOrderHistoryController, getAllOrderHistoryController, getAllOrderHistoryByIdController, updateOrderStatusController };
+const getOrderItemsByOrderIdController = async (req, res) => {
+  const {orderId} = req.query;
+  try {
+    if(!orderId) {
+      res.status(400).send({ message: "Required All Fields" });
+    }  else {
+      const result = await getOrderItemsByOrderIdService(orderId);
+      return res.status(200).json(result);
+    }
+  } catch (e) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+module.exports = {
+  getOrderHistoryController,
+  getAllOrderHistoryController,
+  getAllOrderHistoryByIdController,
+  updateOrderStatusController,
+  getOrderItemsByOrderIdController,
+};

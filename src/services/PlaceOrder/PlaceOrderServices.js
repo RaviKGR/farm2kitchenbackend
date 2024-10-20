@@ -30,19 +30,26 @@ const { db } = require("../../confic/db");
 const CreatePlaceOrder = async (input) => {
   const { userId, totalAmount, products } = input;
   const couponId = input.couponId || null;
+  console.log("input", input);
+
   try {
     const checkQuantityPromises = products.map(async (list) => {
       const checkInventory = `SELECT * FROM inventory WHERE variant_id = ? AND quantity_in_stock >= ?`;
       const [inventoryRes] = await db
         .promise()
         .query(checkInventory, [list.variantId, list.quantity]);
+      console.log("inventoryRes", inventoryRes);
+
       return inventoryRes;
     });
 
     const inventoryResults = await Promise.all(checkQuantityPromises);
+    console.log("inventoryResults", inventoryResults);
+
     const outOfStockItems = inventoryResults.filter(
       (result) => result.length === 0
     );
+    console.log("outOfStockItems", outOfStockItems);
 
     if (outOfStockItems.length > 0) {
       return {
@@ -58,7 +65,7 @@ const CreatePlaceOrder = async (input) => {
 
       if (createOrder.affectedRows > 0) {
         const lastInsertedId = createOrder.insertId;
-        console.log(lastInsertedId);
+        console.log("lastInsertedId", lastInsertedId);
 
         const insertOrderItems = products.map(async (list) => {
           const insertOrderItems = `INSERT INTO orderitem (order_id, variant_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)`;
@@ -70,17 +77,19 @@ const CreatePlaceOrder = async (input) => {
               list.quantity,
               list.purchasePrice,
             ]);
+          console.log("inventoryRes", inventoryRes);
+
           return inventoryRes;
         });
 
         const results = await Promise.all(insertOrderItems);
         console.log(results);
-        if ((results.length === 0)) {
-            return {
-                success: false,
-                status: 500,
-                message: "failed to place order",
-              };
+        if (results.length === 0) {
+          return {
+            success: false,
+            status: 500,
+            message: "failed to place order",
+          };
         } else {
           return {
             success: true,
