@@ -19,7 +19,7 @@ const NewServieLocationService = async (input) => {
 
     const newWeekends = GetDates();
 
-    const selectQuery = `SELECT * FROM servicelocation WHERE city = ? AND postal_code = ? AND devilery_date = ? AND Notification = ?`;
+    const selectQuery = `SELECT * FROM servicelocation WHERE city = ? AND postal_code = ? AND delivery_date = ? AND Notification = ?`;
     const [result] = await db
       .promise()
       .query(selectQuery, [city, postalCode, newWeekends, Notification]);
@@ -27,7 +27,7 @@ const NewServieLocationService = async (input) => {
     if (result.length > 0) {
       return { message: "service location already exists" };
     } else {
-      const insertQuery = `INSERT INTO servicelocation (city, postal_code, devilery_date, Notification) VALUES (?, ?, ?, ?)`;
+      const insertQuery = `INSERT INTO servicelocation (city, postal_code, delivery_date, Notification) VALUES (?, ?, ?, ?)`;
       const [insert] = await db
         .promise()
         .query(insertQuery, [city, postalCode, newWeekends, Notification]);
