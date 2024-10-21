@@ -1,73 +1,81 @@
 const { db } = require("../../confic/db");
 
 const addNewOfferServer = async (input, output) => {
-  const {
-    offerName,
-    description,
-    discountType,
-    discountValue,
-    startDate,
-    endDate,
-    tagId,
-    isPrimary,
-  } = input;
-  const offerTag = input.offerTag.toUpperCase();
-  const image = `/uploads/${input.image}`;
+  try {
+    const {
+      offerName,
+      description,
+      discountType,
+      discountValue,
+      startDate,
+      endDate,
+      isPrimary,
+      items,
+      imageTag,
+    } = input;
+    const image = `/uploads/${input.image}`;
 
-  if (!image) {
-    const insertQuery = `INSERT INTO offer (name, description, discountType, discountValue, start_date, end_date, deleted) VALUES (?, ?, ?, ?, ?, ?, "N");
-    SET @last_offer_id = LAST_INSERT_ID();
-    INSERT INTO offer_details (offer_id, offer_tag, tag_id) VALUES (@last_offer_id, ?, ?)`;
-    db.query(
-      insertQuery,
-      [
+    // Insert the offer into the offer table
+    const insertOfferQuery = `INSERT INTO offer (name, description, discountType, discountValue, start_date, end_date, deleted) VALUES (?, ?, ?, ?, ?, ?, "N")`;
+    const [offerResult] = await db
+      .promise()
+      .query(insertOfferQuery, [
         offerName,
         description,
         discountType,
         discountValue,
         startDate,
         endDate,
-        offerTag,
-        tagId,
-      ],
-      (err, result) => {
-        if (err) {
-          output({ error: { description: err.message } }, null);
-        } else {
-          output(null, { message: "Offer created Successfully" });
-        }
-      }
-    );
-  } else {
-    const insertQuery = `INSERT INTO offer (name, description, discountType, discountValue, start_date, end_date, deleted) VALUES (?, ?, ?, ?, ?, ?, "N");
-    SET @last_offer_id = LAST_INSERT_ID();
-    INSERT INTO offer_details (offer_id, offer_tag, tag_id) VALUES (@last_offer_id, ?, ?);
-    INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) VALUES (@last_offer_id, ?, ?, ?, ?);`;
+      ]);
 
-    db.query(
-      insertQuery,
-      [
-        offerName,
-        description,
-        discountType,
-        discountValue,
-        startDate,
-        endDate,
-        offerTag,
-        tagId,
-        image,
-        offerTag,
-        offerName,
-        isPrimary,
-      ],
-      (err, result) => {
-        if (err) {
-          output({ error: { description: err.message } }, null);
-        } else {
-          output(null, { message: "Offer created Successfully" });
-        }
+    if (offerResult.affectedRows > 0) {
+      const lastOfferId = offerResult.insertId;
+
+      // Insert the image into the productimage table
+      const insertImageQuery = `INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) VALUES (?, ?, ?, ?, ?)`;
+      await db
+        .promise()
+        .query(insertImageQuery, [
+          lastOfferId,
+          image,
+          imageTag,
+          offerName,
+          isPrimary,
+        ]);
+
+      // Insert offer details (loop over items)
+      const insertItemsPromises = items.map((list) => {
+        const insertItemsQuery = `INSERT INTO offer_details (offer_id, offer_tag, tag_id) VALUES (?, ?, ?)`;
+        return db
+          .promise()
+          .query(insertItemsQuery, [lastOfferId, list.offerTag, list.tagId]);
+      });
+
+      const OfferResults = await Promise.all(insertItemsPromises);
+
+      if (OfferResults.some((result) => result[0].affectedRows === 0)) {
+        return {
+          success: false,
+          status: 500,
+          message: "Failed to place order.",
+        };
+      } else {
+        return {
+          success: true,
+          status: 200,
+          message: "Order placed successfully.",
+        };
       }
-    );
+    } else {
+      return {
+        success: false,
+        status: 500,
+        message: "Failed to insert offer.",
+      };
+    }
+  } catch (e) {
+    console.error(e);
+    return { success: false, status: 500, message: "DataBase Error" };
   }
 };
 
