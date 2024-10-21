@@ -46,7 +46,7 @@ console.log(req.body);
 };
 
 const getOfferController = async (req, res) => {
-  const { limit, offset } = req.query;
+  const { limit, offset, offerName, startDate, endDate } = req.query;
   try {
     if (!limit || !offset) {
       res.status(400).send("Required All The Fields");

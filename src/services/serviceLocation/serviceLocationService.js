@@ -62,4 +62,26 @@ const getServiceLocationService = async () => {
   }
 };
 
-module.exports = { NewServieLocationService, getServiceLocationService };
+const getDeliveryDateService = async (addressId) => {
+  try {
+    const getAddress = `SELECT * FROM address WHERE address_id = ?`;
+    const [addressResult] = await db.promise().query(getAddress, [addressId]);
+    if(addressResult.length > 0) {
+      const postalCode = addressResult[0].postal_code;      
+      const getServiceLocation = `SELECT location_id, city, postal_code, delivery_date FROM servicelocation WHERE postal_code = ?`
+      const [locationAddress] = await db.promise().query(getServiceLocation, [postalCode]);
+      if(locationAddress.length > 0) {
+        return locationAddress
+      } else {
+        return []
+      }
+    } else {
+      return []
+    }
+  } catch (e) {
+    console.error(e);
+    return { success: false, message: "Database error" };
+  }
+}
+
+module.exports = { NewServieLocationService, getServiceLocationService, getDeliveryDateService };

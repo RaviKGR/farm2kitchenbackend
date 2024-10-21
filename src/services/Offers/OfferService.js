@@ -80,11 +80,28 @@ const addNewOfferServer = async (input, output) => {
 };
 
 const getOfferService = async (input, output) => {
-  const { limit, offset } = input;
+  const { limit, offset, offerName, startDate, endDate } = input;
+
+  // let whereClause = "";
+  // const queryParams= [];
+  // const hasConditions = offerName || startDate || endDate
+
+  // if(hasConditions) {
+  //   if(offerName) {
+  //     whereClause += "off.name LIKE ?";
+  //     queryParams.push(`%${offerName}%`)
+  //   }
+
+  //   if(startDate && endDate) {
+  //     whereClause += (whereClause ? "AND " : "") + ""
+  //   }
+  // }
+
   const getOfferQuery = `
     SELECT
     COUNT(off.offer_id) OVER() AS total_count,
     off.offer_id,
+    off.name,
     off.description,
     off.discountType,
     off.discountValue,
