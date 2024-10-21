@@ -211,8 +211,8 @@ const GetCategoryIdProduct = async (input, output) => {
   });
 };
 
-const getProductByCategoryIdService = async () => {
-  // const {category_Id} = input;
+const getProductByCategoryIdService = async (categoryId) => {
+  
   return new Promise((resolve, reject) => {
     const getCartQuery = `
     SELECT 
@@ -243,10 +243,11 @@ const getProductByCategoryIdService = async () => {
     LEFT JOIN
         ProductImage pi ON pi.image_id = pv.variant_id
     LEFT JOIN
-        Category c ON p.category_id = c.category_id;
+        Category c ON p.category_id = c.category_id
+    WHERE p.category_id = ?
 `;
 
-    db.query(getCartQuery, (err, cartResult) => {
+    db.query(getCartQuery, [categoryId], (err, cartResult) => {
         if (err) {
             console.error('Database error in getCartService (cart data):', err);
             return reject(new Error('Failed to retrieve cart data from database'));

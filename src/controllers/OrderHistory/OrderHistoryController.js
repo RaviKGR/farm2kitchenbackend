@@ -30,7 +30,6 @@ const getOrderHistoryController = async (req, res) => {
 };
 
 const getAllOrderHistoryController = async (req, res) => {
-  console.log(req.query);
   const {
     limit,
     offset,
