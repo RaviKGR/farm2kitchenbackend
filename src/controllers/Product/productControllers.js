@@ -107,9 +107,9 @@ const getProductByCategoryIdController = async (req, res) => {
   // } catch (error) {
   //   throw error;
   // }
-
+  const { categoryId } = req.query;  
   try {
-    const result = await getProductByCategoryIdService();
+    const result = await getProductByCategoryIdService(categoryId);
     if (!result || result.error) {
       console.error("Service error in getCartController:", result.error);
       return res.status(400).json({

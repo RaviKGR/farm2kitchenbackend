@@ -62,7 +62,7 @@ const addNewOfferServer = async (input, output) => {
       } else {
         return {
           success: true,
-          status: 200,
+          status: 201,
           message: "Order placed successfully.",
         };
       }
@@ -82,7 +82,8 @@ const addNewOfferServer = async (input, output) => {
 const getOfferService = async (input, output) => {
   const { limit, offset } = input;
   const getOfferQuery = `
-    SELECT 
+    SELECT
+    COUNT(off.offer_id) OVER() AS total_count,
     off.offer_id,
     off.description,
     off.discountType,

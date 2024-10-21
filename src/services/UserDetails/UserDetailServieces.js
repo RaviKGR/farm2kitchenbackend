@@ -79,7 +79,7 @@ const SearchUserDetailServices = async (userName) => {
           const addresDetails = address.find(
             (add) => add.user_id === user.user_id
           );
-          return {...user, address : [addresDetails]}
+          return { ...user, address: [addresDetails] };
         });
         return UserDetails;
       } else {
@@ -188,14 +188,22 @@ const getUserService = async (input, output) => {
   });
 };
 
-const addAddressByUserIdService = async () => {
-    try {
-      
-    } catch (e) {
-      console.error(e);
-      return {success: false, status: 400}
+const addAddressByUserIdService = async (input) => {
+  const { userId, street, city, state, postal_code, country, is_default } =
+    input;
+  try {
+    const insertQuery = `INSERT INTO address (user_id, street, city, state, postal_code, country, is_default) VALUES (?, ?, ?, ?, ?, ?, ?);`
+    const [result] = await db.promise().query(insertQuery, [userId, street, city, state, postal_code, country, is_default]);
+    if(result.affectedRows > 0) {
+      return {success: true, status: 201, message: "Added successfully"}
+    } else {
+      return {success: false,  status: 400, message: "Unable to added address"}
     }
-}
+  } catch (e) {
+    console.error(e);
+    return { success: false, status: 400, message: "Database error" };
+  }
+};
 
 module.exports = {
   getUserDetailServieces,
@@ -204,5 +212,5 @@ module.exports = {
   getUserService,
   SearchUserDetailServices,
   getAllUserdetailsService,
-  addAddressByUserIdService
+  addAddressByUserIdService,
 };
