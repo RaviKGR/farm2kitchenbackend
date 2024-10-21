@@ -6,6 +6,7 @@ const {
 } = require("../../services/Offers/OfferService");
 
 const addNewOfferController = async (req, res) => {
+  
   const {
     offerName,
     description,
@@ -13,11 +14,15 @@ const addNewOfferController = async (req, res) => {
     discountValue,
     startDate,
     endDate,
-    offerTag,
-    tagId,
+    items,
+    imageTag,
     isPrimary
   } = req.body;
+
   const image = req.file ? req.file.filename : null;
+console.log(req.body);
+
+
   try {
     if (
       !offerName ||
@@ -26,18 +31,17 @@ const addNewOfferController = async (req, res) => {
       !discountValue ||
       !startDate ||
       !endDate ||
-      !offerTag ||
-      !tagId
+      !imageTag ||
+      !items.length === 0
     ) {
       res.status(400).send({ message: "Required All Fields" });
     } else {
-      await addNewOfferServer({...req.body, image},(err, data) => {
-        if (err) res.status(400).send(err.error);
-        else res.status(201).send(data);
-      });
+     const result = await addNewOfferServer({...req.body, image});
+      return res.status(result.status).json(result);
     }
   } catch (e) {
-    throw e;
+    console.error(e);
+    return res.status(500).json({ message: "Internal server error"} )
   }
 };
 

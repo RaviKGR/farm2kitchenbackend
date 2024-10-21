@@ -152,9 +152,11 @@ const Order = `CREATE TABLE IF NOT EXISTS Orders (
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total_amount DECIMAL(10, 2) NOT NULL,
 	order_status VARCHAR(100) NOT NULL,
+    location_id BIGINT NOT NULL,
     delivery_date DATE NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(user_id),
-    FOREIGN KEY (coupon_id) REFERENCES Coupon(coupon_id)
+    FOREIGN KEY (coupon_id) REFERENCES Coupon(coupon_id),
+    FOREIGN KEY (location_id) REFERENCES serviceLocation(location_id)
 );`;
 
 const OrderItem = `CREATE TABLE IF NOT EXISTS OrderItem (
