@@ -1,6 +1,7 @@
 const {
   NewServieLocationService,
   getServiceLocationService,
+  getDeliveryDateService,
 } = require("../../services/serviceLocation/serviceLocationService");
 
 const NewServieLocationController = async (req, res) => {
@@ -38,6 +39,17 @@ const getServiceLocationController = async (req, res) => {
 };
 
 const getDeliveryDateController = async (req, res) => {
-  
+  const { addressId } = req.query;
+  try {
+    if(!addressId) {
+      res.status(400).send({ message: "All fields are required" });
+    } else {
+      const result = await getDeliveryDateService(addressId);
+      return res.status(200).json(result);
+    }
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
 }
 module.exports = { NewServieLocationController, getServiceLocationController, getDeliveryDateController };

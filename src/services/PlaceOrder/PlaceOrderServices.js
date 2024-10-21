@@ -28,7 +28,7 @@ const { db } = require("../../confic/db");
 // };
 
 const CreatePlaceOrder = async (input) => {
-  const { userId, totalAmount, products } = input;
+  const { userId, totalAmount, products, locationId } = input;
   const couponId = input.couponId || null;
 
   try {
@@ -54,10 +54,10 @@ const CreatePlaceOrder = async (input) => {
         message: "Some products are out of stock.",
       };
     } else {
-      const insertOrder = `INSERT INTO orders (user_id, coupon_id, order_date, total_amount, order_status) VALUES (?, ?, CURRENT_DATE(), ?, "INPROGRESS")`;
+      const insertOrder = `INSERT INTO orders (user_id, coupon_id, order_date, total_amount, order_status, location_id) VALUES (?, ?, CURRENT_DATE(), ?, "INPROGRESS", ?)`;
       const [createOrder] = await db
         .promise()
-        .query(insertOrder, [userId, couponId, totalAmount]);
+        .query(insertOrder, [userId, couponId, totalAmount, locationId]);
 
       if (createOrder.affectedRows > 0) {
         const lastInsertedId = createOrder.insertId;
