@@ -69,11 +69,11 @@ queryParams.push(parseInt(limit), parseInt(offset));
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
-      const results = result.map((i) => ({
-        ...i,
-        product_name: `${i.product_name}(${i.size}${i.type})`,
-      }));
-      output(null, results);
+      // const results = result.map((i) => ({
+      //   ...i,
+      //   product_name: `${i.product_name}(${i.size}${i.type})`,
+      // }));
+      output(null, result);
     }
   });
 };

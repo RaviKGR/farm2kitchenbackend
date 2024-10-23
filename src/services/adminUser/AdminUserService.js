@@ -97,7 +97,7 @@ if(hasConditions) {
     const [updateResult] = await db
           .promise()
           .query(selectQuery, [...queryParams]);
-    if(selectQuery.length > 0) {
+    if(updateResult.length > 0) {
         return updateResult;
     } else {
         return [];
@@ -108,4 +108,20 @@ if(hasConditions) {
   }
 };
 
-module.exports = { addNewAdminUserService, UpdateAdminUserEnabledService, getAllAdminUserEnabledService };
+const getAllAdminRoleServcie = async () => {
+    try {
+      const selctQuery = `SELECT * FROM roles ORDER BY role_id ASC`;
+      const [result] = await db.promise().query(selctQuery);
+      if(result.length > 0) {
+        return result;
+      } else {
+        return [];
+      }
+    } catch (e) {
+      console.error(e);
+      return {success: false, status: 500, message: "datebase error"}
+    }
+    
+}
+
+module.exports = { addNewAdminUserService, UpdateAdminUserEnabledService, getAllAdminUserEnabledService, getAllAdminRoleServcie };

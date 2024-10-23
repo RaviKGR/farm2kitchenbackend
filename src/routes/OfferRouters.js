@@ -7,6 +7,7 @@ const {
   getOfferController,
   updateOfferConteroller,
   deleteOfferController,
+  getAllOffersController,
 } = require("../controllers/Offer/offerController");
 const { addNewCouponConnteroller, getCouponOfferController, getCouponOfferByIdController, getCouponOfferByUserIdController, updateCouponOfferConteroller, deleteCouponOfferController } = require("../controllers/Offer/couponOfferController");
 const OfferRouters = express.Router();
@@ -27,6 +28,10 @@ OfferRouters.post("/createOffers", uploadOffer.single('image'), addNewOfferContr
 OfferRouters.get("/getOffers", getOfferController);
 OfferRouters.put("/updateOffer", updateOfferConteroller);
 OfferRouters.delete("/deleteOffer", deleteOfferController);
+
+//  Customer API
+
+OfferRouters.get('/getAllOffers', getAllOffersController)
 
 //        Coupon offer routers
 

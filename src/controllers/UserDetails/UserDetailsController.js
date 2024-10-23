@@ -7,6 +7,7 @@ const {
   getUserDetailServieces,
   getAllUserdetailsService,
   addAddressByUserIdService,
+  getCustomerAddressByIdService,
 } = require("../../services/UserDetails/UserDetailServieces");
 
 const getUserDetailController = async (req, res) => {
@@ -146,17 +147,18 @@ const SearchUserDetailController = async (req, res) => {
 };
 
 const addAddressByUserIdController = async (req, res) => {
-  const { userId, street, city, state, postal_code, country, is_default } =
-    req.body;
+  const { userId, street, city, state, postalCode, country, isDefault } =
+    req.body;    
   try {
     if (
       !userId ||
       !street ||
       !city ||
       !state ||
-      !postal_code ||
+      !postalCode ||
       !country ||
-      !is_default
+      isDefault === null || 
+      isDefault === undefined
     ) {
       return res.status(400).json({ message: "All fields are required" });
     } else {
@@ -169,6 +171,22 @@ const addAddressByUserIdController = async (req, res) => {
   }
 };
 
+const getCustomerAddressByIdController = async (req, res) => {
+  const { userId } = req.query;
+  try {
+    if(!userId) {
+      return res.status(400).json({message: "All fields are required"})
+    } else {
+      const result = await getCustomerAddressByIdService(userId);
+      return res.status(200).json(result);
+    }
+  } catch(e) {
+    console.error(e);
+    return res.status(500).json({message: "Internal server error"})
+    
+  }
+}
+
 module.exports = {
   getUserDetailController,
   updateUserDetailController,
@@ -177,4 +195,5 @@ module.exports = {
   getUserController,
   SearchUserDetailController,
   addAddressByUserIdController,
+  getCustomerAddressByIdController
 };

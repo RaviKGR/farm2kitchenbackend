@@ -211,193 +211,190 @@ const GetCategoryIdProduct = async (input, output) => {
   });
 };
 
-const getProductByCategoryIdService = async (categoryId) => {
-  
-  return new Promise((resolve, reject) => {
-    const getCartQuery = `
-    SELECT 
-        p.product_id,
-        p.name AS product_name,
-        pv.variant_id,
-        pv.description AS variant_description,
-        pv.size,
-        pv.type,
-        i.quantity_in_stock,
-        i.price,
-        CASE 
-            WHEN i.quantity_in_stock = 0 THEN 'Out of Stock'
-            ELSE 'In Stock'
-        END AS stock_status,
-        pi.image_url,
-        pi.alt_text,
-        pi.is_primary,
-        c.category_id,
-        c.name AS category_name,
-        c.description AS category_description
-    FROM 
-        Product p
-    INNER JOIN 
-        productVariant pv ON p.product_id = pv.product_id
-    INNER JOIN 
-        Inventory i ON pv.variant_id = i.variant_id
-    LEFT JOIN
-        ProductImage pi ON pi.image_id = pv.variant_id
-    LEFT JOIN
-        Category c ON p.category_id = c.category_id
-    WHERE p.category_id = ?
-`;
-
-    db.query(getCartQuery, [categoryId], (err, cartResult) => {
-        if (err) {
-            console.error('Database error in getCartService (cart data):', err);
-            return reject(new Error('Failed to retrieve cart data from database'));
-        }
-
-        const getOfferQuery = `
-                    SELECT 
-                        o.offer_id,
-                        o.name AS offer_name,
-                        o.description AS offer_description,
-                        o.discountType,
-                        o.discountValue,
-                        o.start_date,
-                        o.end_date,
-                        od.offer_tag,
-                        od.tag_id
-                    FROM 
-                        Offer o
-                    JOIN 
-                        Offer_Details od ON o.offer_id = od.offer_id 
-                    AND o.deleted = 'n'  
-                    AND CURDATE() BETWEEN o.start_date AND o.end_date
-                `;
-
-
-        db.query(getOfferQuery, (err, offerResult) => {
-            if (err) {
-                console.error('Database error in getCartService (offer data):', err);
-                return reject(new Error('Failed to retrieve offer data from database'));
-            }
-            console.log(!offerResult.length)
-            // If no valid offer is found, handle gracefully
-            if (!offerResult.length) {
-                return resolve(cartResult); // No offer, return the original cart
-            }
-
-            const offerTagId = offerResult[0].tag_id;
-            const offerTagType = offerResult[0].offer_tag || ''; // Ensure it's a valid string
-            const discountType = offerResult[0].discountType;
-            let filteredCartData = [];
-            let noOfferCartData = [];
-
-            if (offerTagType.toLowerCase() === 'product') {
-                filteredCartData = cartResult.filter(product => product.product_id === offerTagId);
-                noOfferCartData = cartResult.filter(product => product.product_id !== offerTagId);
-            } else if (offerTagType.toLowerCase() === 'category') {
-                filteredCartData = cartResult.filter(product => product.category_id === offerTagId);
-                noOfferCartData = cartResult.filter(product => product.product_id !== offerTagId);
-            }
-
-            if (discountType.toLowerCase() === 'flat') {
-                const discountValue = parseFloat(offerResult[0].discountValue);
-                filteredCartData = filteredCartData.map(product => {
-                    const originalPrice = parseFloat(product.price);
-                    const discountedPrice = Math.max(0, originalPrice - discountValue);
-                    return {
-                        ...product,
-                        discountValue,
-                        originalPrice,
-                        price: discountedPrice.toFixed(2)
-                    };
-                });
-            }
-
-            if (discountType.toLowerCase() === 'percentage') {
-                const discountValue = parseFloat(offerResult[0].discountValue);
-                filteredCartData = filteredCartData.map(product => {
-                    const originalPrice = parseFloat(product.price);
-                    const discountAmount = (originalPrice * discountValue) / 100;
-                    const discountedPrice = Math.max(0, originalPrice - discountAmount);
-                    return {
-                        ...product,
-                        discountAmount,
-                        originalPrice,
-                        price: discountedPrice.toFixed(2)
-                    };
-                });
-            }
-
-            const result = [...filteredCartData, ...noOfferCartData];
-            resolve(result);
-        });
-    });
-});
-  // const selectQuery = `
-  //   SELECT 
-  //     p.product_id, 
-  //     p.name, 
-  //     p.brand,
-  //     p.category_id, 
-  //     p.status, 
-  //     p.deleted,
-  //     pv.variant_id,
-  //     pv.description, 
-  //     pv.size,
-  //     pv.type,
-  //     pv.barcode,
-  //     pv.is_primary, 
-  //     pi.id,
-  //     pi.image_id, 
-  //     pi.image_url, 
-  //     pi.image_tag, 
-  //     pi.alt_text, 
-  //     pi.is_primary
-  //   FROM product p
-  //   LEFT JOIN productvariant pv
-  //   ON pv.product_id = p.product_id
-  //   LEFT JOIN productimage pi
-  //   ON pi.image_id = pv.variant_id
-  //   WHERE p.category_id = ? AND pi.image_tag IN ("variant", pi.image_tag = "VARIANT") AND p.deleted = "N" AND p.status = True
+const getProductByCategoryIdService = async (category_Id) => {
+  //   return new Promise((resolve, reject) => {
+  //     const getCartQuery = `
+  //     SELECT
+  //         p.product_id,
+  //         p.name AS product_name,
+  //         pv.variant_id,
+  //         pv.description AS variant_description,
+  //         pv.size,
+  //         pv.type,
+  //         i.quantity_in_stock,
+  //         i.price,
+  //         CASE
+  //             WHEN i.quantity_in_stock = 0 THEN 'Out of Stock'
+  //             ELSE 'In Stock'
+  //         END AS stock_status,
+  //         pi.image_url,
+  //         pi.alt_text,
+  //         pi.is_primary,
+  //         c.category_id,
+  //         c.name AS category_name,
+  //         c.description AS category_description
+  //     FROM
+  //         Product p
+  //     INNER JOIN
+  //         productVariant pv ON p.product_id = pv.product_id
+  //     INNER JOIN
+  //         Inventory i ON pv.variant_id = i.variant_id
+  //     LEFT JOIN
+  //         ProductImage pi ON pi.image_id = pv.variant_id
+  //     LEFT JOIN
+  //         Category c ON p.category_id = c.category_id
+  //     WHERE p.category_id = ?
   // `;
-  // db.query(selectQuery, [category_Id], (err, result) => {
-  //   if (err) {
-  //     output({ error: { description: err.message } }, null);
-  //   } else { 
-          
-  //     const productList = {};
-  //     result.forEach((list) => {
-  //       if (!productList[list.product_id]) {
-  //         productList[list.product_id] = {
-  //           total_count: list.total_count,
-  //           product_id: list.product_id,
-  //           productName: `${list.name} (${list.size})`,
-  //           brandName: list.brand,
-  //           category_id: list.category_id,
-  //           status: list.status,
-  //           variant_id: list.variant_id,
-  //           description: list.description,
-  //           price: list.price,
-  //           size: list.size,
-  //           type: list.type,
-  //           barcode: list.barcode,
-  //           isPrimary: list.is_primary,
-  //           image: [],
-  //         };
-  //       }
-  //       productList[list.variant_id]?.image.push({
-  //         id: list.id,
-  //         image_id: list.image_id,
-  //         image_url: list.image_url,
-  //         image_tag: list.image_tag,
-  //         alt_text: list.alt_text,
-  //         is_primary: list.is_primary,
-  //       });
-  //     });
 
-  //     const productArray = Object.values(productList);
-  //     output(null, productArray);
-  //   }
+  //     db.query(getCartQuery, [category_Id], (err, cartResult) => {
+  //         if (err) {
+  //             console.error('Database error in getCartService (cart data):', err);
+  //             return reject(new Error('Failed to retrieve cart data from database'));
+  //         }
+
+  //         const getOfferQuery = `
+  //                     SELECT
+  //                         o.offer_id,
+  //                         o.name AS offer_name,
+  //                         o.description AS offer_description,
+  //                         o.discountType,
+  //                         o.discountValue,
+  //                         o.start_date,
+  //                         o.end_date,
+  //                         od.offer_tag,
+  //                         od.tag_id
+  //                     FROM
+  //                         Offer o
+  //                     JOIN
+  //                         Offer_Details od ON o.offer_id = od.offer_id
+  //                     AND o.deleted = 'n'
+  //                     AND CURDATE() BETWEEN o.start_date AND o.end_date
+  //                 `;
+
+  //         db.query(getOfferQuery, (err, offerResult) => {
+  //             if (err) {
+  //                 console.error('Database error in getCartService (offer data):', err);
+  //                 return reject(new Error('Failed to retrieve offer data from database'));
+  //             }
+  //             console.log(!offerResult.length)
+  //             // If no valid offer is found, handle gracefully
+  //             if (!offerResult.length) {
+  //                 return resolve(cartResult); // No offer, return the original cart
+  //             }
+
+  //             const offerTagId = offerResult[0].tag_id;
+  //             const offerTagType = offerResult[0].offer_tag || ''; // Ensure it's a valid string
+  //             const discountType = offerResult[0].discountType;
+  //             let filteredCartData = [];
+  //             let noOfferCartData = [];
+
+  //             if (offerTagType.toLowerCase() === 'product') {
+  //                 filteredCartData = cartResult.filter(product => product.product_id === offerTagId);
+  //                 noOfferCartData = cartResult.filter(product => product.product_id !== offerTagId);
+  //             } else if (offerTagType.toLowerCase() === 'category') {
+  //                 filteredCartData = cartResult.filter(product => product.category_id === offerTagId);
+  //                 noOfferCartData = cartResult.filter(product => product.product_id !== offerTagId);
+  //             }
+
+  //             if (discountType.toLowerCase() === 'flat') {
+  //                 const discountValue = parseFloat(offerResult[0].discountValue);
+  //                 filteredCartData = filteredCartData.map(product => {
+  //                     const originalPrice = parseFloat(product.price);
+  //                     const discountedPrice = Math.max(0, originalPrice - discountValue);
+  //                     return {
+  //                         ...product,
+  //                         discountValue,
+  //                         originalPrice,
+  //                         price: discountedPrice.toFixed(2)
+  //                     };
+  //                 });
+  //             }
+
+  //             if (discountType.toLowerCase() === 'percentage') {
+  //                 const discountValue = parseFloat(offerResult[0].discountValue);
+  //                 filteredCartData = filteredCartData.map(product => {
+  //                     const originalPrice = parseFloat(product.price);
+  //                     const discountAmount = (originalPrice * discountValue) / 100;
+  //                     const discountedPrice = Math.max(0, originalPrice - discountAmount);
+  //                     return {
+  //                         ...product,
+  //                         discountAmount,
+  //                         originalPrice,
+  //                         price: discountedPrice.toFixed(2)
+  //                     };
+  //                 });
+  //             }
+
+  //             const result = [...filteredCartData, ...noOfferCartData];
+  //             resolve(result);
+  //         });
+  //     });
   // });
+  const getProductsQuery = `
+  SELECT
+    p.product_id, 
+    p.name AS productName, 
+    p.brand AS brandName,
+    p.category_id, 
+    p.status, 
+    p.deleted
+  FROM product p
+  WHERE p.category_id = ?`;
+
+  const [productResult] = await db
+    .promise()
+    .query(getProductsQuery, [category_Id]);
+
+  if (productResult.length > 0) {
+    const variantResult = await Promise.all(
+      productResult.map(async (product) => {
+        const getQuery = `
+        SELECT
+          *
+        FROM productvariant pv
+        JOIN inventory i ON i.variant_id = i.variant_id
+        WHERE pv.variant_id = ?`;
+        const [variants] = await db
+          .promise()
+          .query(getQuery, [product.product_id]);
+
+        const variantsWithImages = await Promise.all(
+          variants.map(async (variant) => {
+            const getProductImagesQuery = `
+                SELECT
+                  pi.id,
+                  pi.image_url,
+                  pi.image_tag,
+                  pi.alt_text,
+                  pi.is_primary,
+                  pi.image_id
+                FROM productimage pi
+                WHERE pi.image_id = ? 
+                AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
+                AND pi.is_primary = 'Y';`;
+
+            const [imageResult] = await db
+              .promise()
+              .query(getProductImagesQuery, [variant.variant_id]);
+
+            return {
+              ...variant,
+              images: imageResult || [],
+            };
+          })
+        );
+
+        return {
+          ...product,
+          variants: variantsWithImages || [],
+        };
+      })
+    );
+
+    return variantResult;
+  } else {
+    return [];
+  }
 };
 
 const getProductByProductIdService = async (ProductId) => {
@@ -633,13 +630,13 @@ const getAllProductService = async (input, output) => {
           output({ error: { description: err.message } }, null);
         } else {
           const products = productResult.map((i) => {
-            const productName = `${i.productName} (${i.size}${i.type})`;
+            // const productName = `${i.productName} (${i.size}${i.type})`;
             const image = imageResult.filter(
               (j) => j.image_id === i.variant_id
             );
             return {
               ...i,
-              productName,
+              // productName,
               image,
             };
           });
@@ -724,13 +721,13 @@ const getFilterProductService = async (input, output) => {
         return output({ error: { description: err.message } }, null);
       } else {
         const products = productResult.map((product) => {
-          const productName = `${product.productName} (${product.size}${product.type})`;
+          // const productName = `${product.productName} (${product.size}${product.type})`;
           const image = imageResult.filter(
             (img) => img.image_id === product.variant_id
           );
           return {
             ...product,
-            productName,
+            // productName,
             image,
           };
         });
@@ -879,7 +876,10 @@ const getProductBarCodeService = async (input, output) => {
           const primaryImage = imageResult.find(
             (image) => image.image_id === variant.variant_id
           );
-          return { ...variant, image_url: primaryImage ? primaryImage.image_url : null };
+          return {
+            ...variant,
+            image_url: primaryImage ? primaryImage.image_url : null,
+          };
         });
         return variantResults;
       } else {

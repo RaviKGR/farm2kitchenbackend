@@ -3,6 +3,7 @@ const {
   getOfferService,
   updateOfferService,
   deleteOfferService,
+  getAllOffersService,
 } = require("../../services/Offers/OfferService");
 
 const addNewOfferController = async (req, res) => {
@@ -66,26 +67,18 @@ const updateOfferConteroller = async (req, res) => {
     offerId,
     offerName,
     description,
-    discountType,
     discountValue,
     startDate,
-    endDate,
-    id,
-    offerTag,
-    tagId,
+    endDate
   } = req.body;
   try {
     if (
       !offerId ||
       !offerName ||
       !description ||
-      !discountType ||
       !discountValue ||
       !startDate ||
-      !endDate ||
-      !id ||
-      !offerTag ||
-      !tagId
+      !endDate
     ) {
       res.status(400).send({ message: "Required All Fields" });
     } else {
@@ -115,10 +108,22 @@ const deleteOfferController = async (req, res) => {
   }
 };
 
+// customer 
+const getAllOffersController = async (req, res) => {
+  try {
+    const result = await getAllOffersService();
+    return res.status(200).json(result);
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({message: "Internal server error"})
+  }
+}
+
 
 module.exports = {
   addNewOfferController,
   getOfferController,
   updateOfferConteroller,
   deleteOfferController,
+  getAllOffersController
 };
