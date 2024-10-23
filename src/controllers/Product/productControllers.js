@@ -99,32 +99,32 @@ const GetCategoryIdProducts = async (req, res) => {
 };
 
 const getProductByCategoryIdController = async (req, res) => {
-  // try {
-  //   await getProductByCategoryIdService(req.query, (err, data) => {
-  //     if (err) res.status(400).send(err.error);
-  //     else res.status(200).send(data);
-  //   });
-  // } catch (error) {
-  //   throw error;
-  // }
-  const { categoryId } = req.query;  
+  const { category_Id } = req.query;
+  
   try {
-    const result = await getProductByCategoryIdService(categoryId);
-    if (!result || result.error) {
-      console.error("Service error in getCartController:", result.error);
-      return res.status(400).json({
-        success: false,
-        message: result.error || "Error retrieving cart data",
-      });
-    }
-    return res.status(200).json(result);
+  const result = await getProductByCategoryIdService(category_Id);
+    return res.status(200).json(result)
   } catch (error) {
-    console.error("Error in getCartController:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    throw error;
   }
+     
+  // try {
+  //   const result = await getProductByCategoryIdService(category_Id);
+  //   if (!result || result.error) {
+  //     console.error("Service error in getCartController:", result.error);
+  //     return res.status(400).json({
+  //       success: false,
+  //       message: result.error || "Error retrieving cart data",
+  //     });
+  //   }
+  //   return res.status(200).json(result);
+  // } catch (error) {
+  //   console.error("Error in getCartController:", error);
+  //   return res.status(500).json({
+  //     success: false,
+  //     message: "Internal Server Error",
+  //   });
+  // }
 };
 
 const getProductByProductIdController = async (req, res) => {

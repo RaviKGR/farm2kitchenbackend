@@ -216,6 +216,8 @@ const adminUser = `CREATE TABLE IF NOT EXISTS admin_user (
     email VARCHAR(100) NOT NULL,
     phone_number VARCHAR(20) NOT NULL,
     address VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    temp_password VARCHAR(5) NOT NULL,
     enabled VARCHAR(5) NOT NULL
 )`;
 

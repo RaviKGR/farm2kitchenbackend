@@ -189,11 +189,11 @@ const getUserService = async (input, output) => {
 };
 
 const addAddressByUserIdService = async (input) => {
-  const { userId, street, city, state, postal_code, country, is_default } =
-    input;
+  const { userId, street, city, state, postalCode, country, isDefault } =
+    input;    
   try {
     const insertQuery = `INSERT INTO address (user_id, street, city, state, postal_code, country, is_default) VALUES (?, ?, ?, ?, ?, ?, ?);`
-    const [result] = await db.promise().query(insertQuery, [userId, street, city, state, postal_code, country, is_default]);
+    const [result] = await db.promise().query(insertQuery, [userId, street, city, state, postalCode, country, isDefault]);
     if(result.affectedRows > 0) {
       return {success: true, status: 201, message: "Added successfully"}
     } else {
@@ -205,6 +205,39 @@ const addAddressByUserIdService = async (input) => {
   }
 };
 
+const getCustomerAddressByIdService = async (userId) => {
+    try {
+      const getQuery = `
+       SELECT
+        us.user_id,
+        us.name,
+        us.email,
+        us.phone_number,
+        ad.address_id,
+        ad.street,
+        ad.city,
+        ad.state,
+        ad.postal_code,
+        ad.country,
+        ad.is_default
+        FROM users us
+        JOIN address ad
+        ON ad.user_id = us.user_id
+        WHERE ad.user_id = ?
+        `;
+
+        const [result] = await db.promise().query(getQuery, [userId]);
+        if(result.length > 0) {
+          return result;
+        } else {
+          return [];
+        }
+    } catch (e) {
+      console.error(e);
+      return {success: false, status: 400, message: "Database error"}
+    }
+}
+
 module.exports = {
   getUserDetailServieces,
   updateUserDetailServices,
@@ -213,4 +246,5 @@ module.exports = {
   SearchUserDetailServices,
   getAllUserdetailsService,
   addAddressByUserIdService,
+  getCustomerAddressByIdService
 };
