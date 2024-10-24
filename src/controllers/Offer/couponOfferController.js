@@ -54,7 +54,7 @@ const addNewCouponConnteroller = async (req, res) => {
 };
 
 const getCouponOfferController = async (req, res) => {
-  const { limit, offset } = req.query;
+  const { limit, offset, CouponName, startDate, endDate } = req.query;
   try {
     if (!limit || !offset) {
       res.status(400).send("Required All The Fields");
