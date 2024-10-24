@@ -6,6 +6,8 @@ const {
 
 const addNewPurchaseController = async (req, res) => {
   const { variantId, quantity, purchasePrice, HST, purchaseDate, vendor } = req.body;
+  console.log(req.body);
+  
   try {
     if (!variantId || !quantity || !purchasePrice || !HST || !purchaseDate || !vendor) {
       res.status(400).send({ message: "All fields are required" });

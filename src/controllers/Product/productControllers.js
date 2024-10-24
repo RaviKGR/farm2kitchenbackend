@@ -19,6 +19,7 @@ const {
   getFilterProductService,
   addNewProductImageService,
   getProductvariantByproService,
+  getProductByOfferService,
 } = require("../../services/Product/productServices");
 
 const addNewProductController = async (req, res) => {
@@ -100,14 +101,14 @@ const GetCategoryIdProducts = async (req, res) => {
 
 const getProductByCategoryIdController = async (req, res) => {
   const { category_Id } = req.query;
-  
+
   try {
-  const result = await getProductByCategoryIdService(category_Id);
-    return res.status(200).json(result)
+    const result = await getProductByCategoryIdService(category_Id);
+    return res.status(200).json(result);
   } catch (error) {
     throw error;
   }
-     
+
   // try {
   //   const result = await getProductByCategoryIdService(category_Id);
   //   if (!result || result.error) {
@@ -143,17 +144,21 @@ const getProductByProductIdController = async (req, res) => {
 };
 
 const getAllProductController = async (req, res) => {
-  const { categoryId, productName, limit, offset } = req.query;
+  const { categoryId, productName, limit, offset, offerId, offerTag } =
+    req.query;
   try {
     if (!limit || !offset) {
       res.status(400).send({ message: "All fields are required" });
-    } else if (!productName && !categoryId) {
-      await getAllProductService(req.query, (err, data) => {
+    } else if (productName || categoryId) {
+      await getFilterProductService(req.query, (err, data) => {
         if (err) res.status(400).send(err.error);
         else res.send(data);
       });
-    } else if (productName || categoryId) {
-      await getFilterProductService(req.query, (err, data) => {
+    } else if (offerId && offerTag) {
+      const result = await getProductByOfferService(req.query);
+      return res.status(200).json(result);
+    } else {
+      await getAllProductService(req.query, (err, data) => {
         if (err) res.status(400).send(err.error);
         else res.send(data);
       });

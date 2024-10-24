@@ -82,18 +82,18 @@ const addNewOfferServer = async (input, output) => {
 const getOfferService = async (input, output) => {
   const { limit, offset, offerName, startDate, endDate } = input;
 
-  let whereClause = "";
-  const queryParams= [];
-  const hasConditions = offerName || startDate || endDate
+  let whereClause = "off.deleted = 'N' ";
+  const queryParams = [];
+  const hasConditions = offerName || startDate || endDate;
 
-  if(hasConditions) {
-    if(offerName) {
-      whereClause += "off.name LIKE ?";
-      queryParams.push(`%${offerName}%`)
+  if (hasConditions) {
+    if (offerName) {
+      whereClause += "AND off.name LIKE ? ";
+      queryParams.push(`%${offerName}%`);
     }
 
-    if(startDate && endDate) {
-      whereClause += (whereClause ? "AND " : "") + "off.start_date <= ? AND off.end_date >= ?";
+    if (startDate && endDate) {
+      whereClause += "AND off.start_date <= ? AND off.end_date >= ?";
       queryParams.push(startDate, endDate);
     }
   }
@@ -114,32 +114,22 @@ const getOfferService = async (input, output) => {
     FROM offer off
     JOIN offer_details od
     ON off.offer_id = od.offer_id
-    WHERE off.deleted = "N"
+    WHERE ${whereClause}
     LIMIT ? OFFSET ?`;
 
-    
-  db.query(
-    getOfferQuery,
-    [parseInt(limit), parseInt(offset)],
-    (err, result) => {
-      if (err) {
-        output({ error: { description: err.message } }, null);
-      } else {
-        output(null, result);
-      }
+  queryParams.push(parseInt(limit), parseInt(offset));
+  db.query(getOfferQuery, [...queryParams], (err, result) => {
+    if (err) {
+      output({ error: { description: err.message } }, null);
+    } else {
+      output(null, result);
     }
-  );
+  });
 };
 
 const updateOfferService = async (input, output) => {
-  const {
-    offerId,
-    offerName,
-    description,
-    discountValue,
-    startDate,
-    endDate
-  } = input;
+  const { offerId, offerName, description, discountValue, startDate, endDate } =
+    input;
   // const offerTag = input.offerTag.toUpperCase();
   const updateOfferQuery = `
     UPDATE offer SET name = ?, description = ?, discountValue = ?, start_date = ?, end_date = ? WHERE offer_id = ?;
@@ -150,14 +140,7 @@ const updateOfferService = async (input, output) => {
   //   `;
   db.query(
     updateOfferQuery,
-    [
-      offerName,
-      description,
-      discountValue,
-      startDate,
-      endDate,
-      offerId,
-    ],
+    [offerName, description, discountValue, startDate, endDate, offerId],
     (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
@@ -179,7 +162,7 @@ const deleteOfferService = async (offerId, output) => {
   });
 };
 
-// customer 
+// customer
 
 const getAllOffersService = async () => {
   const getOfferQuery = `
@@ -201,17 +184,49 @@ const getAllOffersService = async () => {
   ON off.offer_id = od.offer_id
   WHERE off.deleted = "N" AND pi.image_tag IN ('offer' , 'OFFER')`;
   const [result] = await db.promise().query(getOfferQuery);
-  if(result.length > 0) {
+  if (result.length > 0) {
     return result;
   } else {
-    return []
+    return [];
   }
-}
+};
+const getCategoryOfferService = async () => {
+  try {
+    const getOfferQuery = `
+  SELECT
+  off.offer_id,
+  off.name,
+  off.description,
+  off.discountType,
+  off.discountValue,
+  off.start_date,
+  off.end_date,
+  od.id,
+  od.offer_tag,
+  od.tag_id,
+  pi.*
+  FROM offer off
+  JOIN productimage pi ON pi.image_id = off.offer_id
+  JOIN offer_details od
+  ON off.offer_id = od.offer_id
+  WHERE od.offer_tag IN ('category', 'CATEGORY') AND off.deleted = "N" AND pi.image_tag IN ('offer' , 'OFFER')`;
+    const [result] = await db.promise().query(getOfferQuery);
+    if (result.length > 0) {
+      return result;
+    } else {
+      return [];
+    }
+  } catch (e) {
+    console.error(e);
+    return { success: false, status: 500, message: "Database error" };
+  }
+};
 
 module.exports = {
   addNewOfferServer,
   getOfferService,
   updateOfferService,
   deleteOfferService,
-  getAllOffersService
+  getAllOffersService,
+  getCategoryOfferService,
 };

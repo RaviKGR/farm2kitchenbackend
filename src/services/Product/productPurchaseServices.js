@@ -17,7 +17,7 @@ const addNewPurchaseService = async (input, output) => {
             output({ error: { description: err.message } }, null);
           } else {
             const inventoryId = result[0].inventory_id;
-            const Quantity = result[0].quantity_in_stock + quantity;
+            const Quantity = (result[0].quantity_in_stock ?? 0) + quantity;
             const insertQuery = `UPDATE inventory SET quantity_in_stock = ? WHERE inventory_id = ?`;
             db.query(insertQuery, [Quantity, inventoryId], (err, results) => {
               if (err) {

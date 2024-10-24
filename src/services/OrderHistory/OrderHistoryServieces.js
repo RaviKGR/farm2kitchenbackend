@@ -71,16 +71,15 @@ const getAllOrderHistoryService = async (input) => {
 
     const selectQuery = `
         SELECT
-          COUNT(*) OVER() AS total_count,
+          COUNT(o.order_id) OVER() AS total_count,
           o.*, 
-          oi.*, 
           u.*,
           sl.*
         FROM orders o 
-        JOIN orderitem oi ON oi.order_id = o.order_id 
         JOIN users u ON u.user_id = o.user_id
         JOIN servicelocation sl ON sl.location_id = o.location_id
         ${hasConditions ? `WHERE ${whereClause}` : ""}
+        ORDER BY o.order_date DESC
         LIMIT ? OFFSET ?
       `;
 

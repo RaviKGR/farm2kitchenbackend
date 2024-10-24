@@ -40,7 +40,23 @@ const addNewCouponService = async (input, output) => {
 };
 
 const getCouponOfferService = async (input, output) => {
-  const { limit, offset } = input;
+  const { limit, offset, CouponName, startDate, endDate } = input;
+
+  let whereClause = "c.deleted = 'N' ";
+  const queryParams= [];
+  const hasConditions = CouponName || startDate || endDate
+
+  if(hasConditions) {
+    if(CouponName) {
+      whereClause += "AND c.name LIKE ? ";
+      queryParams.push(`%${CouponName}%`)
+    }
+
+    if(startDate && endDate) {
+      whereClause += "AND c.start_date <= ? AND c.end_date >= ?";
+      queryParams.push(startDate, endDate);
+    }
+  }
   const getOfferQuery = `
     SELECT
     COUNT(*) OVER() AS total_count,
@@ -56,11 +72,12 @@ const getCouponOfferService = async (input, output) => {
     c.end_date
     FROM coupon c
     JOIN users u ON u.user_id = c.user_id
-    WHERE deleted = "N"    
+    WHERE ${whereClause}    
     LIMIT ? OFFSET ?`;
+    queryParams.push(parseInt(limit), parseInt(offset))
   db.query(
     getOfferQuery,
-    [parseInt(limit), parseInt(offset)],
+    [...queryParams],
     (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
