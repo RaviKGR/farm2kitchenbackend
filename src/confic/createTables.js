@@ -231,6 +231,16 @@ CREATE TABLE IF NOT EXISTS tokens (
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );`;
 
+const adminTokens = `
+CREATE TABLE IF NOT EXISTS admin_tokens (
+    token_id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_user_id BIGINT NOT NULL,
+    token VARCHAR(555) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_user_id) REFERENCES admin_user(admin_user_id)
+);`;
+
 const roles = `
 CREATE TABLE IF NOT EXISTS roles (
     role_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -303,47 +313,48 @@ const paymentHistory = `CREATE TABLE IF NOT EXISTS payment_history(
     user_name VARCHAR(50) NOT NULL,
     payment_status VARCHAR(50) NOT NULL,
     FOREIGN KEY (order_id) REFERENCES Orders(order_id)
-)`
+)`;
 
 // Function to execute the queries
 async function createTables() {
-    try {
-        await db.promise().query(Users);
-        await db.promise().query(createAddressTable);
-        await db.promise().query(Category);
-        await db.promise().query(createAddressTable);
-        await db.promise().query(SubCategory);
-        await db.promise().query(Packaging);
-        await db.promise().query(Product);
-        await db.promise().query(Supplier);
-        await db.promise().query(productvariant);
-        await db.promise().query(Inventory);
-        await db.promise().query(productPurchase);
-        await db.promise().query(Offer);
-        await db.promise().query(offerDetails);
-        await db.promise().query(couponOffer);
-        await db.promise().query(serviceLocation);
-        await db.promise().query(Order);
-        await db.promise().query(OrderItem);
-        await db.promise().query(DeliveryPerson);
-        await db.promise().query(Delivery);
-        await db.promise().query(ProductImage);
-        await db.promise().query(users_credentials);
-        await db.promise().query(tokens);
-        await db.promise().query(adminUser);
-        await db.promise().query(roles);
-        await db.promise().query(user_roles);
-        await db.promise().query(permissions);
-        await db.promise().query(role_permissions);
-        await db.promise().query(otps);
-        await db.promise().query(favorites);
-        await db.promise().query(cart);
-        await db.promise().query(ProductSize);
-        await db.promise().query(paymentHistory);
-        console.log("All tables created successfully.");
-    } catch (error) {
-        console.error("Error creating tables:", error.message);
-    }
+  try {
+    await db.promise().query(Users);
+    await db.promise().query(createAddressTable);
+    await db.promise().query(Category);
+    await db.promise().query(createAddressTable);
+    await db.promise().query(SubCategory);
+    await db.promise().query(Packaging);
+    await db.promise().query(Product);
+    await db.promise().query(Supplier);
+    await db.promise().query(productvariant);
+    await db.promise().query(Inventory);
+    await db.promise().query(productPurchase);
+    await db.promise().query(Offer);
+    await db.promise().query(offerDetails);
+    await db.promise().query(couponOffer);
+    await db.promise().query(serviceLocation);
+    await db.promise().query(Order);
+    await db.promise().query(OrderItem);
+    await db.promise().query(DeliveryPerson);
+    await db.promise().query(Delivery);
+    await db.promise().query(ProductImage);
+    await db.promise().query(users_credentials);
+    await db.promise().query(tokens);
+    await db.promise().query(adminTokens);
+    await db.promise().query(adminUser);
+    await db.promise().query(roles);
+    await db.promise().query(user_roles);
+    await db.promise().query(permissions);
+    await db.promise().query(role_permissions);
+    await db.promise().query(otps);
+    await db.promise().query(favorites);
+    await db.promise().query(cart);
+    await db.promise().query(ProductSize);
+    await db.promise().query(paymentHistory);
+    console.log("All tables created successfully.");
+  } catch (error) {
+    console.error("Error creating tables:", error.message);
+  }
 }
 
 // Run the function to create tables

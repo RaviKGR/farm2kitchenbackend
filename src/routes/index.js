@@ -12,20 +12,22 @@ const serviceLocationRouters = require("./serviceLocation");
 const adminUserRouter = require("./adminUserRoutes");
 const placeOrderRouters = require("./placeOrderRouter");
 const imageRouters = require("./imageRouters");
+const AdminAuthRoutes = require("./AdminAuthRoutes");
 const routes = express.Router();
 
-routes.use('/category', categoryRoutes);
-routes.use('/product', ProductRoutes);
-routes.use('/favorites', favoritesRoutes);
-routes.use('/authentication', authenticationRouters);
-routes.use('/orderhistory', OrderHistoryRouters);
-routes.use('/carts', AddCartRouters)
-routes.use('/inventory', InventoryRouters);
-routes.use('/offer', OfferRouters);
-routes.use('/userDetails', userDetailRouters)
-routes.use('/serviceLocation', serviceLocationRouters)
-routes.use('/adminUser', adminUserRouter);
-routes.use('/placeOrder', placeOrderRouters);
-routes.use('/image', imageRouters)
+routes.use("/category", categoryRoutes);
+routes.use("/product", ProductRoutes);
+routes.use("/favorites", favoritesRoutes);
+routes.use("/authentication", authenticationRouters);
+routes.use("/adminAuth", AdminAuthRoutes);
+routes.use("/orderhistory", OrderHistoryRouters);
+routes.use("/carts", AddCartRouters);
+routes.use("/inventory", InventoryRouters);
+routes.use("/offer", OfferRouters);
+routes.use("/userDetails", userDetailRouters);
+routes.use("/serviceLocation", serviceLocationRouters);
+routes.use("/adminUser", adminUserRouter);
+routes.use("/placeOrder", placeOrderRouters);
+routes.use("/image", imageRouters);
 
 module.exports = routes;

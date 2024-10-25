@@ -30,4 +30,22 @@ const DECODE_TOKEN = (token) => {
   return decoded; // Returns the decoded payload
 };
 
-module.exports = { GENERATE_TOKEN, VERIFY_TOKEN, DECODE_TOKEN };
+const GENERATE_RANDOM_PASSWORD = (length) => {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*_?";
+  let password = "";
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * chars.length);
+    password += chars[randomIndex];
+  }
+
+  return password;
+};
+
+module.exports = {
+  GENERATE_TOKEN,
+  VERIFY_TOKEN,
+  DECODE_TOKEN,
+  GENERATE_RANDOM_PASSWORD,
+};

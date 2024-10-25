@@ -1,4 +1,9 @@
 const {
+  loadTemplate,
+  GREETINGS_TEMPLATE,
+  SENDEMAIL,
+} = require("../../email/emailconfic");
+const {
   addNewAdminUserService,
   UpdateAdminUserEnabledService,
   getAllAdminUserEnabledService,
@@ -12,7 +17,26 @@ const addNewAdminUserController = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     } else {
       const result = await addNewAdminUserService(req.body);
-      return res.status(result.success ? 201 : 400).json(result);
+      console.log(result.data);
+      if (result.success) {
+        const template = loadTemplate(
+          {
+            password: result?.data?.password,
+            name: result?.data?.name,
+            email: result?.data?.email,
+          },
+          GREETINGS_TEMPLATE
+        );
+
+        const send = await SENDEMAIL(result?.data?.email, template);
+        console.log(send);
+
+        if (send) {
+          return res.status(201).json(result);
+        }
+      }
+
+      return res.status(result.status).json(result);
     }
   } catch (e) {
     console.error(e);
@@ -63,5 +87,5 @@ module.exports = {
   addNewAdminUserController,
   UpdateAdminUserEnabledController,
   getAllAdminUserEnabledController,
-  getAllAdminRoleController
+  getAllAdminRoleController,
 };
