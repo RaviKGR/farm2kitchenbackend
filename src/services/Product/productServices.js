@@ -742,16 +742,15 @@ const getProductByOfferService = async (input) => {
       const [offerResult] = await db
         .promise()
         .query(getoffer, [offerId, offerTag]);
-        console.log(offerResult);
-        
+      console.log(offerResult);
+
       if (offerResult.length > 0) {
         const result = await Promise.all(
           offerResult.map(async (cate) => {
-            return await getProductByCategoryIdService(cate.tag_id)
+            return await getProductByCategoryIdService(cate.tag_id);
           })
-          
         );
-        return result.flat()
+        return result.flat();
       } else {
         return [];
       }
@@ -760,10 +759,12 @@ const getProductByOfferService = async (input) => {
       const [offerResult] = await db
         .promise()
         .query(getoffer, [offerId, offerTag]);
-        console.log(offerResult);
-        
+      console.log(offerResult);
+
       if (offerResult.length > 0) {
-        const getProductVariantsQuery = `
+        const ProductVariant = await Promise.all(
+          offerResult.map(async (off) => {
+            const getProductVariantsQuery = `
             SELECT
               pv.product_id,
               pv.variant_id,
@@ -792,7 +793,7 @@ const getProductByOfferService = async (input) => {
             LEFT JOIN category ca ON ca.category_id = c.parent_category_id
             WHERE pv.variant_id = ?;
           `;
-                const getProductImagesQuery = `
+            const getProductImagesQuery = `
             SELECT 
               pi.id,
               pi.image_url, 
@@ -803,20 +804,28 @@ const getProductByOfferService = async (input) => {
             FROM productimage pi
             WHERE (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT');
           `;
-       const [variantResult] = await db.promise().query(getProductVariantsQuery, [offerId]);
-        if(variantResult.length > 0) {
-          const [imageResult] = await db.promise().query(getProductImagesQuery);
-          const variant = variantResult.map((i) => {
-            const image = imageResult.filter(
-              (j) => j.image_id === i.variant_id
-            );
-            return {
-              ...i,
-              image,
-            };
-          });
-          return variant;
-        }
+            const [variantResult] = await db
+              .promise()
+              .query(getProductVariantsQuery, [off.tag_id]);
+            const [imageResult] = await db
+              .promise()
+              .query(getProductImagesQuery);
+
+            if (variantResult.length > 0) {
+              const variant = variantResult.map((i) => {
+                const images = imageResult.filter(
+                  (img) => img.image_id === i.variant_id
+                );
+                return { ...i, images };
+              });
+              return variant;
+            }
+            return [];
+          })
+        );
+
+        const flattenedProductVariants = ProductVariant.flat();
+        return flattenedProductVariants;
       } else {
         return [];
       }

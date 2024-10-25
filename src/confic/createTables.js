@@ -283,12 +283,12 @@ CREATE TABLE IF NOT EXISTS otps (
 
 const cart = `CREATE TABLE IF NOT EXISTS cart (
     cart_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    user_id BIGINT NOT NULL,
     variant_id BIGINT NOT NULL,
     quantity_count BIGINT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (variant_id) REFERENCES productvariant(variant_id),
-    FOREIGN KEY (user_id) REFERENCES users_credentials (user_id)
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
 
 );`;
 

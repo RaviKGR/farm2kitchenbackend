@@ -4,12 +4,14 @@ const {
 } = require("../../services/AddCartServices/AddCartServices");
 
 const AddCartController = async (req, res) => {
-  const { userId, variantId, counts } = req.body;
+  console.log(req.query);
+  
+  const { userId, variantId, counts } = req.query;
   try {
     if (!userId || !variantId || !counts) {
       return res.status(400).json({ message: "All fields are required" });
     } else {
-      const result = await AddCartService(req.body);
+      const result = await AddCartService(req.query);
       return res.status(result.status ?? 201).json(result);
     }
   } catch (e) {

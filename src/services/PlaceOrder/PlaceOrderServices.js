@@ -54,7 +54,7 @@ const CreatePlaceOrder = async (input) => {
         message: "Some products are out of stock.",
       };
     } else {
-      const insertOrder = `INSERT INTO orders (user_id, coupon_id, order_date, total_amount, order_status, location_id) VALUES (?, ?, CURRENT_DATE(), ?, "INPROGRESS", ?)`;
+      const insertOrder = `INSERT INTO orders (user_id, coupon_id, order_date, total_amount, order_status, location_id) VALUES (?, ?, CURRENT_DATE(), ?, "PLACED", ?)`;
       const [createOrder] = await db
         .promise()
         .query(insertOrder, [userId, couponId, totalAmount, locationId]);
