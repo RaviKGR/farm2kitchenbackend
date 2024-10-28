@@ -238,6 +238,106 @@ const getCategoryOfferService = async () => {
   }
 };
 
+const getCategoryProductByOfferService = async (input) => {
+  try {
+    // Query to get offers with specified tags
+    const getOfferQuery = `
+      SELECT
+        off.offer_id,
+        off.name AS offer_name,
+        od.id,
+        od.offer_tag,
+        od.tag_id,
+        c.name AS category_name
+      FROM offer off
+      JOIN offer_details od ON od.offer_id = off.offer_id
+      JOIN category c ON c.category_id = od.tag_id
+      WHERE od.offer_tag IN ('category', 'CATEGORY') AND off.deleted = "N"
+      LIMIT 5 OFFSET 0
+    `;
+    const [offerResult] = await db.promise().query(getOfferQuery);
+
+    if (offerResult.length > 0) {
+      const mainResult = await Promise.all(
+        offerResult.map(async (list) => {
+          // Query to get products for each category
+          const getProductsQuery = `
+            SELECT
+              p.product_id, 
+              p.name AS productName, 
+              p.brand AS brandName,
+              p.category_id,
+              pi.id,
+              pi.image_url,
+              pi.image_tag,
+              pi.alt_text,
+              pi.is_primary,
+              pi.image_id,
+              i.price,
+              i.discount_percentage
+            FROM product p
+            JOIN productvariant pv ON pv.product_id = p.product_id
+            JOIN productimage pi ON pi.image_id = pv.variant_id
+            JOIN inventory i ON i.inventory_id = pv.variant_id
+            WHERE p.category_id = ? 
+            AND pv.is_primary = 'Y'
+            AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
+            AND pi.is_primary = 'Y';
+          `;
+          const [productResult] = await db.promise().query(getProductsQuery, [list.tag_id]);
+
+          // const productsWithImages = await Promise.all(
+          //   productResult.map(async (product) => {
+          //     // Query to get the primary image associated with the product's primary variant
+          //     const getProductImagesQuery = `
+          //       SELECT
+          //         pi.id,
+          //         pi.image_url,
+          //         pi.image_tag,
+          //         pi.alt_text,
+          //         pi.is_primary,
+          //         pi.image_id,
+          //         i.price,
+          //         i.discount_percentage
+          //       FROM productimage pi
+          //       JOIN productvariant pv ON pi.image_id = pv.variant_id
+          //       JOIN inventory i ON i.variant_id = pv.variant_id
+          //       WHERE pv.product_id = ? 
+          //       AND pv.is_primary = 'Y'
+          //       AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
+          //       AND pi.is_primary = 'Y';
+          //     `;
+          //     const [imageResult] = await db.promise().query(getProductImagesQuery, [product.product_id]);
+
+          //     return {
+          //       ...product,
+          //       images: imageResult || [], // Directly attach images to each product
+          //     };
+          //   })
+          // );
+
+          return {
+            offer_id: list.offer_id,
+            offer_name: list.offer_name,
+            category_id: list.tag_id,
+            category_name: list.category_name,
+            products: productResult,
+          };
+        })
+      );
+
+      return mainResult;
+    } else {
+      return [];
+    }
+  } catch (e) {
+    console.error(e);
+    return { success: false, status: 400, message: "Database Error" };
+  }
+};
+
+
+
 module.exports = {
   addNewOfferServer,
   getOfferService,
@@ -245,4 +345,5 @@ module.exports = {
   deleteOfferService,
   getAllOffersService,
   getCategoryOfferService,
+  getCategoryProductByOfferService,
 };

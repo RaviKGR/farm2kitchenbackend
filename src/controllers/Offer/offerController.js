@@ -5,6 +5,7 @@ const {
   deleteOfferService,
   getAllOffersService,
   getCategoryOfferService,
+  getCategoryProductByOfferService,
 } = require("../../services/Offers/OfferService");
 
 const addNewOfferController = async (req, res) => {
@@ -130,6 +131,16 @@ const getCategoryOffersController = async (req, res) => {
   }
 }
 
+const getCategoryProductByOfferController = async (req, res) => {
+  try {
+    const result = await getCategoryProductByOfferService();
+    return res.status(result.status === 400 ? 400 : 200).json(result);
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({message: "Internal server error"})
+  }
+}
+
 
 
 module.exports = {
@@ -138,5 +149,6 @@ module.exports = {
   updateOfferConteroller,
   deleteOfferController,
   getAllOffersController,
-  getCategoryOffersController
+  getCategoryOffersController,
+  getCategoryProductByOfferController
 };

@@ -62,8 +62,10 @@ const addNewProductController = async (req, res) => {
       await addNewProductService(
         { ...req.body, images: imageUrls },
         (err, data) => {
-          if (err) res.status(400).send(err.error);
-          else res.status(data.status === 400 ? 400 : 201).send(data);
+          console.log(err);
+          
+          if (err) res.status(400).send(err.message);
+          else res.status(201).send(data);
         }
       );
     }

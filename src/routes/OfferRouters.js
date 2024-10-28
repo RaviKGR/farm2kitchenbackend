@@ -9,6 +9,7 @@ const {
   deleteOfferController,
   getAllOffersController,
   getCategoryOffersController,
+  getCategoryProductByOfferController,
 } = require("../controllers/Offer/offerController");
 const { addNewCouponConnteroller, getCouponOfferController, getCouponOfferByIdController, getCouponOfferByUserIdController, updateCouponOfferConteroller, deleteCouponOfferController } = require("../controllers/Offer/couponOfferController");
 const OfferRouters = express.Router();
@@ -34,6 +35,8 @@ OfferRouters.delete("/deleteOffer", deleteOfferController);
 
 OfferRouters.get('/getAllOffers', getAllOffersController);
 OfferRouters.get('/getCategoryByOffer', getCategoryOffersController);
+OfferRouters.get('/getcategoryProductByOffer', getCategoryProductByOfferController);
+
 
 //        Coupon offer routers
 
