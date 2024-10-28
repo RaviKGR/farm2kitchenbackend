@@ -123,10 +123,12 @@ const ResetPasswordService = async (input) => {
           message: "Entered password is Incorrect",
         };
       } else {
+        const saltRounds = 10;
+        const newPassword = await bcrypt.hash(password, saltRounds);
         const insertQuery = `UPDATE admin_user SET password = ?, temp_password = "N" WHERE admin_user_id = ?`;
         const [insert] = await db
           .promise()
-          .query(insertQuery, [password, userId]);
+          .query(insertQuery, [newPassword, userId]);
         console.log("insert", insert);
         if (insert.affectedRows !== 0) {
           return {
