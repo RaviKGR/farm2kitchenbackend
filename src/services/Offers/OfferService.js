@@ -80,11 +80,11 @@ const addNewOfferServer = async (input, output) => {
 };
 
 const getOfferService = async (input, output) => {
-  const { limit, offset, offerName, startDate, endDate } = input;
+  const { limit, offset, offerName, startDate, endDate, status } = input;
 
   let whereClause = "off.deleted = 'N' ";
   const queryParams = [];
-  const hasConditions = offerName || startDate || endDate;
+  const hasConditions = offerName || startDate || endDate || status;
 
   if (hasConditions) {
     if (offerName) {
@@ -92,6 +92,10 @@ const getOfferService = async (input, output) => {
       queryParams.push(`%${offerName}%`);
     }
 
+    if (startDate && endDate) {
+      whereClause += "AND off.start_date <= ? AND off.end_date >= ?";
+      queryParams.push(startDate, endDate);
+    }
     if (startDate && endDate) {
       whereClause += "AND off.start_date <= ? AND off.end_date >= ?";
       queryParams.push(startDate, endDate);
@@ -122,7 +126,19 @@ const getOfferService = async (input, output) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
-      output(null, result);
+      console.log("result", result);
+      const currentDate = new Date();
+
+      const updatedResult = result.map((offer) => {
+        const endDate = new Date(offer.end_date);
+
+        return {
+          ...offer,
+          status: endDate < currentDate ? "EXPIRED" : "ACTIVE",
+        };
+      });
+
+      output(null, updatedResult);
     }
   });
 };

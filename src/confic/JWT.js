@@ -14,17 +14,19 @@ const VERIFY_TOKEN = async (value) => {
     const verify = jwt.verify(value, Secret);
     console.log("verify", verify);
 
-    return verify;
+    return { success: true, decoded: verify };
   } catch (error) {
+    console.error("Token verification error:", error);
     if (error.name === "TokenExpiredError") {
-      throw new Error("Token has expired");
+      return { success: false, error: "Token has expired" };
     } else if (error.name === "JsonWebTokenError") {
-      throw new Error("Invalid token");
+      return { success: false, error: "Invalid token" };
     } else {
-      throw new Error("Token verification failed");
+      return { success: false, error: "Token verification failed" };
     }
   }
 };
+
 const DECODE_TOKEN = (token) => {
   const decoded = jwt.decode(token);
   return decoded; // Returns the decoded payload

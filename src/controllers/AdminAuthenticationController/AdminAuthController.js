@@ -6,6 +6,7 @@ const {
 const {
   LoginService,
   ForgotPasswordService,
+  ResetPasswordService,
 } = require("../../services/AdminAuthenticationService/AdminAuthServices");
 
 const LoginController = async (req, res) => {
@@ -80,7 +81,7 @@ const ResetPasswordController = async (req, res) => {
         message: "required details missing",
       });
     } else {
-      const result = await ForgotPasswordService(req.body.email);
+      const result = await ResetPasswordService(req.body);
       console.log(result.data);
       return res.status(result.status).json(result);
     }
@@ -108,9 +109,18 @@ const LogOutController = async (req, res) => {
   }
 };
 
+const GetUserController = async (req, res) => {
+  const user = req.user;
+  console.log("user", req.status);
+  if (user !== undefined && user) {
+    res.status(200).json({ message: "Access granted", ...user.value });
+  }
+};
+
 module.exports = {
   LoginController,
   ForgotPasswordController,
   ResetPasswordController,
   LogOutController,
+  GetUserController,
 };

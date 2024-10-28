@@ -6,7 +6,7 @@ const addNewPurchaseService = async (input, output) => {
   const insertQuery = `INSERT INTO productPurchase (variant_id, vendor, quantity_in_stock, purchase_price, HST, purchase_date, deleted) VALUES (?, ?, ?, ?, ?, ?, "N")`;
   db.query(
     insertQuery,
-    [variantId, vendor, quantity, purchasePrice, HST, purchaseDate],
+    [variantId, vendor, Number(quantity), purchasePrice, HST, purchaseDate],
     (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
@@ -17,7 +17,12 @@ const addNewPurchaseService = async (input, output) => {
             output({ error: { description: err.message } }, null);
           } else {
             const inventoryId = result[0].inventory_id;
-            const Quantity = (result[0].quantity_in_stock ?? 0) + quantity;
+            console.log("result", result);
+
+            const Quantity =
+              (result[0].quantity_in_stock ?? 0) + Number(quantity);
+            console.log("Quantity", Quantity);
+
             const insertQuery = `UPDATE inventory SET quantity_in_stock = ? WHERE inventory_id = ?`;
             db.query(insertQuery, [Quantity, inventoryId], (err, results) => {
               if (err) {
@@ -122,17 +127,24 @@ const deletePurchaseProductService = async (purchaseId) => {
         const variantId = purchaseResult[0].variant_id;
 
         const selectInventory = `SELECT * FROM inventory WHERE variant_id = ?`;
-        const [inventoryResult] = await db.promise().query(selectInventory, [variantId]);
-        if(inventoryResult.length > 0) {
+        const [inventoryResult] = await db
+          .promise()
+          .query(selectInventory, [variantId]);
+        if (inventoryResult.length > 0) {
           const inventoryQuantity = inventoryResult[0].quantity_in_stock;
           const updateQuery = `UPDATE inventory SET quantity_in_stock = ? WHERE variant_id = ?`;
-          const [inventoryUpdate] = await db.promise().query(updateQuery, [inventoryQuantity - purchaseQuantity, variantId]);
-          if(inventoryUpdate.affectedRows > 0) {
+          const [inventoryUpdate] = await db
+            .promise()
+            .query(updateQuery, [
+              inventoryQuantity - purchaseQuantity,
+              variantId,
+            ]);
+          if (inventoryUpdate.affectedRows > 0) {
             return {
               success: true,
               message: "Purchase product deleted successfullf",
             };
-          } 
+          }
           // else {
           //   return {
           //     success: false,
