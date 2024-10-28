@@ -4,7 +4,6 @@ const {
 } = require("../../services/AddCartServices/AddCartServices");
 
 const AddCartController = async (req, res) => {
-  console.log(req.query);
   
   const { userId, variantId, counts } = req.query;
   try {

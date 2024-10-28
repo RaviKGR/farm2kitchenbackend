@@ -71,7 +71,7 @@ const addNewProductService = async (input, output) => {
       const productResult = await query(verifyProduct, [productName]);
 
       if (productResult.length > 0) {
-        return output({ status: 400, message: "Product Already exists" });
+        return output({ status: 400, message: "Product Already exists" }, null);
       }
 
       const insertProduct = `
@@ -335,9 +335,7 @@ const getProductByCategoryIdService = async (category_Id) => {
     p.product_id, 
     p.name AS productName, 
     p.brand AS brandName,
-    p.category_id, 
-    p.status, 
-    p.deleted
+    p.category_id
   FROM product p
   WHERE p.category_id = ?`;
 
@@ -350,13 +348,18 @@ const getProductByCategoryIdService = async (category_Id) => {
       productResult.map(async (product) => {
         const getQuery = `
         SELECT
-          *
+          pv.*,
+          i.*,
+          c.cart_id,
+          c.quantity_count
         FROM productvariant pv
-        JOIN inventory i ON i.variant_id = i.variant_id
-        WHERE pv.variant_id = ?`;
+        JOIN inventory i ON pv.variant_id = i.variant_id
+        LEFT JOIN cart c ON c.variant_id = pv.variant_id
+        WHERE pv.product_id = ?`;
         const [variants] = await db
           .promise()
           .query(getQuery, [product.product_id]);
+console.log(variants);
 
         const variantsWithImages = await Promise.all(
           variants.map(async (variant) => {

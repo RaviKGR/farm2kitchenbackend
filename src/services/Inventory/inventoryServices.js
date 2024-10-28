@@ -23,7 +23,7 @@ const updateInventoryService = async (input, output) => {
 };
 
 const getInventoryService = async (input, output) => {
-  const { limit, offset, categoryId, productName } = input;
+  const { limit, offset, categoryId, productName, parentCategoryId } = input;
   let whereClause = "WHERE 1=1";
   const queryParams = [];
 
@@ -36,6 +36,12 @@ const getInventoryService = async (input, output) => {
     whereClause += " AND p.name LIKE ?";
     queryParams.push(`%${productName}%`);
   }
+
+  if(parentCategoryId) {
+    whereClause += " AND C.parent_category_id = ?";
+    queryParams.push(parentCategoryId);
+  }
+
   const getQuery = `
     SELECT
   COUNT(*) OVER() AS total_count, 
