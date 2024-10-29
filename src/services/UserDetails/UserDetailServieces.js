@@ -74,11 +74,13 @@ const SearchUserDetailServices = async (userName) => {
       const AddressResult = await Promise.all(
         result.map(async (userList) => {
           const getUserAddress = `SELECT * FROM address WHERE user_id = ?`;
-          const [address] = await db.promise().query(getUserAddress, [userList.user_id]);
+          const [address] = await db
+            .promise()
+            .query(getUserAddress, [userList.user_id]);
           return {
             ...userList,
-            address: address.length > 0 ? address : null
-          }
+            address: address.length > 0 ? address : null,
+          };
         })
       );
       return AddressResult;
@@ -122,29 +124,19 @@ const addNewUserByAdminService = async (input, output) => {
     phoneNumber,
     street,
     city,
-    state,
     postalCode,
-    country,
     isDefault,
   } = input;
+  console.log("input", input);
+
   const insertQuery = `
     INSERT INTO users (name, email, phone_number) VALUES (?, ?, ?);
     SET @last_user_id = LAST_INSERT_ID();
-    INSERT INTO address (user_id, street, city, state, postal_code, country, is_default) VALUES (@last_user_id, ?, ?, ?, ?, ?, ?);
+    INSERT INTO address (user_id, street, city, postal_code,  is_default) VALUES (@last_user_id, ?, ?, ?, ?);
     `;
   db.query(
     insertQuery,
-    [
-      userName,
-      userEmail,
-      phoneNumber,
-      street,
-      city,
-      state,
-      postalCode,
-      country,
-      isDefault,
-    ],
+    [userName, userEmail, phoneNumber, street, city, postalCode, isDefault],
     (err, result) => {
       if (err) {
         output({ error: { Description: err.message } }, null);

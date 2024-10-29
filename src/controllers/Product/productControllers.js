@@ -41,29 +41,35 @@ const addNewProductController = async (req, res) => {
     price,
     reorderLevel,
     discountPercentage,
+    is_primary,
   } = req.body;
   const files = req.files;
 
   try {
     if (
-      !productName ||
-      !brandName ||
-      !imageTag ||
-      !description ||
-      !size ||
-      !type ||
-      !barcode ||
-      !files ||
-      files.length <= 0
+      (!productName ||
+        !brandName ||
+        !imageTag ||
+        !description ||
+        !size ||
+        !type ||
+        !barcode ||
+        !files ||
+        is_primary === undefined,
+      files.length <= 0)
     ) {
       res.status(400).send({ message: "All fields are required" });
     } else {
-      const imageUrls = files.map((file) => `/uploads/${file.filename}`);
+      const imageUrls = files.map((file, index) => ({
+        name: `/uploads/${file.filename}`,
+        is_primary: parseInt(is_primary) === index ? "Y" : "N",
+      }));
+
       await addNewProductService(
         { ...req.body, images: imageUrls },
         (err, data) => {
           console.log(err);
-          
+
           if (err) res.status(400).send(err.message);
           else res.status(201).send(data);
         }

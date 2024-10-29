@@ -86,11 +86,11 @@ const addNewUserByAdminController = async (req, res) => {
     phoneNumber,
     street,
     city,
-    state,
     postalCode,
-    country,
     isDefault,
   } = req.body;
+  console.log("req.body", req.body);
+
   try {
     if (
       !userName ||
@@ -98,9 +98,7 @@ const addNewUserByAdminController = async (req, res) => {
       !phoneNumber ||
       !street ||
       !city ||
-      !state ||
       !postalCode ||
-      !country ||
       !isDefault
     ) {
       res.status(400).send({ message: "Required All Fields" });
@@ -148,7 +146,7 @@ const SearchUserDetailController = async (req, res) => {
 
 const addAddressByUserIdController = async (req, res) => {
   const { userId, street, city, state, postalCode, country, isDefault } =
-    req.body;    
+    req.body;
   try {
     if (
       !userId ||
@@ -157,7 +155,7 @@ const addAddressByUserIdController = async (req, res) => {
       !state ||
       !postalCode ||
       !country ||
-      isDefault === null || 
+      isDefault === null ||
       isDefault === undefined
     ) {
       return res.status(400).json({ message: "All fields are required" });
@@ -174,18 +172,17 @@ const addAddressByUserIdController = async (req, res) => {
 const getCustomerAddressByIdController = async (req, res) => {
   const { userId } = req.query;
   try {
-    if(!userId) {
-      return res.status(400).json({message: "All fields are required"})
+    if (!userId) {
+      return res.status(400).json({ message: "All fields are required" });
     } else {
       const result = await getCustomerAddressByIdService(userId);
       return res.status(200).json(result);
     }
-  } catch(e) {
+  } catch (e) {
     console.error(e);
-    return res.status(500).json({message: "Internal server error"})
-    
+    return res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
 module.exports = {
   getUserDetailController,
@@ -195,5 +192,5 @@ module.exports = {
   getUserController,
   SearchUserDetailController,
   addAddressByUserIdController,
-  getCustomerAddressByIdController
+  getCustomerAddressByIdController,
 };
