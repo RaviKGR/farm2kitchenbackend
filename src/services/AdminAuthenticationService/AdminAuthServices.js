@@ -32,8 +32,30 @@ const LoginService = async (input) => {
             message: "Entered password is Incorrect",
           };
         } else {
-          const { temp_password, enabled, password, ...userDetails } = user;
-          const token = await GENERATE_TOKEN(userDetails, "90m");
+          const getRollQuery = `
+          SELECT
+          *
+          FROM user_roles ur
+          JOIN roles r ON r.role_id = ur.role_id
+          WHERE admin_user_id = ? `;
+          const [getRoll] = await db
+            .promise()
+            .query(getRollQuery, [user?.admin_user_id]);
+          getRoll[
+            {
+              user_role_id: 8,
+              admin_user_id: 8,
+              role_id: 1,
+              role_name: "SUPER_ADMIN",
+            }
+          ];
+          const roll = getRoll[0]?.role_name;
+
+          const { temp_password, enabled, password, ...userDetails } = {
+            ...user,
+            roll,
+          };
+          const token = await GENERATE_TOKEN(userDetails, "120m");
           const expiresAt = new Date(Date.now() + 90 * 60 * 1000);
           const createQuery = `INSERT INTO admin_tokens (admin_user_id, token, expires_at) values(?, ?, ?)`;
           const [insertToken] = await db

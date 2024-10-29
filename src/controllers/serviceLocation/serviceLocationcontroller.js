@@ -2,10 +2,11 @@ const {
   NewServieLocationService,
   getServiceLocationService,
   getDeliveryDateService,
+  UpdateDeliveryServiceLocation,
 } = require("../../services/serviceLocation/serviceLocationService");
 
 const NewServieLocationController = async (req, res) => {
-  const { city, postalCode, Notification} = req.body;
+  const { city, postalCode, Notification } = req.body;
   const devileryDay = req.body.devileryDay
     .split("")
     .slice(0, 3)
@@ -41,7 +42,7 @@ const getServiceLocationController = async (req, res) => {
 const getDeliveryDateController = async (req, res) => {
   const { addressId } = req.query;
   try {
-    if(!addressId) {
+    if (!addressId) {
       res.status(400).send({ message: "All fields are required" });
     } else {
       const result = await getDeliveryDateService(addressId);
@@ -51,5 +52,39 @@ const getDeliveryDateController = async (req, res) => {
     console.error(e);
     return res.status(500).json({ message: "Internal Server Error" });
   }
-}
-module.exports = { NewServieLocationController, getServiceLocationController, getDeliveryDateController };
+};
+
+const UpdateServiceLocationController = async (req, res) => {
+  try {
+    const { location_id, city, postal_code, delivery_date, Notification } =
+      req.body;
+    if (
+      !location_id ||
+      !city ||
+      !postal_code ||
+      !delivery_date ||
+      !Notification
+    ) {
+      return res.status(400).send({ message: "All fields are required" });
+    }
+    const result = await UpdateDeliveryServiceLocation(req.body);
+    if (result) {
+      return res.status(result.status).json({
+        success: result.success,
+        message: result.message,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+module.exports = {
+  NewServieLocationController,
+  getServiceLocationController,
+  getDeliveryDateController,
+  UpdateServiceLocationController,
+};

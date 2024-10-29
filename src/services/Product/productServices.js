@@ -120,17 +120,10 @@ const addNewProductService = async (input, output) => {
             INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) 
             VALUES (?, ?, ?, ?, ?);
           `,
-            [
-              lastVariantId,
-              image,
-              imageTag,
-              productName,
-              index === 0 ? "Y" : "N",
-            ]
+            [lastVariantId, image.name, imageTag, productName, image.is_primary]
           );
         })
       );
-
       output(null, { message: "Product added successfully" });
     } else {
       // Logic for adding variant to an existing product
@@ -167,13 +160,7 @@ const addNewProductService = async (input, output) => {
             INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) 
             VALUES (?, ?, ?, ?, ?);
           `,
-            [
-              lastVariantId,
-              image,
-              imageTag,
-              productName,
-              index === 0 ? "Y" : "N",
-            ]
+            [lastVariantId, image.name, imageTag, productName, image.is_primary]
           );
         })
       );
@@ -359,7 +346,7 @@ const getProductByCategoryIdService = async (category_Id) => {
         const [variants] = await db
           .promise()
           .query(getQuery, [product.product_id]);
-console.log(variants);
+        console.log(variants);
 
         const variantsWithImages = await Promise.all(
           variants.map(async (variant) => {
