@@ -282,7 +282,8 @@ const getCategoryProductByOfferService = async (input) => {
             WHERE p.category_id = ? 
             AND pv.is_primary = 'Y'
             AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
-            AND pi.is_primary = 'Y';
+            AND pi.is_primary = 'Y'
+            AND i.price IS NOT NULL;
           `;
           const [productResult] = await db.promise().query(getProductsQuery, [list.tag_id]);
 

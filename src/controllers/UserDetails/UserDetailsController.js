@@ -8,6 +8,7 @@ const {
   getAllUserdetailsService,
   addAddressByUserIdService,
   getCustomerAddressByIdService,
+  updateAllUserInfoService,
 } = require("../../services/UserDetails/UserDetailServieces");
 
 const getUserDetailController = async (req, res) => {
@@ -57,8 +58,6 @@ const updateUserDetailController = async (req, res) => {
 };
 
 const getAllUserdetailsController = async (req, res) => {
-  console.log(req.query);
-
   const { limit, offset, name, phoneNumber } = req.query;
   try {
     if (!limit || !offset) {
@@ -76,6 +75,22 @@ const getAllUserdetailsController = async (req, res) => {
     res.status(500).send({ error: "Internal server error" });
   }
 };
+
+const updateAllUserInfoController = async (req, res) => {
+  const {Name, phoneNumber, city, userId, addressId} = req.body;
+  try {
+    if(!Name || !phoneNumber || !city || !userId || !addressId) {
+      return res.status(400).send("Required All Fields");
+    } else {
+      const result = await updateAllUserInfoService(req.body);
+      return res.status(result.status).json(result)
+    }
+    
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({message: "Internal server error"})
+  }
+}
 
 // ADMIN
 
@@ -193,4 +208,5 @@ module.exports = {
   SearchUserDetailController,
   addAddressByUserIdController,
   getCustomerAddressByIdController,
+  updateAllUserInfoController
 };

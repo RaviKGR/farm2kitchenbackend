@@ -4,6 +4,7 @@ const {
   getAllOrderHistoryByIdService,
   updateOrderStatusService,
   getOrderItemsByOrderIdService,
+  getOrderHistomerByUserIdService,
 } = require("../../services/OrderHistory/OrderHistoryServieces");
 
 const getOrderHistoryController = async (req, res) => {
@@ -97,10 +98,20 @@ const getOrderItemsByOrderIdController = async (req, res) => {
   }
 };
 
+const getOrderHistomerByUserIdController = async (req, res) => {
+    try {
+      const result = await getOrderHistomerByUserIdService(req.query);
+      return res.status(200).json(result)
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({message: "Internal server error"})
+    }
+}
 module.exports = {
   getOrderHistoryController,
   getAllOrderHistoryController,
   getAllOrderHistoryByIdController,
   updateOrderStatusController,
   getOrderItemsByOrderIdController,
+  getOrderHistomerByUserIdController
 };

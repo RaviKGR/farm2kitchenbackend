@@ -56,6 +56,25 @@ const getAllUserdetailsService = async (input, output) => {
   });
 };
 
+const updateAllUserInfoService = async (input) => {
+  const {Name, phoneNumber, city, userId, addressId} = input
+  try {
+    const updateQuery = `UPDATE users SET name = ?, phone_number = ? WHERE user_id = ?`;
+    const [result] = await db.promise().query(updateQuery, [Name, phoneNumber, userId]);
+    if(result.affectedRows > 0) {
+      const updateCity = `UPDATE address SET city = ? WHERE address_id = ?`;
+      const [updateResult] = await db.promise().query(updateCity, [city, addressId]);
+      if(updateResult.affectedRows > 0) {
+        return {success: true, status: 200, message: "Updated successfully"}
+      } else {
+        return {success: false, status: 400, message: "unable to update"}
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    return {success: false, status: 400, message: "Database error"}
+  }
+}
 const SearchUserDetailServices = async (userName) => {
   try {
     const getUserQuery = `
@@ -249,4 +268,5 @@ module.exports = {
   getAllUserdetailsService,
   addAddressByUserIdService,
   getCustomerAddressByIdService,
+  updateAllUserInfoService
 };
