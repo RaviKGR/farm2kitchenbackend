@@ -170,10 +170,48 @@ const getOrderItemsByOrderIdService = async (orderId) => {
   }
 };
 
+const getOrderHistomerByUserIdService = async (input) => {
+  const { userId } = input
+  try {
+    const getQuery =`
+    SELECT
+      COUNT(pv.variant_id) OVER() AS total_count,
+      oi.*,
+      o.*,
+      p.name AS productName,
+      p.brand AS productBrand,
+      pv.product_id,
+      pv.description,
+      pv.size,
+      pv.type,
+      pv.barcode,
+      pi.*,
+      sl.*
+    FROM orderitem oi
+    JOIN orders o ON o.order_id = oi.order_id
+    JOIN productvariant pv ON pv.variant_id = oi.variant_id
+    JOIN product p ON p.product_id = pv.product_id
+    LEFT JOIN productimage pi ON pi.image_id = pv.variant_id
+    JOIN servicelocation sl ON sl.location_id = o.location_id
+    WHERE o.user_id = ? AND pi.is_primary = "Y" AND pi.image_tag IN ("variant", "VARIANT");
+    `
+    const [result] = await db.promise().query(getQuery, [userId]);
+    if(result.length > 0) {
+      return result
+    } else {
+      return []
+    }
+  } catch (e) {
+    console.error(e);
+    return {success: false, status: 400, message: "database error"}
+  }
+}
+
 module.exports = {
   getOrderHistoryServieces,
   getAllOrderHistoryService,
   getAllOrderHistoryByIdService,
   updateOrderStatusService,
   getOrderItemsByOrderIdService,
+  getOrderHistomerByUserIdService
 };

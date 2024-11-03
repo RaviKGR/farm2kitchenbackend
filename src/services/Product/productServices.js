@@ -346,8 +346,6 @@ const getProductByCategoryIdService = async (category_Id) => {
         const [variants] = await db
           .promise()
           .query(getQuery, [product.product_id]);
-        console.log(variants);
-
         const variantsWithImages = await Promise.all(
           variants.map(async (variant) => {
             const getProductImagesQuery = `
