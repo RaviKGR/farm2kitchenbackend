@@ -11,7 +11,7 @@ const AddNewFavoritesController = async (req, res) => {
                 if (err) {
                     res.status(400).send(err.error)
                 } else {
-                    res.status(200).send(data)
+                    res.status(201).send(data)
                 }
             })
         }
@@ -27,14 +27,8 @@ const getFavoritesController = async (req, res) => {
             res.status(400).send({ message: "Check Your UserId" })
         }
         else {
-            await getFavoritesServices(req.query, (err, data) => {
-                if (err) {
-                    res.status(400).send(err.error)
-                }
-                else {
-                    res.send(data)
-                }
-            })
+            const result = await getFavoritesServices(req.query);
+            return res.status(200).json(result)
         }
     } catch (error) {
         res.status(500).send({ error: { description: error.message } });
