@@ -84,30 +84,11 @@ const CreatePlaceOrder = async (input) => {
             message: "failed to place order",
           };
         } else {
-          const reduceInventoryCount = products.map(async (list) => {
-            const checkInventory = `SELECT * FROM inventory WHERE variant_id = ? AND quantity_in_stock >= ?`;
-            const [inventoryRes] = await db
-              .promise()
-              .query(checkInventory, [list.variantId, list.quantity]);
-            if (inventoryRes.length > 0) {
-              const inventoryId = inventoryRes[0].inventory_id;
-              const variantId = inventoryRes[0].variant_id;
-              const quantityStock = inventoryRes[0].quantity_in_stock - list.quantity;
-              const inventoryUpdate = `UPDATE inventory SET quantity_in_stock = ? WHERE variant_id = ? AND inventory_id = ?`;
-              const [results] = await db
-                .promise()
-                .query(inventoryUpdate, [quantityStock, variantId, inventoryId]);
-              return results;
-            }
-          });
-          const updatevalue = await Promise.all(reduceInventoryCount);
-          if (updatevalue.length > 0) {
-            return {
-              success: true,
-              status: 200,
-              message: "Order placed successfully.",
-            };
-          }
+          return {
+            success: true,
+            status: 200,
+            message: "Order placed successfully.",
+          };
         }
       }
     }
