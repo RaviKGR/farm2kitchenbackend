@@ -255,15 +255,15 @@ const getProductByCategoryIdService = async (category_Id) => {
     const variantResult = await Promise.all(
       productResult.map(async (product) => {
         const getQuery = `
-      SELECT
-        pv.*,
-        i.*,
-        c.cart_id,
-        c.quantity_count
-      FROM productvariant pv
-      JOIN inventory i ON pv.variant_id = i.variant_id
-      LEFT JOIN cart c ON c.variant_id = pv.variant_id
-      WHERE pv.product_id = ?`;
+        SELECT
+          pv.*,
+          i.*,
+          c.cart_id,
+          c.quantity_count
+        FROM productvariant pv
+        JOIN inventory i ON pv.variant_id = i.variant_id
+        LEFT JOIN cart c ON c.variant_id = pv.variant_id
+        WHERE pv.product_id = ?`;
 
         const [variants] = await db
           .promise()
@@ -273,40 +273,50 @@ const getProductByCategoryIdService = async (category_Id) => {
           variants.map(async (variant) => {
             // Fetch offer details
             const offerQuery = `
-          SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted
-          FROM Offer o
-          JOIN Offer_Details od ON od.offer_id = o.offer_id
-          WHERE od.tag_id = ?
-            AND CURDATE() BETWEEN o.start_date AND o.end_date;`;
+            SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted
+            FROM Offer o
+            JOIN Offer_Details od ON od.offer_id = o.offer_id
+            WHERE od.tag_id = ?
+              AND CURDATE() BETWEEN o.start_date AND o.end_date;`;
 
             const [offerResults] = await db.promise().query(offerQuery, [category_Id]);
             let discountValue = 0;
+            let discountType = null;
 
             if (offerResults.length > 0) {
               const offer = offerResults[0];
               discountValue = parseFloat(offer.discountValue);
+              discountType = offer.discountType;
             } else {
               console.log("No offers found.");
             }
 
-            // Adjust the price based on the discount
+            // Adjust the price based on the discount type
             const originalPrice = parseFloat(variant.price);
-            const discountedPrice = Math.max(0, originalPrice - discountValue);
+            let discountedPrice = originalPrice;
+
+            if (discountType.toLowerCase() === 'Flat') {
+              discountedPrice = Math.max(0, originalPrice - discountValue);
+            } else if (discountType === 'Percentage') {
+              const discountAmount = (originalPrice * discountValue) / 100;
+              discountedPrice = Math.max(0, originalPrice - discountAmount);
+            }
+
             variant.price = discountedPrice.toFixed(2);
 
             // Fetch product images
             const getProductImagesQuery = `
-          SELECT
-            pi.id,
-            pi.image_url,
-            pi.image_tag,
-            pi.alt_text,
-            pi.is_primary,
-            pi.image_id
-          FROM productimage pi
-          WHERE pi.image_id = ? 
-            AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
-            AND pi.is_primary = 'Y';`;
+            SELECT
+              pi.id,
+              pi.image_url,
+              pi.image_tag,
+              pi.alt_text,
+              pi.is_primary,
+              pi.image_id
+            FROM productimage pi
+            WHERE pi.image_id = ? 
+              AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
+              AND pi.is_primary = 'Y';`;
 
             const [imageResult] = await db
               .promise()
@@ -315,6 +325,7 @@ const getProductByCategoryIdService = async (category_Id) => {
             return {
               ...variant,
               discountValue, // Include discount details
+              discountType, // Include the type of discount
               originalPrice, // Keep original price for reference
               images: imageResult || [],
             };
