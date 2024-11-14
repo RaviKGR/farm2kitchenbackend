@@ -5,14 +5,9 @@ const SearchProduct = (input) => {
   const SearchProductWithCategory = `
   SELECT 
       p.product_id, 
-      p.name AS product_name, 
-      pv.description AS variant_description, 
-      pv.size, 
-      pv.type, 
-      pv.barcode, 
+      p.name AS product_name,  
       c.category_id, 
       c.name AS category_name, 
-      c.description AS category_description,
       i.quantity_in_stock,
       CASE 
           WHEN i.quantity_in_stock = 0 THEN 'Out of Stock' 
@@ -198,8 +193,7 @@ const GetCategoryIdProduct = async (input, output) => {
   });
 };
 
-const getProductByCategoryIdService = async (category_Id) => {
-
+const getProductByCategoryIdService = async (category_Id, userId) => {
   //   const query = `
   //   SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted
   //   FROM Offer o
@@ -207,7 +201,6 @@ const getProductByCategoryIdService = async (category_Id) => {
   //   WHERE od.tag_id = ?
   //     AND CURDATE() BETWEEN o.start_date AND o.end_date;
   // `;
-
 
   //   const [results] = await db.promise().query(query, [category_Id]);
   //   if (results.length > 0) {
@@ -236,8 +229,6 @@ const getProductByCategoryIdService = async (category_Id) => {
   //     return [];
   //   }
 
-
-
   const getProductsQuery = `
   SELECT
     p.product_id, 
@@ -252,22 +243,29 @@ const getProductByCategoryIdService = async (category_Id) => {
     .query(getProductsQuery, [category_Id]);
 
   if (productResult.length > 0) {
+    const cartQuery = `
+    SELECT
+      c.variant_id,
+      c.cart_id,
+      c.user_id,
+      c.quantity_count
+    FROM cart c
+    WHERE c.user_id = ?`;
+    const [cartResults] = await db.promise().query(cartQuery, [userId]);
+
     const variantResult = await Promise.all(
       productResult.map(async (product) => {
-        const getQuery = `
+        const getVariantsQuery = `
         SELECT
           pv.*,
-          i.*,
-          c.cart_id,
-          c.quantity_count
+          i.*
         FROM productvariant pv
         JOIN inventory i ON pv.variant_id = i.variant_id
-        LEFT JOIN cart c ON c.variant_id = pv.variant_id
         WHERE pv.product_id = ?`;
 
         const [variants] = await db
           .promise()
-          .query(getQuery, [product.product_id]);
+          .query(getVariantsQuery, [product.product_id]);
 
         const variantsWithDetails = await Promise.all(
           variants.map(async (variant) => {
@@ -279,7 +277,9 @@ const getProductByCategoryIdService = async (category_Id) => {
             WHERE od.tag_id = ?
               AND CURDATE() BETWEEN o.start_date AND o.end_date;`;
 
-            const [offerResults] = await db.promise().query(offerQuery, [category_Id]);
+            const [offerResults] = await db
+              .promise()
+              .query(offerQuery, [category_Id]);
             let discountValue = 0;
             let discountType = null;
 
@@ -295,9 +295,9 @@ const getProductByCategoryIdService = async (category_Id) => {
             const originalPrice = parseFloat(variant.price);
             let discountedPrice = originalPrice;
 
-            if (discountType.toLowerCase() === 'Flat') {
+            if (discountType.toLowerCase() === "Flat") {
               discountedPrice = Math.max(0, originalPrice - discountValue);
-            } else if (discountType === 'Percentage') {
+            } else if (discountType === "Percentage") {
               const discountAmount = (originalPrice * discountValue) / 100;
               discountedPrice = Math.max(0, originalPrice - discountAmount);
             }
@@ -321,13 +321,20 @@ const getProductByCategoryIdService = async (category_Id) => {
             const [imageResult] = await db
               .promise()
               .query(getProductImagesQuery, [variant.variant_id]);
-
+              
+            const cartData =
+              cartResults.find(
+                (cart) => cart.variant_id === variant.variant_id
+              ) || {};
             return {
               ...variant,
               discountValue, // Include discount details
               discountType, // Include the type of discount
               originalPrice, // Keep original price for reference
               images: imageResult || [],
+              cart_id: cartData.cart_id || null,
+              user_id: cartData.user_id || null,
+              quantity_count: cartData.quantity_count || null,
             };
           })
         );
@@ -343,7 +350,7 @@ const getProductByCategoryIdService = async (category_Id) => {
   } else {
     return [];
   }
-}
+};
 
 const getProductByProductIdService = async (ProductId) => {
   try {
