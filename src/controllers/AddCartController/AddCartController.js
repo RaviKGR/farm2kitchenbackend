@@ -22,8 +22,9 @@ const AddCartController = async (req, res) => {
   }
 };
 const getCartController = async (req, res) => {
+  const { userId } = req.query;
   try {
-    const result = await getCartService();
+    const result = await getCartService(userId);
     if (!result || result.error) {
       console.error("Service error in getCartController:", result.error);
       return res.status(400).json({

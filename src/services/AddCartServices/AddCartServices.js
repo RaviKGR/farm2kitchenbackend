@@ -150,7 +150,7 @@ const AddCartService = async (input) => {
   }
 };
 
-const getCartService = async () => {
+const getCartService = async (userId) => {
   try {
     const getQuery = `
     SELECT
@@ -170,8 +170,8 @@ const getCartService = async () => {
     JOIN product p ON p.product_id = pv.product_id
     JOIN productimage pi ON pi.image_id = pv.variant_id
     JOIN inventory i ON i.variant_id = pv.variant_id
-    WHERE pi.is_primary = "Y" AND pi.image_tag IN ('variant', 'VARIANT')`;
-    const [result] = await db.promise().query(getQuery);
+    WHERE pi.is_primary = "Y" AND pi.image_tag IN ('variant', 'VARIANT') AND c.user_id = ?`;
+    const [result] = await db.promise().query(getQuery, [userId]);
     if (result.length > 0) {
       return result;
     } else {
