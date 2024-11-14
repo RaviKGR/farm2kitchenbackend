@@ -288,16 +288,16 @@ const getProductByCategoryIdService = async (category_Id, userId) => {
               discountValue = parseFloat(offer.discountValue);
               discountType = offer.discountType;
             } else {
-              console.log("No offers found.");
+              discountValue = 0;
+              discountType = null;
             }
 
-            // Adjust the price based on the discount type
             const originalPrice = parseFloat(variant.price);
             let discountedPrice = originalPrice;
 
-            if (discountType.toLowerCase() === "Flat") {
+            if (discountType && discountType.toLowerCase() === "flat") {
               discountedPrice = Math.max(0, originalPrice - discountValue);
-            } else if (discountType === "Percentage") {
+            } else if (discountType && discountType === "Percentage") {
               const discountAmount = (originalPrice * discountValue) / 100;
               discountedPrice = Math.max(0, originalPrice - discountAmount);
             }
@@ -321,7 +321,7 @@ const getProductByCategoryIdService = async (category_Id, userId) => {
             const [imageResult] = await db
               .promise()
               .query(getProductImagesQuery, [variant.variant_id]);
-              
+
             const cartData =
               cartResults.find(
                 (cart) => cart.variant_id === variant.variant_id
@@ -1232,6 +1232,8 @@ const getProductvariantByproService = async (input) => {
     return { success: false, message: "Database error" };
   }
 };
+
+
 
 module.exports = {
   SearchProduct,
