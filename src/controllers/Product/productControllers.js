@@ -20,6 +20,7 @@ const {
   addNewProductImageService,
   getProductvariantByproService,
   getProductByOfferService,
+  getProductSearchName,
 } = require("../../services/Product/productServices");
 
 const addNewProductController = async (req, res) => {
@@ -56,7 +57,7 @@ const addNewProductController = async (req, res) => {
         !barcode ||
         !files ||
         is_primary === undefined,
-      files.length <= 0)
+        files.length <= 0)
     ) {
       res.status(400).send({ message: "All fields are required" });
     } else {
@@ -108,7 +109,7 @@ const GetCategoryIdProducts = async (req, res) => {
 };
 
 const getProductByCategoryIdController = async (req, res) => {
-  const { category_Id, userId} = req.query;
+  const { category_Id, userId } = req.query;
 
   try {
     const result = await getProductByCategoryIdService(category_Id, userId);
@@ -416,9 +417,27 @@ const getProductvariantByproController = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+const SearchProducts = async (req, res) => {
+  try {
+    const data = await getProductSearchName(req);
+
+    if (!data || data.length === 0) {
+      return res.status(404).send({ message: 'No products found' });
+    }
+
+    res.status(200).send(data);
+  } catch (error) {
+    console.error(error);
+    const statusCode = error.status || 500;
+    const errorMessage = error.description || 'Internal Server Error';
+
+    res.status(statusCode).send({ error: errorMessage });
+  }
+};
 
 module.exports = {
   GetSearchProducts,
+  SearchProducts,
   GetCategoryIdProducts,
   getProductByCategoryIdController,
   addNewProductController,
