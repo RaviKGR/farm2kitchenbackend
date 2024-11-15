@@ -1254,7 +1254,7 @@ const getProductSearchName = async (input) => {
   const SearchProductWithCategory = `
     SELECT 
       p.product_id, 
-      p.name AS product_name,  
+      p.name AS productName,  
       c.category_id, 
       c.name AS category_name, 
       i.quantity_in_stock,
