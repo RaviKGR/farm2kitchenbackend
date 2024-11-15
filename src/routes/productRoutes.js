@@ -1,26 +1,27 @@
 const express = require("express");
 const multer = require('multer');
 const path = require('path');
-const { GetSearchProducts, GetCategoryIdProducts, addNewProductController, getProductByProductIdController, getAllProductController, updateProductController, updateProductStatusController, deleteProductController, getProductBarCodeController, getBestSellerProductController, updateBestSellerProductController, exportProductsToCSVController, getProductByCategoryIdController, updateProductImageController, getProductByProductNameController, updateProductAndCategoryMapController, addNewProductImageController, getProductvariantByproController } = require("../controllers/Product/productControllers");
+const { GetSearchProducts, GetCategoryIdProducts, addNewProductController, getProductByProductIdController, getAllProductController, updateProductController, updateProductStatusController, deleteProductController, getProductBarCodeController, getBestSellerProductController, updateBestSellerProductController, exportProductsToCSVController, getProductByCategoryIdController, updateProductImageController, getProductByProductNameController, updateProductAndCategoryMapController, addNewProductImageController, getProductvariantByproController, SearchProducts } = require("../controllers/Product/productControllers");
 const { addNewPurchaseController, getPurchaseDetailController, deletePurchaseProductController } = require("../controllers/Product/productPurchaseController");
 const { addNewProductSizeController, getAllProuctSizeConttroler } = require("../controllers/ProductSize/productSizeController");
 
 const ProductRoutes = express.Router();
 
 const productStorage = multer.diskStorage({
-    destination: function (req, file, callback) {
-      callback(null, path.join(__dirname, '../../uploads'));
-    },
-    filename: function (req, file,  cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, file.fieldname + '-' + uniqueSuffix + '-' + file.originalname);
-    }
-  });
+  destination: function (req, file, callback) {
+    callback(null, path.join(__dirname, '../../uploads'));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + '-' + file.originalname);
+  }
+});
 
-   // Multer instances
-   const uploadProduct = multer({ storage: productStorage });
+// Multer instances
+const uploadProduct = multer({ storage: productStorage });
 // productRoutes
 ProductRoutes.get("/searchProduct", GetSearchProducts);
+ProductRoutes.get("/searchAllProducts", SearchProducts);
 ProductRoutes.get("/categoryId", GetCategoryIdProducts);
 ProductRoutes.get("/productByCategoryId", getProductByCategoryIdController)
 ProductRoutes.post("/addNewProduct", uploadProduct.array('images', 5), addNewProductController);
