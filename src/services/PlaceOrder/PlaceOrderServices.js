@@ -84,11 +84,23 @@ const CreatePlaceOrder = async (input) => {
             message: "failed to place order",
           };
         } else {
-          return {
-            success: true,
-            status: 200,
-            message: "Order placed successfully.",
-          };
+          const DeleteCartEntries = products.map(async (list) => {
+            const removeCart = `DELETE FROM cart Where variant_id = ?`;
+            const [result] = await db
+              .promise()
+              .query(removeCart, [list.variantId]);
+              return result;
+          });
+
+          const removeResult = await Promise.all(DeleteCartEntries);
+          if(removeResult[0].affectedRows > 0) {
+            return {
+              success: true,
+              status: 201,
+              message: "Order placed successfully.",
+            };
+          }
+          
         }
       }
     }

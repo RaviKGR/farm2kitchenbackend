@@ -2,7 +2,7 @@ const { db } = require("../../confic/db");
 
 const getUserDetailServieces = async (input, output) => {
   const userId = input.userId;
-  const getuserIdquery = `SELECT user_id,name,email,phone_number FROM users `;
+  const getuserIdquery = `SELECT user_id, name, email, phone_number FROM users WHERE user_id = ?`;
   db.query(getuserIdquery, [userId], (err, result) => {
     if (err) {
       return output({ error: { Description: err.message } }, null);
@@ -57,24 +57,40 @@ const getAllUserdetailsService = async (input, output) => {
 };
 
 const updateAllUserInfoService = async (input) => {
-  const {Name, phoneNumber, city, userId, addressId} = input
+  const { Name, phoneNumber, email, city, userId, addressId } = input;
   try {
-    const updateQuery = `UPDATE users SET name = ?, phone_number = ? WHERE user_id = ?`;
-    const [result] = await db.promise().query(updateQuery, [Name, phoneNumber, userId]);
-    if(result.affectedRows > 0) {
-      const updateCity = `UPDATE address SET city = ? WHERE address_id = ?`;
-      const [updateResult] = await db.promise().query(updateCity, [city, addressId]);
-      if(updateResult.affectedRows > 0) {
-        return {success: true, status: 200, message: "Updated successfully"}
-      } else {
-        return {success: false, status: 400, message: "unable to update"}
-      }
+    let setClause = "name = ?, phone_number = ?";
+    const queryParams = [Name, phoneNumber];
+
+    if (email) {
+      setClause += ", email = ?";
+      queryParams.push(email);
+    }
+
+    queryParams.push(userId);
+
+    const updateQuery = `UPDATE users SET ${setClause} WHERE user_id = ?`;
+    const [result] = await db
+      .promise()
+      .query(updateQuery, queryParams);
+    if (result.affectedRows > 0) {
+      // const updateCity = `UPDATE address SET city = ? WHERE address_id = ?`;
+      // const [updateResult] = await db.promise().query(updateCity, [city, addressId]);
+      // if(updateResult.affectedRows > 0) {
+      //   return {success: true, status: 200, message: "Updated successfully"}
+      // } else {
+      //   return {success: false, status: 400, message: "unable to update"}
+      // }
+
+      return { success: true, status: 200, message: "Updated successfully" };
+    } else {
+      return { success: false, status: 400, message: "unable to update" };
     }
   } catch (e) {
     console.error(e);
-    return {success: false, status: 400, message: "Database error"}
+    return { success: false, status: 400, message: "Database error" };
   }
-}
+};
 const SearchUserDetailServices = async (userName) => {
   try {
     const getUserQuery = `
@@ -268,5 +284,5 @@ module.exports = {
   getAllUserdetailsService,
   addAddressByUserIdService,
   getCustomerAddressByIdService,
-  updateAllUserInfoService
+  updateAllUserInfoService,
 };
