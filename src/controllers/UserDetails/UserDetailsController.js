@@ -77,9 +77,11 @@ const getAllUserdetailsController = async (req, res) => {
 };
 
 const updateAllUserInfoController = async (req, res) => {
-  const {Name, phoneNumber, city, userId, addressId} = req.body;
+  const {Name, phoneNumber, email, city, userId, addressId} = req.body;
+  console.log("=========",email);
+  
   try {
-    if(!Name || !phoneNumber || !city || !userId || !addressId) {
+    if(!Name || !phoneNumber || !userId ) {
       return res.status(400).send("Required All Fields");
     } else {
       const result = await updateAllUserInfoService(req.body);
