@@ -43,16 +43,16 @@ const getCouponOfferService = async (input, output) => {
   const { limit, offset, CouponName, startDate, endDate } = input;
 
   let whereClause = "c.deleted = 'N' ";
-  const queryParams= [];
+  const queryParams = [];
   const hasConditions = CouponName || startDate || endDate
 
-  if(hasConditions) {
-    if(CouponName) {
+  if (hasConditions) {
+    if (CouponName) {
       whereClause += "AND c.name LIKE ? ";
       queryParams.push(`%${CouponName}%`)
     }
 
-    if(startDate && endDate) {
+    if (startDate && endDate) {
       whereClause += "AND c.start_date <= ? AND c.end_date >= ?";
       queryParams.push(startDate, endDate);
     }
@@ -74,7 +74,7 @@ const getCouponOfferService = async (input, output) => {
     JOIN users u ON u.user_id = c.user_id
     WHERE ${whereClause}    
     LIMIT ? OFFSET ?`;
-    queryParams.push(parseInt(limit), parseInt(offset))
+  queryParams.push(parseInt(limit), parseInt(offset))
   db.query(
     getOfferQuery,
     [...queryParams],
@@ -173,7 +173,73 @@ const deleteCouponOfferService = async (couponId, output) => {
   });
 };
 
+const ApplyCouponOfferService = async (input, output) => {
+  const { couponCode, totalcouponAmount } = input;
+  console.log(input)
+  const currentDate = new Date();
+  const checkQuery = `
+    SELECT * FROM coupon 
+    WHERE coupon_code = ? 
+      AND start_date <= ? 
+      AND end_date >= ? 
+      AND deleted = 'N' 
+  `;
+  db.query(
+    checkQuery,
+    [couponCode, currentDate, currentDate],
+    (err, result) => {
+      if (err) {
+        output({ error: { description: err.message } }, null);
+      } else if (result.length === 0) {
+        output({ error: { description: "Invalid coupon code or expired offer" } }, null);
+      } else {
+        const coupon = result[0];
+        let discountAmount = 0;
+        let discountMessage = '';
+        let finalAmount = totalcouponAmount;
+        if (coupon.coupon_type === 'Flat') {
+          discountAmount = coupon.coupon_value;
+
+          if (totalcouponAmount < coupon.min_amount) {
+            output({ error: { description: `Minimum amount of ${coupon.min_amount} is required` } }, null);
+            return;
+          }
+          discountMessage = `Flat discount applied: ${discountAmount}`;
+          finalAmount = totalcouponAmount - discountAmount;
+
+        } else if (coupon.coupon_type === 'Percentage') {
+          discountAmount = (totalcouponAmount * coupon.coupon_value) / 100;
+
+          if (discountAmount > coupon.max_discount_amt) {
+            discountAmount = coupon.max_discount_amt;
+          }
+
+          if (totalcouponAmount < coupon.min_amount) {
+            output({ error: { description: `Minimum amount of ${coupon.min_amount} is required` } }, null);
+            return;
+          }
+
+          discountMessage = `Percentage discount applied: ${coupon.coupon_value}% off, Discount Amount: ${discountAmount}`;
+          finalAmount = totalcouponAmount - discountAmount;
+
+        } else {
+          output({ error: { description: "Invalid coupon type" } }, null);
+          return;
+        }
+        output(null, {
+          message: discountMessage,
+          discountAmount: discountAmount,
+          finalAmount: finalAmount.toFixed(2)
+        });
+      }
+    }
+  );
+};
+
+
+
 module.exports = {
+  ApplyCouponOfferService,
   addNewCouponService,
   getCouponOfferService,
   getCouponOfferByIdService,

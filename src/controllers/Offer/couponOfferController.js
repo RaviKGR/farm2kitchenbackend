@@ -5,6 +5,7 @@ const {
   getCouponOfferByUserIdService,
   updateCouponOfferService,
   deleteCouponOfferService,
+  ApplyCouponOfferService,
 } = require("../../services/Offers/couponOfferService");
 
 const addNewCouponConnteroller = async (req, res) => {
@@ -133,7 +134,24 @@ const deleteCouponOfferController = async (req, res) => {
   }
 };
 
+const ApplyCouponOfferConteroller = async (req, res) => {
+  const { couponCode, totalcouponAmount } = req.body;
+  // console.log(req.body)
+  try {
+    if (!couponCode || !totalcouponAmount) {
+      res.status(400).send("Required All The Fields");
+    } else {
+      await ApplyCouponOfferService(req.body, (err, data) => {
+        if (err) res.status(400).send(err.error);
+        else res.send(data);
+      });
+    }
+  } catch (error) {
+    throw error;
+  }
+};
 module.exports = {
+  ApplyCouponOfferConteroller,
   addNewCouponConnteroller,
   getCouponOfferController,
   getCouponOfferByIdController,
