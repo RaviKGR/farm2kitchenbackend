@@ -13,12 +13,12 @@ createTables();
 const allowedOrigins = [
   "https://farm2kitchen.vercel.app",
   "http://localhost:3000",
+  "http://localhost:3001",
 ];
 
 app.use(
   cors({
     origin: allowedOrigins,
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   })
 );
 app.options("*");
