@@ -5,9 +5,9 @@ const {
 
 const AddCartController = async (req, res) => {
   
-  const { userId, variantId, counts } = req.query;
+  const { userId, variantId, counts, temp_UserId } = req.query;
   try {
-    if (!userId || !variantId || !counts) {
+    if (!variantId || !counts) {
       return res.status(400).json({ message: "All fields are required" });
     } else {
       const result = await AddCartService(req.query);
@@ -22,9 +22,9 @@ const AddCartController = async (req, res) => {
   }
 };
 const getCartController = async (req, res) => {
-  const { userId } = req.query;
+  const { userId, tepm_UserId } = req.query;  
   try {
-    const result = await getCartService(userId);
+    const result = await getCartService(userId, tepm_UserId);
     if (!result || result.error) {
       console.error("Service error in getCartController:", result.error);
       return res.status(400).json({

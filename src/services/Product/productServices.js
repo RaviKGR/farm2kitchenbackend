@@ -193,7 +193,7 @@ const GetCategoryIdProduct = async (input, output) => {
   });
 };
 
-const getProductByCategoryIdService = async (category_Id, userId) => {
+const getProductByCategoryIdService = async (category_Id, userId, tepm_UserId) => {
   //   const query = `
   //   SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted
   //   FROM Offer o
@@ -250,8 +250,8 @@ const getProductByCategoryIdService = async (category_Id, userId) => {
       c.user_id,
       c.quantity_count
     FROM cart c
-    WHERE c.user_id = ?`;
-    const [cartResults] = await db.promise().query(cartQuery, [userId]);
+    WHERE c.temp_user_id = ?`;
+    const [cartResults] = await db.promise().query(cartQuery, [tepm_UserId]);
 
     const variantResult = await Promise.all(
       productResult.map(async (product) => {

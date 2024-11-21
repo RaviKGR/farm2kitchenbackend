@@ -9,6 +9,7 @@ const {
   addAddressByUserIdService,
   getCustomerAddressByIdService,
   updateAllUserInfoService,
+  updateUserAddressDefaultService,
 } = require("../../services/UserDetails/UserDetailServieces");
 
 const getUserDetailController = async (req, res) => {
@@ -77,23 +78,36 @@ const getAllUserdetailsController = async (req, res) => {
 };
 
 const updateAllUserInfoController = async (req, res) => {
-  const {Name, phoneNumber, email, city, userId, addressId} = req.body;
-  console.log("=========",email);
-  
+  const { Name, phoneNumber, email, city, userId, addressId } = req.body;
+  console.log("=========", email);
+
   try {
-    if(!Name || !phoneNumber || !userId ) {
+    if (!Name || !phoneNumber || !userId) {
       return res.status(400).send("Required All Fields");
     } else {
       const result = await updateAllUserInfoService(req.body);
-      return res.status(result.status).json(result)
+      return res.status(result.status).json(result);
     }
-    
   } catch (e) {
     console.error(e);
-    res.status(500).json({message: "Internal server error"})
+    res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
+const updateUserAddressDefaultController = async (req, res) => {
+  const { userId, addressId, isDefault } = req.body;  
+  try {
+    if(!userId || !addressId) {
+      return res.status(400).send("Required All Fields");
+    } else {
+      const result = await updateUserAddressDefaultService(req.body);
+      return res.status(result.status).json(result);
+    }
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 // ADMIN
 
 const addNewUserByAdminController = async (req, res) => {
@@ -210,5 +224,6 @@ module.exports = {
   SearchUserDetailController,
   addAddressByUserIdController,
   getCustomerAddressByIdController,
-  updateAllUserInfoController
+  updateAllUserInfoController,
+  updateUserAddressDefaultController,
 };

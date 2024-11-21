@@ -37,12 +37,10 @@ const addAuthenticationController = async (req, res) => {
     // Send the OTP email
     const mailSuccess = await sendOtpMail(emailId, data);
     if (mailSuccess) {
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: "User registered successfully. OTP sent to email.",
-        });
+      return res.status(200).json({
+        success: true,
+        message: "User registered successfully. OTP sent to email.",
+      });
     } else {
       return res
         .status(500)
@@ -150,13 +148,21 @@ const signOutController = async (req, res) => {
 };
 
 const createUserController = async (req, res) => {
-    try {
-        const result = await createUserService();
-        return res.status(201).json(result);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json( {message: "Internal server error"} )
+  const { name, email, phone_number } = req.body;
+  try {
+    if (!name || !email || !phone_number) {
+      return res.status(400).json({
+        success: false,
+        message: "Requered All Fields",
+      });
+    } else {
+      const result = await createUserService(req.body);
+      return res.status(201).json(result);
     }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 module.exports = {

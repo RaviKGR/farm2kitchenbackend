@@ -70,9 +70,7 @@ const updateAllUserInfoService = async (input) => {
     queryParams.push(userId);
 
     const updateQuery = `UPDATE users SET ${setClause} WHERE user_id = ?`;
-    const [result] = await db
-      .promise()
-      .query(updateQuery, queryParams);
+    const [result] = await db.promise().query(updateQuery, queryParams);
     if (result.affectedRows > 0) {
       // const updateCity = `UPDATE address SET city = ? WHERE address_id = ?`;
       // const [updateResult] = await db.promise().query(updateCity, [city, addressId]);
@@ -91,6 +89,31 @@ const updateAllUserInfoService = async (input) => {
     return { success: false, status: 400, message: "Database error" };
   }
 };
+
+const updateUserAddressDefaultService = async (input) => {
+  const { userId, addressId, isDefault } = input;
+  try {
+    if (isDefault) {
+      const updateResult = `UPDATE address SET is_default = true WHERE address_id = ? AND user_id = ?`;
+      const [result] = await db
+        .promise()
+        .query(updateResult, [addressId, userId]);
+        console.log(result);
+        
+        if(result.affectedRows > 0) {          
+          const updateAddress = `UPDATE address SET is_default = false WHERE address_id != ? AND user_id = ?`;
+          const[finalResult] = await db.promise().query(updateAddress, [addressId, userId]);
+          return {success: true, status: 200, message: "updated successfully"}
+        }
+    } else {
+      return {success: false, status: 400, message: "Atleast one address should be enable"}
+    }
+  } catch (e) {
+    console.error(e);
+    return { success: false, status: 400, message: "Database error" };
+  }
+};
+
 const SearchUserDetailServices = async (userName) => {
   try {
     const getUserQuery = `
@@ -212,34 +235,118 @@ const getUserService = async (input, output) => {
   });
 };
 
-const addAddressByUserIdService = async (input) => {
+// const addAddressByUserIdService = async (input) => {
+//   const { userId, street, city, state, postalCode, country, isDefault } = input;
+//   try {
+//     await db.beginTransaction();
+//     const updateQuery = `UPDATE address set is_default = false WHERE user_id = ?`;
+//     await db.promise().query(updateQuery, [userId]);
+
+//     const insertQuery = `INSERT INTO address (user_id, street, city, state, postal_code, country, is_default) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+//     const [result] = await db
+//       .promise()
+//       .query(insertQuery, [
+//         userId,
+//         street,
+//         city,
+//         state,
+//         postalCode,
+//         country,
+//         isDefault,
+//       ]);
+//     if (result.affectedRows > 0) {
+//       await db.commit();
+//       return { success: true, status: 201, message: "Added successfully" };
+//     } else {
+//       await db.rollback();
+//       return {
+//         success: false,
+//         status: 400,
+//         message: "Unable to added address",
+//       };
+//     }
+//   } catch (e) {
+//     await db.rollback();
+//     console.error(e);
+//     return { success: false, status: 400, message: "Database error" };
+//   }
+// };
+
+const addAddressByUserIdService = (input) => {
   const { userId, street, city, state, postalCode, country, isDefault } = input;
-  try {
-    const insertQuery = `INSERT INTO address (user_id, street, city, state, postal_code, country, is_default) VALUES (?, ?, ?, ?, ?, ?, ?);`;
-    const [result] = await db
-      .promise()
-      .query(insertQuery, [
-        userId,
-        street,
-        city,
-        state,
-        postalCode,
-        country,
-        isDefault,
-      ]);
-    if (result.affectedRows > 0) {
-      return { success: true, status: 201, message: "Added successfully" };
-    } else {
-      return {
-        success: false,
-        status: 400,
-        message: "Unable to added address",
-      };
-    }
-  } catch (e) {
-    console.error(e);
-    return { success: false, status: 400, message: "Database error" };
-  }
+
+  return new Promise((resolve, reject) => {
+    // Start transaction
+    db.beginTransaction((err) => {
+      if (err) {
+        return reject({
+          success: false,
+          status: 400,
+          message: "Transaction start error",
+        });
+      }
+
+      // Step 1: Update existing addresses to set is_default = false
+      const updateQuery = `UPDATE address SET is_default = false WHERE user_id = ?`;
+      db.query(updateQuery, [userId], (err, result) => {
+        if (err) {
+          return db.rollback(() => {
+            reject({
+              success: false,
+              status: 400,
+              message: "Unable to update address",
+            });
+          });
+        }
+
+        // Step 2: Insert new address
+        const insertQuery = `INSERT INTO address (user_id, street, city, state, postal_code, country, is_default) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        db.query(
+          insertQuery,
+          [userId, street, city, state, postalCode, country, isDefault],
+          (err, result) => {
+            if (err) {
+              return db.rollback(() => {
+                reject({
+                  success: false,
+                  status: 400,
+                  message: "Unable to add address",
+                });
+              });
+            }
+
+            // Step 3: Commit transaction if address was successfully added
+            if (result.affectedRows > 0) {
+              db.commit((err) => {
+                if (err) {
+                  return db.rollback(() => {
+                    reject({
+                      success: false,
+                      status: 400,
+                      message: "Commit error",
+                    });
+                  });
+                }
+                resolve({
+                  success: true,
+                  status: 201,
+                  message: "Address added successfully",
+                });
+              });
+            } else {
+              db.rollback(() => {
+                reject({
+                  success: false,
+                  status: 400,
+                  message: "No rows affected",
+                });
+              });
+            }
+          }
+        );
+      });
+    });
+  });
 };
 
 const getCustomerAddressByIdService = async (userId) => {
@@ -285,4 +392,5 @@ module.exports = {
   addAddressByUserIdService,
   getCustomerAddressByIdService,
   updateAllUserInfoService,
+  updateUserAddressDefaultService,
 };

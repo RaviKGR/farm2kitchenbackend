@@ -164,8 +164,6 @@ const googleAuthentiCationServices = async (input, output) => {
                         SET @last_user_id = LAST_INSERT_ID();
                         SELECT * FROM users WHERE user_id = @last_user_id;`;
       db.query(geustSignQuery, [Email], async (err, result) => {
-        console.log(Email);
-
         if (err) {
           output({ error: { description: err.message } }, null);
           console.log(err);
@@ -187,15 +185,20 @@ const googleAuthentiCationServices = async (input, output) => {
   });
 };
 
-const createUserService = async () => {
-    const name = null;
-    const email = null;
-    const phone_number = null;
+const createUserService = async (input) => {
+  const {name, email, phone_number} = input;
     try {
         const insertQuery = `INSERT INTO users (name, email, phone_number) VALUES (?, ?, ?)`;
         const [result] = await db.promise().query(insertQuery, [name, email, phone_number]);
         if(result.affectedRows > 0) {
-            return result;
+          const lastUserId = result.insertId;
+          const getUser = `SELECT * FROM users WHERE user_id = ?`
+          const [userResult] = await db.promise().query(getUser, [lastUserId]);
+          if(userResult.length > 0) {
+            return userResult;
+          } else {
+            return []
+          }
         } else {
             return {success: false, status: 400, message: "unable to create"}
         }  

@@ -109,10 +109,10 @@ const GetCategoryIdProducts = async (req, res) => {
 };
 
 const getProductByCategoryIdController = async (req, res) => {
-  const { category_Id, userId } = req.query;
+  const { category_Id, userId, tepm_UserId } = req.query;
 
   try {
-    const result = await getProductByCategoryIdService(category_Id, userId);
+    const result = await getProductByCategoryIdService(category_Id, userId, tepm_UserId);
     return res.status(200).json(result);
   } catch (error) {
     throw error;
