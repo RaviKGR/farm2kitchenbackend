@@ -136,11 +136,11 @@ const AddCartService = async (input) => {
             success: false,
             status: 400,
             message: `We have only ${inventoryStock} quantity in stock`,
-            quantity: inventoryStock
+            quantity: inventoryStock,
           };
         }
-      } else {      
-        if (temp_UserId === "null") {          
+      } else {
+        if (temp_UserId === "null") {
           if (inventoryStock >= counts && counts !== 0) {
             const generateUniqueCartId = async () => {
               let uniqueCartId;
@@ -196,7 +196,7 @@ const AddCartService = async (input) => {
               return {
                 success: true,
                 status: 201,
-                message: "Added to cart"
+                message: "Added to cart",
               };
             }
           } else {
@@ -214,8 +214,6 @@ const AddCartService = async (input) => {
 };
 
 const getCartService = async (userId, tepm_UserId) => {
-  console.log(tepm_UserId);
-  
   try {
     const getQuery = `
     SELECT
@@ -238,7 +236,13 @@ const getCartService = async (userId, tepm_UserId) => {
     WHERE pi.is_primary = "Y" AND pi.image_tag IN ('variant', 'VARIANT') AND c.temp_user_id = ?`;
     const [result] = await db.promise().query(getQuery, [tepm_UserId]);
     if (result.length > 0) {
-      return result;
+      const cartFinalResult = result.reduce((acc, cart) => {
+        return acc + cart.quantity_count * parseFloat(cart.price);
+      }, 0);
+      return {
+        items: result,
+        total_Amount: cartFinalResult,
+      };
     } else {
       return [];
     }

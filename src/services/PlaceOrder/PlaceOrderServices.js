@@ -28,9 +28,9 @@ const { db } = require("../../confic/db");
 // };
 
 const CreatePlaceOrder = async (input) => {
-  const { userId, totalAmount, products, locationId } = input;
+  const { userId, totalAmount, products } = input;
   const couponId = input.couponId || null;
-
+  const locationId = input.locationId || null;
   try {
     const checkQuantityPromises = products.map(async (list) => {
       const checkInventory = `SELECT * FROM inventory WHERE variant_id = ? AND quantity_in_stock >= ?`;
@@ -89,18 +89,17 @@ const CreatePlaceOrder = async (input) => {
             const [result] = await db
               .promise()
               .query(removeCart, [list.variantId]);
-              return result;
+            return result;
           });
 
           const removeResult = await Promise.all(DeleteCartEntries);
-          if(removeResult[0].affectedRows > 0) {
+          if (removeResult[0].affectedRows > 0) {
             return {
               success: true,
               status: 201,
               message: "Order placed successfully.",
             };
           }
-          
         }
       }
     }
