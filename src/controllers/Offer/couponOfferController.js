@@ -1,3 +1,4 @@
+const { getCartService } = require("../../services/AddCartServices/AddCartServices");
 const {
   addNewCouponService,
   getCouponOfferService,
@@ -134,24 +135,40 @@ const deleteCouponOfferController = async (req, res) => {
   }
 };
 
-const ApplyCouponOfferConteroller = async (req, res) => {
-  const { couponCode, totalcouponAmount } = req.body;
-  // console.log(req.body)
+const ApplyCouponOfferController = async (req, res) => {
+  const { couponCode, tepm_UserId } = req.body;
+
+  if (!couponCode || !tepm_UserId) {
+    return res.status(400).send("All fields are required");
+  }
+
   try {
-    if (!couponCode || !totalcouponAmount) {
-      res.status(400).send("Required All The Fields");
-    } else {
-      await ApplyCouponOfferService(req.body, (err, data) => {
-        if (err) res.status(400).send(err.error);
-        else res.send(data);
-      });
+    // Pass temp_UserId to getCartService
+    const cartData = await getCartService(null, tepm_UserId);
+
+    if (!cartData || cartData.items.length === 0) {
+      return res.status(404).send("Cart is empty or not found");
     }
+    console.log(cartData.total_Amount)
+    // Example condition logic
+    if (cartData.total_Amount > 100) {
+      const couponResponse = await ApplyCouponOfferService({ ...req.body, totalcouponAmount: cartData.total_Amount });
+      return res.status(200).send(couponResponse);
+    }
+
+    // Send cart data as a response if no coupon is applied
+    return res.status(200).send(cartData);
   } catch (error) {
-    throw error;
+    console.error("Error in ApplyCouponOfferController:", error);
+    return res.status(500).send("Internal Server Error");
   }
 };
+
+
+
+
 module.exports = {
-  ApplyCouponOfferConteroller,
+  ApplyCouponOfferController,
   addNewCouponConnteroller,
   getCouponOfferController,
   getCouponOfferByIdController,
