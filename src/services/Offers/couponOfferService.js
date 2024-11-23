@@ -173,9 +173,8 @@ const deleteCouponOfferService = async (couponId, output) => {
   });
 };
 
-const ApplyCouponOfferService = async (input, output) => {
+const ApplyCouponOfferService = async (input) => {
   const { couponCode, totalcouponAmount } = input;
-  console.log(input)
   const currentDate = new Date();
   const checkQuery = `
     SELECT * FROM coupon 
@@ -184,57 +183,57 @@ const ApplyCouponOfferService = async (input, output) => {
       AND end_date >= ? 
       AND deleted = 'N' 
   `;
-  db.query(
-    checkQuery,
-    [couponCode, currentDate, currentDate],
-    (err, result) => {
-      if (err) {
-        output({ error: { description: err.message } }, null);
-      } else if (result.length === 0) {
-        output({ error: { description: "Invalid coupon code or expired offer" } }, null);
-      } else {
-        const coupon = result[0];
-        let discountAmount = 0;
-        let discountMessage = '';
-        let finalAmount = totalcouponAmount;
-        if (coupon.coupon_type === 'Flat') {
-          discountAmount = coupon.coupon_value;
 
-          if (totalcouponAmount < coupon.min_amount) {
-            output({ error: { description: `Minimum amount of ${coupon.min_amount} is required` } }, null);
-            return;
-          }
-          discountMessage = `Flat discount applied: ${discountAmount}`;
-          finalAmount = totalcouponAmount - discountAmount;
+  try {
+    const [result] = await db.promise().query(checkQuery, [couponCode, currentDate, currentDate]);
 
-        } else if (coupon.coupon_type === 'Percentage') {
-          discountAmount = (totalcouponAmount * coupon.coupon_value) / 100;
-
-          if (discountAmount > coupon.max_discount_amt) {
-            discountAmount = coupon.max_discount_amt;
-          }
-
-          if (totalcouponAmount < coupon.min_amount) {
-            output({ error: { description: `Minimum amount of ${coupon.min_amount} is required` } }, null);
-            return;
-          }
-
-          discountMessage = `Percentage discount applied: ${coupon.coupon_value}% off, Discount Amount: ${discountAmount}`;
-          finalAmount = totalcouponAmount - discountAmount;
-
-        } else {
-          output({ error: { description: "Invalid coupon type" } }, null);
-          return;
-        }
-        output(null, {
-          message: discountMessage,
-          discountAmount: discountAmount,
-          finalAmount: finalAmount.toFixed(2)
-        });
-      }
+    if (result.length === 0) {
+      throw new Error("Invalid coupon code or expired offer");
     }
-  );
+
+    const coupon = result[0];
+    let discountAmount = 0;
+    let discountMessage = '';
+    let finalAmount = totalcouponAmount;
+
+    if (coupon.coupon_type === 'Flat') {
+      discountAmount = coupon.coupon_value;
+
+      if (totalcouponAmount < coupon.min_amount) {
+        throw new Error(`Minimum amount of ${coupon.min_amount} is required`);
+      }
+
+      discountMessage = `Flat discount applied: ${discountAmount}`;
+      finalAmount = totalcouponAmount - discountAmount;
+
+    } else if (coupon.coupon_type === 'Percentage') {
+      discountAmount = (totalcouponAmount * coupon.coupon_value) / 100;
+
+      if (discountAmount > coupon.max_discount_amt) {
+        discountAmount = coupon.max_discount_amt;
+      }
+
+      if (totalcouponAmount < coupon.min_amount) {
+        throw new Error(`Minimum amount of ${coupon.min_amount} is required`);
+      }
+
+      discountMessage = `Percentage discount applied: ${coupon.coupon_value}% off, Discount Amount: ${discountAmount}`;
+      finalAmount = totalcouponAmount - discountAmount;
+
+    } else {
+      throw new Error("Invalid coupon type");
+    }
+
+    return {
+      message: discountMessage,
+      discountAmount: discountAmount,
+      finalAmount: finalAmount.toFixed(2),
+    };
+  } catch (error) {
+    throw new Error(error.message);
+  }
 };
+
 
 
 

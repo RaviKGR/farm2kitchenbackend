@@ -11,10 +11,10 @@ var session = require("express-session");
 connectDB();
 createTables();
 const allowedOrigins = [
-  // "https://farm2kitchen.vercel.app",
-  // "http://localhost:3000",`                              
+  "https://farm2kitchen.vercel.app",
+  "http://localhost:3000",
   "http://localhost:3001",
-  // "farm2kitchen-admin.vercel.app/"
+  "farm2kitchen-admin.vercel.app/"
 ];
 
 app.use(
