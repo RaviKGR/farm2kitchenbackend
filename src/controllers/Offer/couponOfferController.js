@@ -149,17 +149,17 @@ const ApplyCouponOfferController = async (req, res) => {
     }
     if (cartData.total_Amount > 100) {
       const couponResponse = await ApplyCouponOfferService({ ...req.body, totalcouponAmount: cartData.total_Amount });
-      return res.status(200).send(couponResponse);
+      return res.status(200).send({...couponResponse,errorshow:true});
     }
-    return res.status(200).send("Coupon Not Available")
+    return res.status(200).send({
+      message: "Coupon cannot be applied. Minimum cart amount should exceed ₹100.",
+      errorshow:false
+    })
   } catch (error) {
     console.error("Error in ApplyCouponOfferController:", error);
     return res.status(500).send("Internal Server Error");
   }
 };
-
-
-
 
 module.exports = {
   ApplyCouponOfferController,
