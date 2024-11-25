@@ -83,15 +83,20 @@ const addNewProductController = async (req, res) => {
 
 const GetSearchProducts = async (req, res) => {
   try {
-    const data = await SearchProduct(req); // Await the result from SearchProduct
-    res.status(200).send(data); // Send the data if successful
+    const { SearchName } = req.query || req.body || {};
+    if (!SearchName) {
+      return res.status(200).send([]);
+    }
+    const data = await SearchProduct({ searchTerm: SearchName });
+    res.status(200).send(data);
   } catch (error) {
-    console.log(error);
+    console.error("Error in GetSearchProducts:", error);
     res
       .status(error.status || 500)
       .send({ error: error.description || "Internal Server Error" });
   }
 };
+
 
 const GetCategoryIdProducts = async (req, res) => {
   try {

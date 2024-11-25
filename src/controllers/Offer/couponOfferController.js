@@ -143,21 +143,15 @@ const ApplyCouponOfferController = async (req, res) => {
   }
 
   try {
-    // Pass temp_UserId to getCartService
     const cartData = await getCartService(null, tepm_UserId);
-
     if (!cartData || cartData.items.length === 0) {
       return res.status(404).send("Cart is empty or not found");
     }
-    console.log(cartData.total_Amount)
-    // Example condition logic
     if (cartData.total_Amount > 100) {
       const couponResponse = await ApplyCouponOfferService({ ...req.body, totalcouponAmount: cartData.total_Amount });
       return res.status(200).send(couponResponse);
     }
-
-    // Send cart data as a response if no coupon is applied
-    return res.status(200).send(cartData);
+    return res.status(200).send("Coupon Not Available")
   } catch (error) {
     console.error("Error in ApplyCouponOfferController:", error);
     return res.status(500).send("Internal Server Error");

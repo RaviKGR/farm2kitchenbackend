@@ -1,7 +1,10 @@
 const { db } = require("../../confic/db");
 
 const SearchProduct = (input) => {
-  const SearchName = input.query.SearchName;
+  const SearchName = input.searchTerm?.trim();
+  if (!SearchName) {
+    return Promise.reject({ description: "Search term is required", status: 400 });
+  }
   const SearchProductWithCategory = `
   SELECT 
       p.product_id, 
@@ -1291,7 +1294,7 @@ const getProductSearchName = async (input) => {
 
     const productsWithOffers = await Promise.all(
       products.map(async (product) => {
-         const getVariantsQuery = `
+        const getVariantsQuery = `
           SELECT
             pv.*,
             i.*
