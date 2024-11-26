@@ -245,6 +245,8 @@ const getCategoryProductByOfferService = async (input) => {
       SELECT
         off.offer_id,
         off.name AS offer_name,
+        off.discountType,
+        off.discountValue,
         od.id,
         od.offer_tag,
         od.tag_id,
@@ -255,11 +257,12 @@ const getCategoryProductByOfferService = async (input) => {
       WHERE od.offer_tag IN ('category', 'CATEGORY') AND off.deleted = "N"
       LIMIT 5 OFFSET 0
     `;
+
     const [offerResult] = await db.promise().query(getOfferQuery);
 
     if (offerResult.length > 0) {
       const mainResult = await Promise.all(
-        offerResult.map(async (list) => {
+        offerResult.map(async (offer) => {
           // Query to get products for each category
           const getProductsQuery = `
             SELECT
@@ -267,12 +270,10 @@ const getCategoryProductByOfferService = async (input) => {
               p.name AS productName, 
               p.brand AS brandName,
               p.category_id,
-              pi.id,
+              pi.id AS imageId,
               pi.image_url,
-              pi.image_tag,
               pi.alt_text,
               pi.is_primary,
-              pi.image_id,
               i.price,
               i.discount_percentage
             FROM product p
@@ -285,44 +286,30 @@ const getCategoryProductByOfferService = async (input) => {
             AND pi.is_primary = 'Y'
             AND i.price IS NOT NULL;
           `;
-          const [productResult] = await db.promise().query(getProductsQuery, [list.tag_id]);
 
-          // const productsWithImages = await Promise.all(
-          //   productResult.map(async (product) => {
-          //     // Query to get the primary image associated with the product's primary variant
-          //     const getProductImagesQuery = `
-          //       SELECT
-          //         pi.id,
-          //         pi.image_url,
-          //         pi.image_tag,
-          //         pi.alt_text,
-          //         pi.is_primary,
-          //         pi.image_id,
-          //         i.price,
-          //         i.discount_percentage
-          //       FROM productimage pi
-          //       JOIN productvariant pv ON pi.image_id = pv.variant_id
-          //       JOIN inventory i ON i.variant_id = pv.variant_id
-          //       WHERE pv.product_id = ? 
-          //       AND pv.is_primary = 'Y'
-          //       AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
-          //       AND pi.is_primary = 'Y';
-          //     `;
-          //     const [imageResult] = await db.promise().query(getProductImagesQuery, [product.product_id]);
+          const [productResult] = await db.promise().query(getProductsQuery, [offer.tag_id]);
+          const productsWithDiscount = productResult.map((product) => {
+            const price = parseFloat(product.price);
+            let discountedPrice = price;
 
-          //     return {
-          //       ...product,
-          //       images: imageResult || [], // Directly attach images to each product
-          //     };
-          //   })
-          // );
-
+            if (offer.discountType.toLowerCase() === 'flat') {
+              discountedPrice = Math.max(price - parseFloat(offer.discountValue), 0);
+            } else if (offer.discountType.toLowerCase() === 'percentage') {
+              discountedPrice = price - (price * parseFloat(offer.discountValue)) / 100;
+            }
+            return {
+              ...product,
+              discountedPrice: discountedPrice.toFixed(2),
+            };
+          });
           return {
-            offer_id: list.offer_id,
-            offer_name: list.offer_name,
-            category_id: list.tag_id,
-            category_name: list.category_name,
-            products: productResult,
+            offer_id: offer.offer_id,
+            offer_name: offer.offer_name,
+            discountType: offer.discountType,
+            discountValue: offer.discountValue, 
+            category_id: offer.tag_id,
+            category_name: offer.category_name,
+            products: productsWithDiscount,
           };
         })
       );
@@ -333,9 +320,10 @@ const getCategoryProductByOfferService = async (input) => {
     }
   } catch (e) {
     console.error(e);
-    return { success: false, status: 400, message: "Database Error" };
+    return { success: false, status: 400, message: 'Database Error' };
   }
 };
+
 
 
 
