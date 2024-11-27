@@ -4,8 +4,8 @@ const { db } = require("./db");
 const Users = `CREATE TABLE IF NOT EXISTS Users (
     user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NULL,
-    email VARCHAR(255) UNIQUE NULL,
-    phone_number VARCHAR(20),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone_number VARCHAR(20) UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );`;
 
@@ -223,8 +223,7 @@ CREATE TABLE IF NOT EXISTS tokens (
     user_id BIGINT NOT NULL,
     token VARCHAR(255) UNIQUE NOT NULL,
     expires_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );`;
 
 const adminTokens = `
@@ -315,72 +314,38 @@ const paymentHistory = `CREATE TABLE IF NOT EXISTS payment_history(
 async function createTables() {
   try {
     await db.promise().query(Users);
-    console.log("Users table created successfully");
     await db.promise().query(createAddressTable);
-    console.log("createAddressTable table created successfully");
-    await db.promise().query(Category);
-    console.log("Category table created successfully");
-    await db.promise().query(createAddressTable);
-    console.log("createAddressTable table created successfully");
-    await db.promise().query(SubCategory);
-    console.log("SubCategory table created successfully");
-    await db.promise().query(Packaging);
-    console.log("Packaging table created successfully");
-    await db.promise().query(Product);
-    console.log("Product table created successfully");
-    await db.promise().query(Supplier);
-    console.log("Supplier table created successfully");
-    await db.promise().query(productvariant);
-    console.log("productvariant table created successfully");
-    await db.promise().query(Inventory);
-    console.log("Inventory table created successfully");
-    await db.promise().query(productPurchase);
-    console.log("productPurchase table created successfully");
-    await db.promise().query(Offer);
-    console.log("Offer table created successfully");
-    await db.promise().query(offerDetails);
-    console.log("offerDetails table created successfully");
-    await db.promise().query(couponOffer);
-    console.log("couponOffer table created successfully");
-    await db.promise().query(serviceLocation);
-    console.log("serviceLocation table created successfully");
-    await db.promise().query(Order);
-    console.log("Order table created successfully");
-    await db.promise().query(OrderItem);
-    console.log("OrderItem table created successfully");
-    await db.promise().query(DeliveryPerson);
-    console.log("DeliveryPerson table created successfully");
-    await db.promise().query(Delivery);
-    console.log("Delivery table created successfully");
-    await db.promise().query(ProductImage);
-    console.log("ProductImage table created successfully");
     await db.promise().query(users_credentials);
-    console.log("users_credentials table created successfully");
+    await db.promise().query(Category);
+    await db.promise().query(SubCategory);
+    await db.promise().query(Packaging);
+    await db.promise().query(Product);
+    await db.promise().query(Supplier);
+    await db.promise().query(productvariant);
+    await db.promise().query(Inventory);
+    await db.promise().query(productPurchase);
+    await db.promise().query(Offer);
+    await db.promise().query(offerDetails);
+    await db.promise().query(couponOffer);
+    await db.promise().query(serviceLocation);
+    await db.promise().query(Order);
+    await db.promise().query(OrderItem);
+    await db.promise().query(DeliveryPerson);
+    await db.promise().query(Delivery);
+    await db.promise().query(ProductImage);
     await db.promise().query(tokens);
     await db.promise().query(adminUser);
-    console.log("adminUser table created successfully");
-    console.log("tokens table created successfully");
     await db.promise().query(adminTokens);
-    console.log("adminTokens table created successfully");
 
     await db.promise().query(roles);
-    console.log("roles table created successfully");
     await db.promise().query(user_roles);
-    console.log("user_roles table created successfully");
     await db.promise().query(permissions);
-    console.log("permissions table created successfully");
     await db.promise().query(role_permissions);
-    console.log("role_permissions table created successfully");
     await db.promise().query(otps);
-    console.log("otps table created successfully");
     await db.promise().query(favorites);
-    console.log("favorites table created successfully");
     await db.promise().query(cart);
-    console.log("cart table created successfully");
     await db.promise().query(ProductSize);
-    console.log("ProductSize table created successfully");
     await db.promise().query(paymentHistory);
-    console.log("paymentHistory table created successfully");
     console.log("All tables created successfully.");
   } catch (error) {
     console.error("Error creating tables:", error.message);
