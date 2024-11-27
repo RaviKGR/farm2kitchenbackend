@@ -213,43 +213,123 @@ const AddCartService = async (input) => {
   }
 };
 
-const getCartService = async (userId, tepm_UserId) => {
+const getCartService = async (userId, temp_UserId) => {
   try {
-    const getQuery = `
-    SELECT
-    c.*,
-    p.product_id,
-    p.name,
-    pv.variant_id,
-    pv.size,
-    pv.type,
-    pv.barcode,
-    pi.*,
-    i.inventory_id,
-    i.price,
-    i.discount_percentage
-    FROM cart c
-    JOIN productvariant pv ON pv.variant_id = c.variant_id
-    JOIN product p ON p.product_id = pv.product_id
-    JOIN productimage pi ON pi.image_id = pv.variant_id
-    JOIN inventory i ON i.variant_id = pv.variant_id
-    WHERE pi.is_primary = "Y" AND pi.image_tag IN ('variant', 'VARIANT') AND c.temp_user_id = ?`;
-    const [result] = await db.promise().query(getQuery, [tepm_UserId]);
-    if (result.length > 0) {
-      const cartFinalResult = result.reduce((acc, cart) => {
-        return acc + cart.quantity_count * parseFloat(cart.price);
-      }, 0);
+    const getCartQuery = `
+      SELECT
+        c.cart_id,
+        c.quantity_count,
+        c.variant_id,
+        p.product_id,
+        p.name AS product_name,
+        p.category_id,
+        pv.size,
+        pv.type,
+        pv.barcode,
+        pi.image_url AS product_image,
+        i.price
+      FROM cart c
+      JOIN productvariant pv ON pv.variant_id = c.variant_id
+      JOIN product p ON p.product_id = pv.product_id
+      JOIN productimage pi ON pi.image_id = pv.variant_id
+      JOIN inventory i ON i.variant_id = pv.variant_id
+      WHERE pi.is_primary = "Y"
+        AND pi.image_tag IN ('variant', 'VARIANT')
+        AND c.temp_user_id = ?`;
+
+    const [cartResult] = await db.promise().query(getCartQuery, [temp_UserId]);
+
+    if (cartResult.length === 0) {
       return {
-        items: result,
-        total_Amount: cartFinalResult,
+        items: [],
+        total_Amount: "0.00",
       };
-    } else {
-      return [];
     }
-  } catch (e) {
-    console.error(e);
+
+    let totalAmount = 0;
+
+    const itemsWithDiscount = await Promise.all(
+      cartResult.map(async (item) => {
+        const basePrice = parseFloat(item.price);
+        const quantityCount = item.quantity_count;
+        let discountAmount = 0;
+        let finalPrice = basePrice;
+        let discountType = null;
+        let discountValue = null;
+        let discountPercentage = null;
+        let offerId = null;
+
+        // Fetch offer details for the product's category
+        const offerQuery = `
+          SELECT 
+            o.offer_id, 
+            o.discountType, 
+            o.discountValue, 
+            o.start_date, 
+            o.end_date, 
+            o.deleted
+          FROM Offer o
+          JOIN Offer_Details od ON od.offer_id = o.offer_id
+          WHERE od.tag_id = ?
+            AND CURDATE() BETWEEN o.start_date AND o.end_date
+            AND o.deleted = 0`;
+
+        const [offerResults] = await db.promise().query(offerQuery, [item.category_id]);
+
+        if (offerResults.length > 0) {
+          const offer = offerResults[0];
+          offerId = offer.offer_id;
+          discountType = offer.discountType;
+          discountValue = parseFloat(offer.discountValue);
+
+          // Apply discount based on type
+          if (discountType.toLowerCase() === "flat") {
+            discountAmount = discountValue;
+          } else if (discountType.toLowerCase() === "percentage") {
+            discountPercentage = discountValue.toFixed(2);
+            discountAmount = (basePrice * discountValue) / 100;
+          }
+
+          // Ensure discount doesn't exceed the base price
+          discountAmount = Math.min(discountAmount, basePrice);
+          finalPrice = basePrice - discountAmount;
+        }
+
+        // Update total amount (considering quantity)
+        totalAmount += finalPrice * quantityCount;
+
+        return {
+          product_id: item.product_id,
+          name: item.product_name,
+          price: basePrice.toFixed(2),
+          size: item.size,
+          type: item.type,
+          barcode: item.barcode,
+          product_image: item.product_image, // Added product image URL
+          quantity_count: quantityCount,
+          discount_percentage: discountPercentage || null,
+          offer_id: offerId,
+          discountType,
+          discountValue: discountValue ? discountValue.toFixed(2) : null,
+          discountAmount: discountAmount.toFixed(2),
+          finalPrice: finalPrice.toFixed(2),
+        };
+      })
+    );
+
+    return {
+      items: itemsWithDiscount,
+      total_Amount: totalAmount.toFixed(2),
+    };
+  } catch (error) {
+    console.error(error);
     return { success: false, status: 500, message: "Database error" };
   }
 };
+
+
+
+
+
 
 module.exports = { AddCartService, getCartService };
