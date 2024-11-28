@@ -305,7 +305,7 @@ const getCartService = async (userId, temp_UserId) => {
           size: item.size,
           type: item.type,
           barcode: item.barcode,
-          product_image: item.product_image, // Added product image URL
+          image_url: item.product_image,
           quantity_count: quantityCount,
           discount_percentage: discountPercentage || null,
           offer_id: offerId,
