@@ -14,6 +14,7 @@ const allowedOrigins = [
   "https://farm2kitchen.vercel.app",
   "http://localhost:3000",
   "http://localhost:3001",
+  "http://localhost:3002",
   "http://192.168.1.30:3001",
   "farm2kitchen-admin.vercel.app/"
 ];
