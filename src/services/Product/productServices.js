@@ -1084,6 +1084,10 @@ const getProductByProductNameService = async (input, output) => {
       queryParams.push(categoryId);
     }
   }
+  // const getQuery = `
+  // SELECT p.product_id, p.name, p.brand, p.category_id
+  // FROM product p
+  // ${hasConditions ? `WHERE ${whereClause}` : ""}`;
   const getQuery = `
   SELECT p.product_id, p.name, p.brand, p.category_id, pv.description, pv.type, pv.size, pv.variant_id
   FROM product p

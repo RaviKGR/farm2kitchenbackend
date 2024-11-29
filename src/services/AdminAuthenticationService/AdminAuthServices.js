@@ -49,7 +49,7 @@ const LoginService = async (input) => {
               role_name: "SUPER_ADMIN",
             }
           ];
-          const roll = getRoll[0]?.role_name;
+          const roll = getRoll[0]?.role_name;          
 
           const { temp_password, enabled, password, ...userDetails } = {
             ...user,
