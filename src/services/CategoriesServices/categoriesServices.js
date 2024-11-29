@@ -8,7 +8,7 @@ const AddNewCategoryService = async (input, output) => {
   const imageTag = input.imageTag.toUpperCase();
   const image = `/uploads/${input.image}`;
 
-  const verifiyCategory = `SELECT * FROM category WHERE name = ?`;
+  const verifiyCategory = `SELECT * FROM category WHERE name = ? AND deleted = "N"`;
   db.query(verifiyCategory, [name], (err, result) => {
     if (err) {
       output({ error: { description: err.message } }, null);
@@ -139,26 +139,42 @@ const GetParentCategoryService = async (output) => {
 };
 
 const updateCategoryService = async (input, output) => {
-  const { categoryId, categoryName, description} =
-    input;
+  const { categoryId, categoryName, description } = input;
+  if (!categoryId) {
+    return output({ error: { description: "Category ID is required" } }, null);
+  }
+  if (!categoryName) {
+    return output({ error: { description: "Category name is required" } }, null);
+  }
+  const checkCategoryExistsQuery = `
+    SELECT category_id 
+    FROM category 
+    WHERE name = ? AND deleted = 'N' AND category_id != ?;
+  `;
 
-  const updateCategory = `
-  UPDATE category 
-  SET name = ?, description = ? 
-  WHERE category_id = ?;
-`;
+  db.query(checkCategoryExistsQuery, [categoryName, categoryId], (err, existingCategory) => {
+    if (err) {
+      output({ error: { description: err.message } }, null);
+    } else if (existingCategory.length > 0) {
+      output({ error: { description: "Category name already exists" } }, null);
+    } else {
+      const updateCategoryQuery = `
+        UPDATE category 
+        SET name = ?, description = ? 
+        WHERE category_id = ?;
+      `;
 
-  db.query(
-    updateCategory,
-    [categoryName, description, categoryId],
-    (err, result) => {
-      if (err) {
-        output({ error: { description: err.message } }, null);
-      } else {
-        output(null, { message: "Updated Successfully"});
-      }
+      db.query(updateCategoryQuery, [categoryName, description, categoryId], (err, result) => {
+        if (err) {
+          output({ error: { description: err.message } }, null);
+        } else if (result.affectedRows === 0) {
+          output({ error: { description: "No category found with the provided ID" } }, null);
+        } else {
+          output(null, { message: "Category updated successfully" });
+        }
+      });
     }
-  );
+  });
 };
 
 //  Delete Category

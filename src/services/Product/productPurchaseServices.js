@@ -43,27 +43,23 @@ const addNewPurchaseService = async (input, output) => {
 const getPurchaseDetailService = async (input, output) => {
   const { limit, offset, productName, brand, purchaseDate } = input;
 
-  let whereClause = "";
+  let whereClause = "pp.deleted = 'N'";
   const queryParams = [];
 
-  const hasConditions = productName || brand || purchaseDate;
+  if (productName) {
+    whereClause += " AND p.name LIKE ? ";
+    queryParams.push(`%${productName}%`);
+}
 
-  if (hasConditions) {
-    if (productName) {
-      whereClause += "p.name LIKE ? ";
-      queryParams.push(`%${productName}%`);
-    }
+if (brand) {
+    whereClause += " AND p.brand LIKE ? ";
+    queryParams.push(`%${brand}%`);
+}
 
-    if (brand) {
-      whereClause += (whereClause ? "AND " : "") + "p.brand LIKE ? ";
-      queryParams.push(`%${brand}%`);
-    }
-
-    if (purchaseDate) {
-      whereClause += (whereClause ? "AND " : "") + "pp.purchase_date = ? ";
-      queryParams.push(purchaseDate);
-    }
-  }
+if (purchaseDate) {
+    whereClause += " AND pp.purchase_date = ? ";
+    queryParams.push(purchaseDate);
+}
 
   const selectQuery = `
     SELECT
@@ -83,13 +79,13 @@ const getPurchaseDetailService = async (input, output) => {
     FROM productPurchase pp
     JOIN productvariant pv ON pv.variant_id = pp.variant_id
     LEFT JOIN product p ON p.product_id = pv.product_id
-    ${hasConditions ? `WHERE ${whereClause}` : ""}
+    WHERE ${whereClause}
     LIMIT ? OFFSET ?;
     `;
-
   queryParams.push(parseInt(limit), parseInt(offset));
 
   db.query(selectQuery, [...queryParams], (err, result) => {
+    
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
@@ -115,42 +111,44 @@ const getPurchaseDetailService = async (input, output) => {
 
 const deletePurchaseProductService = async (purchaseId) => {
   try {
-    const updateQuery = `UPDATE productpurchase SET deleted = "Y" WHERE purchase_id = ?`;
-    const [result] = await db.promise().query(updateQuery, [purchaseId]);
-    if (result.affectedRows > 0) {
-      const selectPurchase = `SELECT * FROM productpurchase WHERE purchase_id = ?`;
-      const [purchaseResult] = await db
-        .promise()
-        .query(selectPurchase, [purchaseId]);
-      if (purchaseResult.length > 0) {
-        const purchaseQuantity = purchaseResult[0].quantity_in_stock;
-        const variantId = purchaseResult[0].variant_id;
+    const selectPurchase = `SELECT * FROM productpurchase WHERE purchase_id = ?`;
+    const [purchaseResult] = await db
+      .promise()
+      .query(selectPurchase, [purchaseId]);
+    if (purchaseResult.length > 0) {
+      const purchaseQuantity = purchaseResult[0].quantity_in_stock;
+      const variantId = purchaseResult[0].variant_id;
 
-        const selectInventory = `SELECT * FROM inventory WHERE variant_id = ?`;
-        const [inventoryResult] = await db
-          .promise()
-          .query(selectInventory, [variantId]);
-        if (inventoryResult.length > 0) {
-          const inventoryQuantity = inventoryResult[0].quantity_in_stock;
-          const updateQuery = `UPDATE inventory SET quantity_in_stock = ? WHERE variant_id = ?`;
-          const [inventoryUpdate] = await db
-            .promise()
-            .query(updateQuery, [
-              inventoryQuantity - purchaseQuantity,
-              variantId,
-            ]);
-          if (inventoryUpdate.affectedRows > 0) {
-            return {
-              success: true,
-              message: "Purchase product deleted successfullf",
-            };
+      const selectInventory = `SELECT * FROM inventory WHERE variant_id = ?`;
+      const [inventoryResult] = await db
+        .promise()
+        .query(selectInventory, [variantId]);
+      if (inventoryResult.length > 0) {
+        const inventoryQuantity = inventoryResult[0].quantity_in_stock;
+        if (purchaseQuantity <= inventoryQuantity) {
+          const updateQuery = `UPDATE productpurchase SET deleted = "Y" WHERE purchase_id = ?`;
+          const [result] = await db.promise().query(updateQuery, [purchaseId]);
+          if (result.affectedRows > 0) {
+            const updateQuery = `UPDATE inventory SET quantity_in_stock = ? WHERE variant_id = ?`;
+            const [inventoryUpdate] = await db
+              .promise()
+              .query(updateQuery, [
+                inventoryQuantity - purchaseQuantity,
+                variantId,
+              ]);
+            if (inventoryUpdate.affectedRows > 0) {
+              return {
+                success: true,
+                message: "Purchase product deleted successfullf",
+              };
+            }
           }
-          // else {
-          //   return {
-          //     success: false,
-          //     message: "Purchase product deleted successfullf",
-          //   };
-          // }
+          return {
+                  success: true,
+                  message: "Purchase product deleted successfullf",
+                };
+        } else {
+          return { success: false, message: "Unable to delete" };
         }
       }
     } else {
