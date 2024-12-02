@@ -111,13 +111,8 @@ const getOfferService = async (input, output) => {
     off.discountType,
     off.discountValue,
     off.start_date,
-    off.end_date,
-    od.id,
-    od.offer_tag,
-    od.tag_id
+    off.end_date
     FROM offer off
-    JOIN offer_details od
-    ON off.offer_id = od.offer_id
     WHERE ${whereClause}
     LIMIT ? OFFSET ?`;
 
