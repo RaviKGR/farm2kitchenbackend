@@ -54,7 +54,7 @@ const getServiceLocationService = async () => {
     if (result.length > 0) {
       return result;
     } else {
-      return { message: "Result is not found" };
+      return [];
     }
   } catch (error) {
     console.error(error);
