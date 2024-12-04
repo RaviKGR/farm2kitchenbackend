@@ -116,18 +116,18 @@ const addNewUserByAdminController = async (req, res) => {
     userEmail,
     phoneNumber,
     street,
+    state,
     city,
     postalCode,
     isDefault,
   } = req.body;
-  console.log("req.body", req.body);
-
   try {
     if (
       !userName ||
       !userEmail ||
       !phoneNumber ||
       !street ||
+      !state ||
       !city ||
       !postalCode ||
       !isDefault

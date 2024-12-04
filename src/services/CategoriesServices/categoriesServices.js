@@ -139,12 +139,15 @@ const GetParentCategoryService = async (output) => {
 };
 
 const updateCategoryService = async (input, output) => {
-  const { categoryId, categoryName, description } = input;
+  const { categoryId, categoryName, description, image, id } = input;
   if (!categoryId) {
     return output({ error: { description: "Category ID is required" } }, null);
   }
   if (!categoryName) {
-    return output({ error: { description: "Category name is required" } }, null);
+    return output(
+      { error: { description: "Category name is required" } },
+      null
+    );
   }
   const checkCategoryExistsQuery = `
     SELECT category_id 
@@ -152,29 +155,55 @@ const updateCategoryService = async (input, output) => {
     WHERE name = ? AND deleted = 'N' AND category_id != ?;
   `;
 
-  db.query(checkCategoryExistsQuery, [categoryName, categoryId], (err, existingCategory) => {
-    if (err) {
-      output({ error: { description: err.message } }, null);
-    } else if (existingCategory.length > 0) {
-      output({ error: { description: "Category name already exists" } }, null);
-    } else {
-      const updateCategoryQuery = `
+  db.query(
+    checkCategoryExistsQuery,
+    [categoryName, categoryId],
+    (err, existingCategory) => {
+      if (err) {
+        output({ error: { description: err.message } }, null);
+      } else if (existingCategory.length > 0) {
+        output(
+          { error: { description: "Category name already exists" } },
+          null
+        );
+      } else {
+        const updateCategoryQuery = `
         UPDATE category 
         SET name = ?, description = ? 
         WHERE category_id = ?;
       `;
 
-      db.query(updateCategoryQuery, [categoryName, description, categoryId], (err, result) => {
-        if (err) {
-          output({ error: { description: err.message } }, null);
-        } else if (result.affectedRows === 0) {
-          output({ error: { description: "No category found with the provided ID" } }, null);
-        } else {
-          output(null, { message: "Category updated successfully" });
-        }
-      });
+        db.query(
+          updateCategoryQuery,
+          [categoryName, description, categoryId],
+          (err, result) => {
+            if (err) {
+              output({ error: { description: err.message } }, null);
+            } else if (result.affectedRows === 0) {
+              output(
+                {
+                  error: {
+                    description: "No category found with the provided ID",
+                  },
+                },
+                null
+              );
+            } else {
+              const updateimage = `UPDATE productimage SET image_url = ? WHERE id = ?`;
+              db.query(updateimage, [image, id], (err, result) => {
+                if (err) {
+                  output({ error: { description: err.message } }, null);
+                } else {
+                  output(null, { message: "Category updated successfully" });
+                }
+              });
+              
+            }
+          }
+        );
+      }
     }
-  });
+  );
 };
 
 //  Delete Category

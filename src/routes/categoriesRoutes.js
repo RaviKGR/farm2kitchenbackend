@@ -40,7 +40,7 @@ categoryRoutes.get(
   GetChildByCategoryIdController
 );
 categoryRoutes.put(
-  "/updateCategory",
+  "/updateCategory", uploadCategory.single("image"),
   updateCategoryConteroller
 );
 categoryRoutes.delete("/deleteCategory", deleteCategoryController); // Delete category
