@@ -181,8 +181,10 @@ const addNewUserByAdminService = async (input, output) => {
     userEmail,
     phoneNumber,
     street,
+    state,
     city,
     postalCode,
+    country,
     isDefault,
   } = input;
   console.log("input", input);
@@ -190,11 +192,11 @@ const addNewUserByAdminService = async (input, output) => {
   const insertQuery = `
     INSERT INTO users (name, email, phone_number) VALUES (?, ?, ?);
     SET @last_user_id = LAST_INSERT_ID();
-    INSERT INTO address (user_id, street, city, postal_code,  is_default) VALUES (@last_user_id, ?, ?, ?, ?);
+    INSERT INTO address (user_id, street, city, state, postal_code, country, is_default) VALUES (@last_user_id, ?, ?, ?, ?, ?, ?);
     `;
   db.query(
     insertQuery,
-    [userName, userEmail, phoneNumber, street, city, postalCode, isDefault],
+    [userName, userEmail, phoneNumber, street, city, state, postalCode, country, isDefault],
     (err, result) => {
       if (err) {
         output({ error: { Description: err.message } }, null);

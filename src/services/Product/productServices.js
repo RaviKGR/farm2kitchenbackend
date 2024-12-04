@@ -3,7 +3,10 @@ const { db } = require("../../confic/db");
 const SearchProduct = (input) => {
   const SearchName = input.searchTerm?.trim();
   if (!SearchName) {
-    return Promise.reject({ description: "Search term is required", status: 400 });
+    return Promise.reject({
+      description: "Search term is required",
+      status: 400,
+    });
   }
   const SearchProductWithCategory = `
   SELECT 
@@ -63,108 +66,129 @@ const addNewProductService = async (input, output) => {
   const imageTag = input.imageTag.toUpperCase();
 
   try {
-    // Step 1: Check for existing product if no productId is provided
-    if (!productId) {
-      const verifyProduct = `SELECT * FROM product WHERE name = ?`;
-      const productResult = await query(verifyProduct, [productName]);
-
-      if (productResult.length > 0) {
-        return output({ status: 400, message: "Product Already exists" }, null);
-      }
-
-      const insertProduct = `
-        INSERT INTO product (name, brand, category_id, status, best_seller, deleted) 
-        VALUES (?, ?, ?, True, False, 'N');
-      `;
-      const productInsertResult = await query(insertProduct, [
-        productName,
-        brandName,
-        categoryId,
-      ]);
-      const lastProductId = productInsertResult.insertId;
-
-      // Step 2: Insert into productvariant using `lastProductId`
-      const insertVariant = `
-        INSERT INTO productvariant (product_id, description, size, type, barcode, is_primary, status, best_seller, deleted)
-        VALUES (?, ?, ?, ?, ?, "Y", True, False, 'N');
-      `;
-      const variantInsertResult = await query(insertVariant, [
-        lastProductId,
-        description,
-        size,
-        type,
-        barcode,
-      ]);
-      const lastVariantId = variantInsertResult.insertId;
-
-      // Step 3: Insert into inventory using `lastVariantId`
-      const insertInventory = `
-        INSERT INTO inventory (variant_id, quantity_in_stock, price, reorder_level, discount_percentage) 
-        VALUES (?, ?, ?, ?, ?);
-      `;
-      await query(insertInventory, [
-        lastVariantId,
-        quantityInStock,
-        price,
-        reorderLevel,
-        discountPercentage,
-      ]);
-
-      // Step 4: Insert images
-      await Promise.all(
-        images.map((image, index) => {
-          return query(
-            `
-            INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) 
-            VALUES (?, ?, ?, ?, ?);
-          `,
-            [lastVariantId, image.name, imageTag, productName, image.is_primary]
-          );
-        })
-      );
-      output(null, { message: "Product added successfully" });
+    const checkBarcode = `SELECT * FROM productvariant WHERE barcode = ?`;
+    const variantResult = await query(checkBarcode, [barcode]);
+    if (variantResult.length > 0) {
+      return output({ status: 400, message: "Barcode Already exists" }, null);
     } else {
-      // Logic for adding variant to an existing product
-      const insertVariant = `
-        INSERT INTO productvariant (product_id, description, size, type, barcode, is_primary, status, best_seller, deleted)
-        VALUES (?, ?, ?, ?, ?, "N", True, False, 'N');
-      `;
-      const variantInsertResult = await query(insertVariant, [
-        productId,
-        description,
-        size,
-        type,
-        barcode,
-      ]);
-      const lastVariantId = variantInsertResult.insertId;
+      if (!productId) {
+        const verifyProduct = `SELECT * FROM product WHERE name = ?`;
+        const productResult = await query(verifyProduct, [productName]);
 
-      const insertInventory = `
-        INSERT INTO inventory (variant_id, quantity_in_stock, price, reorder_level, discount_percentage) 
-        VALUES (?, ?, ?, ?, ?);
-      `;
-      await query(insertInventory, [
-        lastVariantId,
-        quantityInStock,
-        price,
-        reorderLevel,
-        discountPercentage,
-      ]);
-
-      // Insert images for the existing product
-      await Promise.all(
-        images.map((image, index) => {
-          return query(
-            `
-            INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) 
-            VALUES (?, ?, ?, ?, ?);
-          `,
-            [lastVariantId, image.name, imageTag, productName, image.is_primary]
+        if (productResult.length > 0) {
+          return output(
+            { status: 400, message: "Product Already exists" },
+            null
           );
-        })
-      );
+        }
 
-      output(null, { message: "Product added successfully" });
+        const insertProduct = `
+            INSERT INTO product (name, brand, category_id, status, best_seller, deleted) 
+            VALUES (?, ?, ?, True, False, 'N');
+          `;
+        const productInsertResult = await query(insertProduct, [
+          productName,
+          brandName,
+          categoryId,
+        ]);
+        const lastProductId = productInsertResult.insertId;
+
+        // Step 2: Insert into productvariant using `lastProductId`
+        const insertVariant = `
+            INSERT INTO productvariant (product_id, description, size, type, barcode, is_primary, status, best_seller, deleted)
+            VALUES (?, ?, ?, ?, ?, "Y", True, False, 'N');
+          `;
+        const variantInsertResult = await query(insertVariant, [
+          lastProductId,
+          description,
+          size,
+          type,
+          barcode,
+        ]);
+        const lastVariantId = variantInsertResult.insertId;
+
+        // Step 3: Insert into inventory using `lastVariantId`
+        const insertInventory = `
+            INSERT INTO inventory (variant_id, quantity_in_stock, price, reorder_level, discount_percentage) 
+            VALUES (?, ?, ?, ?, ?);
+          `;
+        await query(insertInventory, [
+          lastVariantId,
+          quantityInStock,
+          price,
+          reorderLevel,
+          discountPercentage,
+        ]);
+
+        // Step 4: Insert images
+        await Promise.all(
+          images.map((image, index) => {
+            return query(
+              `
+                INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) 
+                VALUES (?, ?, ?, ?, ?);
+              `,
+              [
+                lastVariantId,
+                image.name,
+                imageTag,
+                productName,
+                image.is_primary,
+              ]
+            );
+          })
+        );
+        output(null, { message: "Product added successfully" });
+      } else {
+        // Logic for adding variant to an existing product
+        const insertVariant = `
+            INSERT INTO productvariant (product_id, description, size, type, barcode, is_primary, status, best_seller, deleted)
+            VALUES (?, ?, ?, ?, ?, "N", True, False, 'N');
+          `;
+        const variantInsertResult = await query(insertVariant, [
+          productId,
+          description,
+          size,
+          type,
+          barcode,
+        ]);
+        const lastVariantId = variantInsertResult.insertId;
+
+        const insertInventory = `
+            INSERT INTO inventory (variant_id, quantity_in_stock, price, reorder_level, discount_percentage) 
+            VALUES (?, ?, ?, ?, ?);
+          `;
+        await query(insertInventory, [
+          lastVariantId,
+          quantityInStock,
+          price,
+          reorderLevel,
+          discountPercentage,
+        ]);
+
+        // Insert images for the existing product
+        await Promise.all(
+          images.map((image, index) => {
+            return query(
+              `
+                INSERT INTO productimage (image_id, image_url, image_tag, alt_text, is_primary) 
+                VALUES (?, ?, ?, ?, ?);
+              `,
+              [
+                lastVariantId,
+                image.name,
+                imageTag,
+                productName,
+                image.is_primary,
+              ]
+            );
+          })
+        );
+
+        output(null, { message: "Product added successfully" });
+      }
     }
+    // Step 1: Check for existing product if no productId is provided
   } catch (err) {
     output({ error: { description: err.message } }, null);
   }
@@ -196,7 +220,11 @@ const GetCategoryIdProduct = async (input, output) => {
   });
 };
 
-const getProductByCategoryIdService = async (category_Id, userId, tepm_UserId) => {
+const getProductByCategoryIdService = async (
+  category_Id,
+  userId,
+  tepm_UserId
+) => {
   //   const query = `
   //   SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted
   //   FROM Offer o
@@ -1281,10 +1309,9 @@ const getProductSearchName = async (input) => {
       p.name LIKE ? OR c.name LIKE ?
   `;
 
-  const [products] = await db.promise().query(SearchProductWithCategory, [
-    `%${SearchName}%`,
-    `%${SearchName}%`
-  ]);
+  const [products] = await db
+    .promise()
+    .query(SearchProductWithCategory, [`%${SearchName}%`, `%${SearchName}%`]);
 
   if (products.length > 0) {
     const offerQuery = `
@@ -1306,9 +1333,9 @@ const getProductSearchName = async (input) => {
           JOIN inventory i ON pv.variant_id = i.variant_id
           WHERE pv.product_id = ?`;
 
-        const [variants] = await db.promise().query(getVariantsQuery, [
-          product.product_id
-        ]);
+        const [variants] = await db
+          .promise()
+          .query(getVariantsQuery, [product.product_id]);
 
         const variantsWithOffers = await Promise.all(
           variants.map(async (variant) => {
@@ -1317,22 +1344,32 @@ const getProductSearchName = async (input) => {
 
             // Check all offers and apply the best discount
             offers.forEach((offer) => {
-              if (offer.discountType && offer.discountType.toLowerCase() === 'flat') {
-                discountValue = Math.max(discountValue, parseFloat(offer.discountValue));
-                discountType = 'flat';
-              } else if (offer.discountType && offer.discountType === 'Percentage') {
-                const percentageDiscount = (variant.price * parseFloat(offer.discountValue)) / 100;
+              if (
+                offer.discountType &&
+                offer.discountType.toLowerCase() === "flat"
+              ) {
+                discountValue = Math.max(
+                  discountValue,
+                  parseFloat(offer.discountValue)
+                );
+                discountType = "flat";
+              } else if (
+                offer.discountType &&
+                offer.discountType === "Percentage"
+              ) {
+                const percentageDiscount =
+                  (variant.price * parseFloat(offer.discountValue)) / 100;
                 discountValue = Math.max(discountValue, percentageDiscount);
-                discountType = 'Percentage';
+                discountType = "Percentage";
               }
             });
 
             const originalPrice = parseFloat(variant.price);
             let discountedPrice = originalPrice;
 
-            if (discountType === 'flat') {
+            if (discountType === "flat") {
               discountedPrice = Math.max(0, originalPrice - discountValue);
-            } else if (discountType === 'Percentage') {
+            } else if (discountType === "Percentage") {
               discountedPrice = Math.max(0, originalPrice - discountValue);
             }
 
@@ -1383,10 +1420,6 @@ const getProductSearchName = async (input) => {
     return [];
   }
 };
-
-
-
-
 
 module.exports = {
   SearchProduct,

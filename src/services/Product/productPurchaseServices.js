@@ -1,3 +1,4 @@
+const { formatDateToTimeZone } = require("../../confic/dateAndTimeZone");
 const { db } = require("../../confic/db");
 
 const addNewPurchaseService = async (input, output) => {
@@ -17,11 +18,8 @@ const addNewPurchaseService = async (input, output) => {
             output({ error: { description: err.message } }, null);
           } else {
             const inventoryId = result[0].inventory_id;
-            console.log("result", result);
-
             const Quantity =
               (result[0].quantity_in_stock ?? 0) + Number(quantity);
-            console.log("Quantity", Quantity);
 
             const insertQuery = `UPDATE inventory SET quantity_in_stock = ? WHERE inventory_id = ?`;
             db.query(insertQuery, [Quantity, inventoryId], (err, results) => {
@@ -97,7 +95,7 @@ if (purchaseDate) {
         purchase_price: list.purchase_price,
         quantity_in_stock: list.quantity_in_stock,
         HST: list.HST,
-        purchase_date: list.purchase_date,
+        purchase_date: formatDateToTimeZone(list.purchase_date),
         product_id: list.product_id,
         name: `${list.name} (${list.size}${list.type})`,
         brand: list.brand,
