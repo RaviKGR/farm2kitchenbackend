@@ -1,5 +1,6 @@
 const { promisify } = require("util");
 const { db } = require("../../confic/db");
+const { formatDateToEnCA } = require("../../confic/dateAndTimeZone");
 
 const getOrderHistoryServieces = async (input) => {
   const user_id = input.userId;
@@ -89,7 +90,12 @@ const getAllOrderHistoryService = async (input) => {
     const [result] = await db.promise().query(selectQuery, [...queryParams]);
 
     if (result.length > 0) {
-      return result;
+      const formatedResult = result.map((item) => ({
+        ...item,
+        order_date: formatDateToEnCA(item.order_date),
+        delivery_date: formatDateToEnCA(item.delivery_date)
+      }))
+      return formatedResult;
     } else {
       return [];
     }
@@ -111,7 +117,12 @@ const getAllOrderHistoryByIdService = async (orderId) => {
     const [result] = await db.promise().query(selectQuery, [orderId]);
 
     if (result.length > 0) {
-      return result;
+      const formatedResult = result.map((item) => ({
+        ...item,
+        order_date: formatDateToEnCA(item.order_date)
+      }))
+      return formatedResult;
+      
     } else {
       return { message: "No results found" };
     }
@@ -253,6 +264,8 @@ const getOrderHistomerByUserIdService = async (input) => {
           if (orderItem.length > 0) {
             return {
               ...list,
+              order_date: formatDateToEnCA(list.order_date),
+              servicelocation_delivery_date: formatDateToEnCA(list.servicelocation_delivery_date),
               orderItems: orderItem,
             };
           }

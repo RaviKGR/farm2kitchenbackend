@@ -1,3 +1,4 @@
+const { formatDateToEnCA } = require("../../confic/dateAndTimeZone");
 const { db } = require("../../confic/db");
 
 const NewServieLocationService = async (input) => {
@@ -52,7 +53,11 @@ const getServiceLocationService = async () => {
     const selectQuery = `SELECT * FROM servicelocation`;
     const [result] = await db.promise().query(selectQuery);
     if (result.length > 0) {
-      return result;
+      const formatedResult = result.map((item) => ({
+        ...item,
+        delivery_date: formatDateToEnCA(item.delivery_date)
+      }))
+      return formatedResult;
     } else {
       return [];
     }
@@ -73,7 +78,11 @@ const getDeliveryDateService = async (addressId) => {
         .promise()
         .query(getServiceLocation, [postalCode]);
       if (locationAddress.length > 0) {
-        return locationAddress;
+        const formatedResult = locationAddress.map((item) => ({
+          ...item,
+          delivery_date: formatDateToEnCA(item.delivery_date)
+        }))
+        return formatedResult;
       } else {
         return [];
       }

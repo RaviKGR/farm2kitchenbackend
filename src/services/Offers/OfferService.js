@@ -1,3 +1,4 @@
+const { formatDateToEnCA } = require("../../confic/dateAndTimeZone");
 const { db } = require("../../confic/db");
 
 const addNewOfferServer = async (input, output) => {
@@ -79,6 +80,113 @@ const addNewOfferServer = async (input, output) => {
   }
 };
 
+// const getOfferService = async (input, output) => {
+//   const { limit, offset, offerName, startDate, endDate, status } = input;
+
+//   let whereClause = "off.deleted = 'N' ";
+//   const queryParams = [];
+
+//   if (offerName) {
+//     whereClause += "AND off.name LIKE ? ";
+//     queryParams.push(`%${offerName}%`);
+//   }
+
+//   if (startDate && endDate) {
+//     whereClause += "AND off.start_date <= ? AND off.end_date >= ? ";
+//     queryParams.push(startDate, endDate);
+//   }
+
+//   const getOfferQuery = `
+//     SELECT
+//     COUNT(off.offer_id) OVER() AS total_count,
+//     off.offer_id,
+//     off.name,
+//     off.description,
+//     off.discountType,
+//     off.discountValue,
+//     off.start_date,
+//     off.end_date
+//     FROM offer off
+//     WHERE ${whereClause}
+//     LIMIT ? OFFSET ?`;
+
+//   queryParams.push(parseInt(limit), parseInt(offset));
+
+//   try {
+//     const [result] = await db.promise().query(getOfferQuery, queryParams);
+
+//     if (result.length > 0) {
+//       const currentDate = new Date();
+
+//       const updatedResult = await Promise.all(
+//         result.map(async (offer) => {
+//           const getOfferDetails = `SELECT * FROM offer_details WHERE offer_id = ?`;
+//           const [offerDetailsResult] = await db
+//             .promise()
+//             .query(getOfferDetails, [offer.offer_id]);
+//           if(offerDetailsResult.length > 0) {
+//             const offerDetailsAndname = await Promise.all(
+//               offerDetailsResult.map( async (items) => {
+//                 if(items.offer_tag === "CATEGORY") {
+//                    const getofferDetailsQuery = `
+//                   SELECT
+//                     *
+//                   FROM offer_details od
+//                   JOIN category c ON c.category_id = od.tag_id
+//                   WHERE od.offer_id = ? 
+//                   AND od.offer_tag IN ('CATEGORY', 'category')
+//                   `
+//                    const [detailsResult] = await db.promise().query(getofferDetailsQuery, [items.tag_id]);
+//                    return detailsResult
+//                 } else if (items.offer_tag === "VARIANT"){
+//                     const getVariantDetails = `
+//                     SELECT
+//                       *
+//                     FROM offer_details od
+//                     JOIN productvariant pv ON pv.variant_id = od.tag_id
+//                     JOIN product p ON p.product_id = pv.product_id
+//                     WHERE od.offer_id = ? 
+//                     AND od.offer_tag IN ('VARIANT', 'variant')`
+//                     const [productVariant] = await db.promise().query(getVariantDetails,[items.tag_id] );
+//                     return productVariant;
+//                 }
+//               })
+//             )
+//             return {
+//               ...offer,
+//               start_date: formatDateToEnCA(offer.start_date),
+//               end_date: formatDateToEnCA(offer.end_date),
+//               status:
+//                 formatDateToEnCA(offer.end_date) < formatDateToEnCA(currentDate)
+//                   ? "EXPIRED"
+//                   : "ACTIVE",
+//               offerDetails: offerDetailsAndname,
+//             };
+//           } else {
+//             return {
+//               ...offer,
+//               start_date: formatDateToEnCA(offer.start_date),
+//               end_date: formatDateToEnCA(offer.end_date),
+//               status:
+//                 formatDateToEnCA(offer.end_date) < formatDateToEnCA(currentDate)
+//                   ? "EXPIRED"
+//                   : "ACTIVE",
+//               offerDetails: offerDetailsResult,
+//             };
+//           }
+          
+//         })
+//       );
+
+//       output(null, updatedResult);
+//     } else {
+//       output(null, []); // No results found
+//     }
+//   } catch (err) {
+//     output({ error: { description: err.message } }, null);
+//   }
+// };
+
 const getOfferService = async (input, output) => {
   const { limit, offset, offerName, startDate, endDate, status } = input;
 
@@ -121,15 +229,14 @@ const getOfferService = async (input, output) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
-      console.log("result", result);
       const currentDate = new Date();
 
       const updatedResult = result.map((offer) => {
-        const endDate = new Date(offer.end_date);
-
         return {
           ...offer,
-          status: endDate < currentDate ? "EXPIRED" : "ACTIVE",
+          start_date: formatDateToEnCA(offer.start_date),
+          end_date: formatDateToEnCA(offer.end_date),
+          status: formatDateToEnCA(offer.end_date) < formatDateToEnCA(currentDate) ? "EXPIRED" : "ACTIVE",
         };
       });
 
@@ -196,7 +303,12 @@ const getAllOffersService = async () => {
   WHERE off.deleted = "N" AND pi.image_tag IN ('offer' , 'OFFER')`;
   const [result] = await db.promise().query(getOfferQuery);
   if (result.length > 0) {
-    return result;
+    const formatResult = result.map((item) => ({
+      ...item,
+      start_date: formatDateToEnCA(item.start_date),
+      end_date: formatDateToEnCA(item.end_date),
+    }));
+    return formatResult;
   } else {
     return [];
   }
@@ -223,7 +335,12 @@ const getCategoryOfferService = async () => {
   WHERE od.offer_tag IN ('category', 'CATEGORY') AND off.deleted = "N" AND pi.image_tag IN ('offer' , 'OFFER')`;
     const [result] = await db.promise().query(getOfferQuery);
     if (result.length > 0) {
-      return result;
+      const formatResult = result.map((item) => ({
+        ...item,
+        start_date: formatDateToEnCA(item.start_date),
+        end_date: formatDateToEnCA(item.end_date),
+      }));
+      return formatResult;
     } else {
       return [];
     }
@@ -282,15 +399,21 @@ const getCategoryProductByOfferService = async (input) => {
             AND i.price IS NOT NULL;
           `;
 
-          const [productResult] = await db.promise().query(getProductsQuery, [offer.tag_id]);
+          const [productResult] = await db
+            .promise()
+            .query(getProductsQuery, [offer.tag_id]);
           const productsWithDiscount = productResult.map((product) => {
             const price = parseFloat(product.price);
             let discountedPrice = price;
 
-            if (offer.discountType.toLowerCase() === 'flat') {
-              discountedPrice = Math.max(price - parseFloat(offer.discountValue), 0);
-            } else if (offer.discountType.toLowerCase() === 'percentage') {
-              discountedPrice = price - (price * parseFloat(offer.discountValue)) / 100;
+            if (offer.discountType.toLowerCase() === "flat") {
+              discountedPrice = Math.max(
+                price - parseFloat(offer.discountValue),
+                0
+              );
+            } else if (offer.discountType.toLowerCase() === "percentage") {
+              discountedPrice =
+                price - (price * parseFloat(offer.discountValue)) / 100;
             }
             return {
               ...product,
@@ -301,7 +424,7 @@ const getCategoryProductByOfferService = async (input) => {
             offer_id: offer.offer_id,
             offer_name: offer.offer_name,
             discountType: offer.discountType,
-            discountValue: offer.discountValue, 
+            discountValue: offer.discountValue,
             category_id: offer.tag_id,
             category_name: offer.category_name,
             products: productsWithDiscount,
@@ -315,12 +438,9 @@ const getCategoryProductByOfferService = async (input) => {
     }
   } catch (e) {
     console.error(e);
-    return { success: false, status: 400, message: 'Database Error' };
+    return { success: false, status: 400, message: "Database Error" };
   }
 };
-
-
-
 
 module.exports = {
   addNewOfferServer,
