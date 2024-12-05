@@ -1,3 +1,4 @@
+const { formatDateToEnCA } = require("../../confic/dateAndTimeZone");
 const { db } = require("../../confic/db");
 
 const addNewCouponService = async (input, output) => {
@@ -82,7 +83,12 @@ const getCouponOfferService = async (input, output) => {
       if (err) {
         output({ error: { description: err.message } }, null);
       } else {
-        output(null, result);
+        const formatedResult = result.map((item) => ({
+          ...item,
+          start_date: formatDateToEnCA(item.start_date),
+          end_date: formatDateToEnCA(item.end_date)
+        }))
+        output(null, formatedResult);
       }
     }
   );
@@ -109,7 +115,12 @@ const getCouponOfferByIdService = async (couponId, output) => {
     if (err) {
       output({ error: { description: err.message } }, null);
     } else {
-      output(null, result);
+      const formatedResult = result.map((item) => ({
+        ...item,
+        start_date: formatDateToEnCA(item.start_date),
+        end_date: formatDateToEnCA(item.end_date)
+      }))
+      output(null, formatedResult);
     }
   });
 };
@@ -140,7 +151,12 @@ const getCouponOfferByUserIdService = async (input, output) => {
       if (err) {
         output({ error: { description: err.message } }, null);
       } else {
-        output(null, result);
+        const formatedResult = result.map((item) => ({
+          ...item,
+          start_date: formatDateToEnCA(item.start_date),
+          end_date: formatDateToEnCA(item.end_date)
+        }))
+        output(null, formatedResult);
       }
     }
   );

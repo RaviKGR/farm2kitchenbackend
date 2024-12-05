@@ -1,4 +1,4 @@
-const { formatDateToTimeZone } = require("../../confic/dateAndTimeZone");
+const { formatDateToEnCA } = require("../../confic/dateAndTimeZone");
 const { db } = require("../../confic/db");
 
 const addNewPurchaseService = async (input, output) => {
@@ -95,7 +95,7 @@ if (purchaseDate) {
         purchase_price: list.purchase_price,
         quantity_in_stock: list.quantity_in_stock,
         HST: list.HST,
-        purchase_date: formatDateToTimeZone(list.purchase_date),
+        purchase_date: formatDateToEnCA(list.purchase_date),
         product_id: list.product_id,
         name: `${list.name} (${list.size}${list.type})`,
         brand: list.brand,

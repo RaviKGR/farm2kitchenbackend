@@ -187,7 +187,6 @@ const addNewUserByAdminService = async (input, output) => {
     country,
     isDefault,
   } = input;
-  console.log("input", input);
 
   const insertQuery = `
     INSERT INTO users (name, email, phone_number) VALUES (?, ?, ?);
