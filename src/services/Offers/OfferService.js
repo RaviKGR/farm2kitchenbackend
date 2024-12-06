@@ -367,7 +367,7 @@ const getCategoryProductByOfferService = async (input) => {
       JOIN offer_details od ON od.offer_id = off.offer_id
       JOIN category c ON c.category_id = od.tag_id
       WHERE od.offer_tag IN ('category', 'CATEGORY') AND off.deleted = "N"
-      LIMIT 5 OFFSET 0
+      LIMIT 6 OFFSET 0
     `;
 
     const [offerResult] = await db.promise().query(getOfferQuery);

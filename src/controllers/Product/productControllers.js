@@ -21,6 +21,7 @@ const {
   getProductvariantByproService,
   getProductByOfferService,
   getProductSearchName,
+  getProductByUserRecentOrderedService,
 } = require("../../services/Product/productServices");
 
 const addNewProductController = async (req, res) => {
@@ -57,7 +58,7 @@ const addNewProductController = async (req, res) => {
         !barcode ||
         !files ||
         is_primary === undefined,
-        files.length <= 0)
+      files.length <= 0)
     ) {
       res.status(400).send({ message: "All fields are required" });
     } else {
@@ -97,7 +98,6 @@ const GetSearchProducts = async (req, res) => {
   }
 };
 
-
 const GetCategoryIdProducts = async (req, res) => {
   try {
     await GetCategoryIdProduct(req, (err, data) => {
@@ -117,7 +117,11 @@ const getProductByCategoryIdController = async (req, res) => {
   const { category_Id, userId, tepm_UserId } = req.query;
 
   try {
-    const result = await getProductByCategoryIdService(category_Id, userId, tepm_UserId);
+    const result = await getProductByCategoryIdService(
+      category_Id,
+      userId,
+      tepm_UserId
+    );
     return res.status(200).json(result);
   } catch (error) {
     throw error;
@@ -285,10 +289,8 @@ const getBestSellerProductController = async (req, res) => {
     if (!limit || !offset) {
       res.status(400).send({ message: "All fields are required" });
     } else {
-      await getBestSellerProductService(req.query, (err, data) => {
-        if (err) res.status(400).send(err.error);
-        else res.send(data);
-      });
+      const result = await getBestSellerProductService(req.query);
+      return res.status(200).json(result);
     }
   } catch (error) {
     throw error;
@@ -427,16 +429,30 @@ const SearchProducts = async (req, res) => {
     const data = await getProductSearchName(req);
 
     if (!data || data.length === 0) {
-      return res.status(404).send({ message: 'No products found' });
+      return res.status(404).send({ message: "No products found" });
     }
 
     res.status(200).send(data);
   } catch (error) {
     console.error(error);
     const statusCode = error.status || 500;
-    const errorMessage = error.description || 'Internal Server Error';
-
+    const errorMessage = error.description || "Internal Server Error";
     res.status(statusCode).send({ error: errorMessage });
+  }
+};
+
+const getProductByUserRecentOrderedController = async (req, res) => {
+  const { userId } = req.query;
+  try {
+    if (!userId) {
+      res.status(400).send({ message: "All fields are required" });
+    } else {
+      const result = await getProductByUserRecentOrderedService(req.query);
+      return res.status(200).json(result);
+    }
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -460,4 +476,5 @@ module.exports = {
   updateProductAndCategoryMapController,
   addNewProductImageController,
   getProductvariantByproController,
+  getProductByUserRecentOrderedController,
 };

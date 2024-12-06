@@ -1,7 +1,7 @@
 const express = require("express");
 const multer = require('multer');
 const path = require('path');
-const { GetSearchProducts, GetCategoryIdProducts, addNewProductController, getProductByProductIdController, getAllProductController, updateProductController, updateProductStatusController, deleteProductController, getProductBarCodeController, getBestSellerProductController, updateBestSellerProductController, exportProductsToCSVController, getProductByCategoryIdController, updateProductImageController, getProductByProductNameController, updateProductAndCategoryMapController, addNewProductImageController, getProductvariantByproController, SearchProducts } = require("../controllers/Product/productControllers");
+const { GetSearchProducts, GetCategoryIdProducts, addNewProductController, getProductByProductIdController, getAllProductController, updateProductController, updateProductStatusController, deleteProductController, getProductBarCodeController, getBestSellerProductController, updateBestSellerProductController, exportProductsToCSVController, getProductByCategoryIdController, updateProductImageController, getProductByProductNameController, updateProductAndCategoryMapController, addNewProductImageController, getProductvariantByproController, SearchProducts, getProductByUserRecentOrdered, getProductByUserRecentOrderedController } = require("../controllers/Product/productControllers");
 const { addNewPurchaseController, getPurchaseDetailController, deletePurchaseProductController } = require("../controllers/Product/productPurchaseController");
 const { addNewProductSizeController, getAllProuctSizeConttroler } = require("../controllers/ProductSize/productSizeController");
 
@@ -39,6 +39,7 @@ ProductRoutes.get('/getProductByProductName', getProductByProductNameController)
 ProductRoutes.put('/ProductAndCategoryMap', updateProductAndCategoryMapController);
 ProductRoutes.post('/addNewProductmage', uploadProduct.array('images', 5), addNewProductImageController)
 ProductRoutes.get("/getProductisPrimary", getProductvariantByproController)
+ProductRoutes.get("/getProductbyUserRecentOrdered", getProductByUserRecentOrderedController)
 
 //  product Purchase Routes
 
