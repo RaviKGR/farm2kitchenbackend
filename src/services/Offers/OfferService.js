@@ -79,135 +79,20 @@ const addNewOfferServer = async (input, output) => {
     return { success: false, status: 500, message: "DataBase Error" };
   }
 };
-
-// const getOfferService = async (input, output) => {
-//   const { limit, offset, offerName, startDate, endDate, status } = input;
-
-//   let whereClause = "off.deleted = 'N' ";
-//   const queryParams = [];
-
-//   if (offerName) {
-//     whereClause += "AND off.name LIKE ? ";
-//     queryParams.push(`%${offerName}%`);
-//   }
-
-//   if (startDate && endDate) {
-//     whereClause += "AND off.start_date <= ? AND off.end_date >= ? ";
-//     queryParams.push(startDate, endDate);
-//   }
-
-//   const getOfferQuery = `
-//     SELECT
-//     COUNT(off.offer_id) OVER() AS total_count,
-//     off.offer_id,
-//     off.name,
-//     off.description,
-//     off.discountType,
-//     off.discountValue,
-//     off.start_date,
-//     off.end_date
-//     FROM offer off
-//     WHERE ${whereClause}
-//     LIMIT ? OFFSET ?`;
-
-//   queryParams.push(parseInt(limit), parseInt(offset));
-
-//   try {
-//     const [result] = await db.promise().query(getOfferQuery, queryParams);
-
-//     if (result.length > 0) {
-//       const currentDate = new Date();
-
-//       const updatedResult = await Promise.all(
-//         result.map(async (offer) => {
-//           const getOfferDetails = `SELECT * FROM offer_details WHERE offer_id = ?`;
-//           const [offerDetailsResult] = await db
-//             .promise()
-//             .query(getOfferDetails, [offer.offer_id]);
-//           if(offerDetailsResult.length > 0) {
-//             const offerDetailsAndname = await Promise.all(
-//               offerDetailsResult.map( async (items) => {
-//                 if(items.offer_tag === "CATEGORY") {
-//                    const getofferDetailsQuery = `
-//                   SELECT
-//                     *
-//                   FROM offer_details od
-//                   JOIN category c ON c.category_id = od.tag_id
-//                   WHERE od.offer_id = ? 
-//                   AND od.offer_tag IN ('CATEGORY', 'category')
-//                   `
-//                    const [detailsResult] = await db.promise().query(getofferDetailsQuery, [items.tag_id]);
-//                    return detailsResult
-//                 } else if (items.offer_tag === "VARIANT"){
-//                     const getVariantDetails = `
-//                     SELECT
-//                       *
-//                     FROM offer_details od
-//                     JOIN productvariant pv ON pv.variant_id = od.tag_id
-//                     JOIN product p ON p.product_id = pv.product_id
-//                     WHERE od.offer_id = ? 
-//                     AND od.offer_tag IN ('VARIANT', 'variant')`
-//                     const [productVariant] = await db.promise().query(getVariantDetails,[items.tag_id] );
-//                     return productVariant;
-//                 }
-//               })
-//             )
-//             return {
-//               ...offer,
-//               start_date: formatDateToEnCA(offer.start_date),
-//               end_date: formatDateToEnCA(offer.end_date),
-//               status:
-//                 formatDateToEnCA(offer.end_date) < formatDateToEnCA(currentDate)
-//                   ? "EXPIRED"
-//                   : "ACTIVE",
-//               offerDetails: offerDetailsAndname,
-//             };
-//           } else {
-//             return {
-//               ...offer,
-//               start_date: formatDateToEnCA(offer.start_date),
-//               end_date: formatDateToEnCA(offer.end_date),
-//               status:
-//                 formatDateToEnCA(offer.end_date) < formatDateToEnCA(currentDate)
-//                   ? "EXPIRED"
-//                   : "ACTIVE",
-//               offerDetails: offerDetailsResult,
-//             };
-//           }
-          
-//         })
-//       );
-
-//       output(null, updatedResult);
-//     } else {
-//       output(null, []); // No results found
-//     }
-//   } catch (err) {
-//     output({ error: { description: err.message } }, null);
-//   }
-// };
-
 const getOfferService = async (input, output) => {
   const { limit, offset, offerName, startDate, endDate, status } = input;
 
   let whereClause = "off.deleted = 'N' ";
   const queryParams = [];
-  const hasConditions = offerName || startDate || endDate || status;
 
-  if (hasConditions) {
-    if (offerName) {
-      whereClause += "AND off.name LIKE ? ";
-      queryParams.push(`%${offerName}%`);
-    }
+  if (offerName) {
+    whereClause += "AND off.name LIKE ? ";
+    queryParams.push(`%${offerName}%`);
+  }
 
-    if (startDate && endDate) {
-      whereClause += "AND off.start_date <= ? AND off.end_date >= ?";
-      queryParams.push(startDate, endDate);
-    }
-    if (startDate && endDate) {
-      whereClause += "AND off.start_date <= ? AND off.end_date >= ?";
-      queryParams.push(startDate, endDate);
-    }
+  if (startDate && endDate) {
+    whereClause += "AND off.start_date <= ? AND off.end_date >= ? ";
+    queryParams.push(startDate, endDate);
   }
 
   const getOfferQuery = `
@@ -225,25 +110,139 @@ const getOfferService = async (input, output) => {
     LIMIT ? OFFSET ?`;
 
   queryParams.push(parseInt(limit), parseInt(offset));
-  db.query(getOfferQuery, [...queryParams], (err, result) => {
-    if (err) {
-      output({ error: { description: err.message } }, null);
-    } else {
+
+  try {
+    const [result] = await db.promise().query(getOfferQuery, queryParams);
+
+    if (result.length > 0) {
       const currentDate = new Date();
 
-      const updatedResult = result.map((offer) => {
-        return {
-          ...offer,
-          start_date: formatDateToEnCA(offer.start_date),
-          end_date: formatDateToEnCA(offer.end_date),
-          status: formatDateToEnCA(offer.end_date) < formatDateToEnCA(currentDate) ? "EXPIRED" : "ACTIVE",
-        };
-      });
+      const updatedResult = await Promise.all(
+        result.map(async (offer) => {
+          const getOfferDetails = `SELECT * FROM offer_details WHERE offer_id = ?`;
+          const [offerDetailsResult] = await db
+            .promise()
+            .query(getOfferDetails, [offer.offer_id]);
+
+          if (offerDetailsResult.length > 0) {
+            const offerDetailsAndName = await Promise.all(
+              offerDetailsResult.map(async (items) => {
+                if (items.offer_tag === "CATEGORY") {
+                  const getOfferDetailsQuery = `
+                  SELECT
+                    *
+                  FROM offer_details od
+                  JOIN category c ON c.category_id = od.tag_id
+                  WHERE od.offer_id = ? 
+                  AND od.offer_tag IN ('CATEGORY', 'category')`;
+                  const [detailsResult] = await db.promise().query(getOfferDetailsQuery, [items.tag_id]);
+                  return detailsResult;
+                } else if (items.offer_tag === "VARIANT") {
+                  const getVariantDetails = `
+                    SELECT
+                      *
+                    FROM offer_details od
+                    JOIN productvariant pv ON pv.variant_id = od.tag_id
+                    JOIN product p ON p.product_id = pv.product_id
+                    WHERE od.offer_id = ? 
+                    AND od.offer_tag IN ('VARIANT', 'variant')`;
+                  const [productVariant] = await db.promise().query(getVariantDetails, [items.tag_id]);
+                  return productVariant;
+                }
+              })
+            );
+
+            return {
+              ...offer,
+              start_date: formatDateToEnCA(offer.start_date),
+              end_date: formatDateToEnCA(offer.end_date),
+              status:
+                formatDateToEnCA(offer.end_date) < formatDateToEnCA(currentDate)
+                  ? "EXPIRED"
+                  : "ACTIVE",
+              offerDetails: offerDetailsAndName.flat().filter(Boolean), // Flatten and remove empty arrays
+            };
+          } else {
+            return {
+              ...offer,
+              start_date: formatDateToEnCA(offer.start_date),
+              end_date: formatDateToEnCA(offer.end_date),
+              status:
+                formatDateToEnCA(offer.end_date) < formatDateToEnCA(currentDate)
+                  ? "EXPIRED"
+                  : "ACTIVE",
+              offerDetails: [], // No offer details
+            };
+          }
+        })
+      );
 
       output(null, updatedResult);
+    } else {
+      output(null, []); // No results found
     }
-  });
+  } catch (err) {
+    output({ error: { description: err.message } }, null);
+  }
 };
+
+// const getOfferService = async (input, output) => {
+//   const { limit, offset, offerName, startDate, endDate, status } = input;
+
+//   let whereClause = "off.deleted = 'N' ";
+//   const queryParams = [];
+//   const hasConditions = offerName || startDate || endDate || status;
+
+//   if (hasConditions) {
+//     if (offerName) {
+//       whereClause += "AND off.name LIKE ? ";
+//       queryParams.push(`%${offerName}%`);
+//     }
+
+//     if (startDate && endDate) {
+//       whereClause += "AND off.start_date <= ? AND off.end_date >= ?";
+//       queryParams.push(startDate, endDate);
+//     }
+//     if (startDate && endDate) {
+//       whereClause += "AND off.start_date <= ? AND off.end_date >= ?";
+//       queryParams.push(startDate, endDate);
+//     }
+//   }
+
+//   const getOfferQuery = `
+//     SELECT
+//     COUNT(off.offer_id) OVER() AS total_count,
+//     off.offer_id,
+//     off.name,
+//     off.description,
+//     off.discountType,
+//     off.discountValue,
+//     off.start_date,
+//     off.end_date
+//     FROM offer off
+//     WHERE ${whereClause}
+//     LIMIT ? OFFSET ?`;
+
+//   queryParams.push(parseInt(limit), parseInt(offset));
+//   db.query(getOfferQuery, [...queryParams], (err, result) => {
+//     if (err) {
+//       output({ error: { description: err.message } }, null);
+//     } else {
+//       const currentDate = new Date();
+
+//       const updatedResult = result.map((offer) => {
+//         return {
+//           ...offer,
+//           start_date: formatDateToEnCA(offer.start_date),
+//           end_date: formatDateToEnCA(offer.end_date),
+//           status: formatDateToEnCA(offer.end_date) < formatDateToEnCA(currentDate) ? "EXPIRED" : "ACTIVE",
+//         };
+//       });
+
+//       output(null, updatedResult);
+//     }
+//   });
+// };
 
 const updateOfferService = async (input, output) => {
   const { offerId, offerName, description, discountValue, startDate, endDate } =

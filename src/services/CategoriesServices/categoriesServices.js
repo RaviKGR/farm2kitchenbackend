@@ -7,6 +7,7 @@ const AddNewCategoryService = async (input, output) => {
   const isPrimary = input.isPrimary;
   const imageTag = input.imageTag.toUpperCase();
   const image = `/uploads/${input.image}`;
+  const categoryType = input.categoryType;
 
   const verifiyCategory = `SELECT * FROM category WHERE name = ? AND deleted = "N"`;
   db.query(verifiyCategory, [name], (err, result) => {
@@ -14,7 +15,7 @@ const AddNewCategoryService = async (input, output) => {
       output({ error: { description: err.message } }, null);
     } else {
       if (result.length > 0) {
-        output(null, { status: 400, message: "Category Already exists" });
+        output(null, { status: 400, message: categoryType == null ? "Category Already exists" : "SubCategory Already exists"});
       } else {
         const insertCategory = `
         INSERT INTO category (name, description, parent_category_id, deleted)
@@ -39,7 +40,15 @@ const AddNewCategoryService = async (input, output) => {
             if (err) {
               output({ error: { description: err.message } }, null);
             } else {
-              output(null, { message: "Category added successfully" });
+              output(null, {
+                message:
+                  categoryType === "Add New Category"
+                    ? "Category added successfully"
+                    : categoryType === "Add Sub Category"
+                    ? "subCategory added successfully"
+                    : "Child Category added successfully",
+              });
+              
             }
           }
         );
