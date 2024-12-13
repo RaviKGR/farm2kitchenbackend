@@ -37,12 +37,15 @@ const getAllOrderHistoryService = async (input) => {
     phoneNumber,
     email,
     status,
+    location
   } = input;
+  console.log(input);
+  
   try {
     let whereClause = "";
     const queryParams = [];
     const hasConditions =
-      orderNumber || deliveryDate || phoneNumber || email || status;
+      orderNumber || deliveryDate || phoneNumber || email || status || location;
 
     if (hasConditions) {
       if (orderNumber) {
@@ -57,7 +60,7 @@ const getAllOrderHistoryService = async (input) => {
 
       if (phoneNumber) {
         whereClause += (whereClause ? "AND " : "") + "u.phone_number LIKE ?";
-        queryParams.push(`%${phoneNumber}%`);
+        queryParams.push(`${phoneNumber}%`);
       }
 
       if (email) {
@@ -68,6 +71,11 @@ const getAllOrderHistoryService = async (input) => {
       if (status) {
         whereClause += (whereClause ? "AND " : "") + "o.order_status = ?";
         queryParams.push(status);
+      }
+
+      if (location){
+        whereClause += (whereClause ? "AND " : "") + "sl.city LIKE ?";
+        queryParams.push(`${location}%`);
       }
     }
 

@@ -35,7 +35,9 @@ console.log(req.body);
       !startDate ||
       !endDate ||
       !imageTag ||
-      !items.length === 0
+      !items ||
+      !Array.isArray(items) ||
+      items.length === 0
     ) {
       res.status(400).send({ message: "Required All Fields" });
     } else {
