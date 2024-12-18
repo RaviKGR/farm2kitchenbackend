@@ -312,6 +312,24 @@ const paymentHistory = `CREATE TABLE IF NOT EXISTS payment_history(
     FOREIGN KEY (order_id) REFERENCES Orders(order_id)
 )`;
 
+const priceHistory = `CREATE TABLE IF NOT EXISTS price_history(
+    price_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    old_price DECIMAL(10, 2) NOT NULL,
+    new_price DECIMAL(10, 2) NOT NULL,
+    variant_id BIGINT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (variant_id) REFERENCES productVariant(variant_id)
+)`;
+
+const recentSearchHistory =`CREATE TABLE IF NOT EXISTS recent_search_history(
+    search_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT NOT NULL,
+    user_id BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES Product(product_id),
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+)`;
+
 // Function to execute the queries
 async function createTables() {
   try {
@@ -338,7 +356,6 @@ async function createTables() {
     await db.promise().query(tokens);
     await db.promise().query(adminUser);
     await db.promise().query(adminTokens);
-
     await db.promise().query(roles);
     await db.promise().query(user_roles);
     await db.promise().query(permissions);
@@ -348,6 +365,8 @@ async function createTables() {
     await db.promise().query(cart);
     await db.promise().query(ProductSize);
     await db.promise().query(paymentHistory);
+    await db.promise().query(priceHistory);
+    await db.promise().query(recentSearchHistory);
     console.log("All tables created successfully.");
   } catch (error) {
     console.error("Error creating tables:", error.message);

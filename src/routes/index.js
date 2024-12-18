@@ -13,6 +13,7 @@ const adminUserRouter = require("./adminUserRoutes");
 const placeOrderRouters = require("./placeOrderRouter");
 const imageRouters = require("./imageRouters");
 const AdminAuthRoutes = require("./AdminAuthRoutes");
+const SearchRouters = require("./searchRouters");
 const routes = express.Router();
 
 routes.use("/category", categoryRoutes);
@@ -29,5 +30,6 @@ routes.use("/serviceLocation", serviceLocationRouters);
 routes.use("/adminUser", adminUserRouter);
 routes.use("/placeOrder", placeOrderRouters);
 routes.use("/image", imageRouters);
+routes.use("/search", SearchRouters)
 
 module.exports = routes;

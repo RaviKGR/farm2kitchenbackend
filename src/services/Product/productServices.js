@@ -580,6 +580,7 @@ const getAllProductService = async (input, output) => {
       p.product_id, 
       p.name AS productName, 
       p.brand AS brandName,
+      p.best_Seller,
       p.status, 
       p.deleted
     FROM productvariant pv
@@ -668,6 +669,7 @@ const getFilterProductService = async (input, output) => {
       p.product_id, 
       p.name AS productName, 
       p.brand AS brandName,
+      p.best_Seller,
       p.status, 
       p.deleted
     FROM productvariant pv
@@ -768,6 +770,7 @@ const getProductByOfferService = async (input) => {
               p.product_id, 
               p.name AS productName, 
               p.brand AS brandName,
+              p.best_Seller,
               p.status, 
               p.deleted
             FROM productvariant pv
@@ -1099,7 +1102,6 @@ const updateBestSellerProductService = async (input, output) => {
 };
 
 const getProductsToCSVService = (callback) => {
-  // SQL query to fetch products by category_id
   const ProductQuery = `
     SELECT * 
     FROM product 
@@ -1107,10 +1109,8 @@ const getProductsToCSVService = (callback) => {
     AND status = True
   `;
 
-  // Executing the query
   db.query(ProductQuery, (err, result) => {
     if (err) {
-      // If there's an error, pass it to the callback with an error description
       return callback({ error: { description: err.message } }, null);
     } else {
       // If query is successful, pass the result to the callback
@@ -1203,7 +1203,6 @@ const getProductvariantByproService = async (input) => {
   const { limit, offset, categoryId, productName } = input;
 
   try {
-    // Array-based approach for WHERE conditions
     let whereConditions = [
       "p.deleted = 'N'",
       "p.status = TRUE",
@@ -1211,7 +1210,6 @@ const getProductvariantByproService = async (input) => {
     ];
     const queryParams = [];
 
-    // Dynamically adding conditions
     if (categoryId) {
       whereConditions.push("p.category_id = ?");
       queryParams.push(categoryId);
@@ -1219,10 +1217,9 @@ const getProductvariantByproService = async (input) => {
 
     if (productName) {
       whereConditions.push("p.name LIKE ?");
-      queryParams.push(`%${productName}%`); // Partial match using wildcards
+      queryParams.push(`%${productName}%`);
     }
 
-    // Final query construction
     const getProductsQuery = `
       SELECT
         p.product_id, 
@@ -1246,16 +1243,13 @@ const getProductvariantByproService = async (input) => {
       LIMIT ? OFFSET ?
     `;
 
-    // Add LIMIT and OFFSET
     queryParams.push(parseInt(limit), parseInt(offset));
 
-    // Execute the first query
     const [productResult] = await db
       .promise()
       .query(getProductsQuery, queryParams);
 
     if (productResult.length > 0) {
-      // Second query for product images
       const getProductImagesQuery = `
       SELECT 
         pi.id,
@@ -1270,14 +1264,13 @@ const getProductvariantByproService = async (input) => {
       `;
       const [imageResult] = await db.promise().query(getProductImagesQuery);
 
-      // Map the products to include images
       const variantResult = productResult.map((product) => {
         const variantImage = imageResult.filter(
           (image) => image.image_id === product.variant_id
         );
         return {
           ...product,
-          images: variantImage, // Attach images for each variant
+          images: variantImage,
         };
       });
 
@@ -1306,7 +1299,6 @@ const getCartData = async () => {
 const getProductSearchName = async (input) => {
   const SearchName = input.query.SearchName;
 
-  // Fetch cart data before processing products
   const cartResults = await getCartData();
 
   const SearchProductWithCategory = `
@@ -1364,8 +1356,6 @@ const getProductSearchName = async (input) => {
           variants.map(async (variant) => {
             let discountValue = 0;
             let discountType = null;
-
-            // Check all offers and apply the best discount
             offers.forEach((offer) => {
               if (
                 offer.discountType &&
@@ -1396,7 +1386,6 @@ const getProductSearchName = async (input) => {
               discountedPrice = Math.max(0, originalPrice - discountValue);
             }
 
-            // Fetch product images
             const getProductImagesQuery = `
               SELECT
                 pi.id,
@@ -1420,10 +1409,10 @@ const getProductSearchName = async (input) => {
 
             return {
               ...variant,
-              discountValue, // Include discount details
-              discountType, // Include the type of discount
-              originalPrice, // Keep original price for reference
-              images: imageResult, // Return all related images for the variant
+              discountValue,
+              discountType,
+              originalPrice,
+              images: imageResult,
               cart_id: cartData.cart_id || null,
               user_id: cartData.user_id || null,
               quantity_count: cartData.quantity_count || null,
@@ -1518,7 +1507,6 @@ const getProductByUserRecentOrderedService = async (input) => {
 
                   const variantsWithDetails = await Promise.all(
                     variants.map(async (variant) => {
-                      // Fetch offer details
                       const offerQuery = `
                       SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted
                       FROM Offer o
@@ -1566,7 +1554,6 @@ const getProductByUserRecentOrderedService = async (input) => {
 
                       variant.price = discountedPrice.toFixed(2);
 
-                      // Fetch product images
                       const getProductImagesQuery = `
                       SELECT
                         pi.id,
@@ -1586,9 +1573,9 @@ const getProductByUserRecentOrderedService = async (input) => {
 
                       return {
                         ...variant,
-                        discountValue, // Include discount details
-                        discountType, // Include the type of discount
-                        originalPrice, // Keep original price for reference
+                        discountValue,
+                        discountType,
+                        originalPrice,
                         images: imageResult || []
                       };
                     })
@@ -1616,9 +1603,80 @@ const getProductByUserRecentOrderedService = async (input) => {
     }
   } catch (e) {
     console.error(e);
-    return { success: false, message: "Database error" };
+    return { success: false, status: 500, message: "Database error" };
   }
 };
+
+const getReducedAmountProductService = async (input) => {
+  const { limit, offset } = input;
+  try {
+      const getDropPriceQuery = `
+          SELECT 
+              ph.*,
+              p.*,
+              pv.*,
+              pi.*,
+              i.*
+          FROM 
+              price_history ph
+          JOIN 
+              productvariant pv ON ph.variant_id = pv.variant_id
+          JOIN 
+              product p ON pv.product_id = p.product_id
+          JOIN 
+              productimage pi ON pi.image_id = pv.variant_id
+          JOIN 
+              inventory i ON i.variant_id = pv.variant_id
+          WHERE 
+              ph.new_price < ph.old_price
+              AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
+              AND pi.is_primary = 'Y'
+          LIMIT ? OFFSET ?`;
+
+      const [result] = await db.promise().query(getDropPriceQuery, [parseInt(limit), parseInt(offset)]);
+      return result.length > 0 ? result : [];
+  } catch (error) {
+      console.error(error);
+      return { success: false, status: 500, message: "Database Error" };
+  }
+};
+
+// const getReducedAmountProductService = async (input) => {
+//     const { limit, offset } = input;
+//     try {
+//       const getDropPrice = `
+//         SELECT 
+//         *
+//         FROM price_history
+//         WHERE new_price < old_price
+//         LIMIT ? OFFSET ?`
+//       const [getDropPriceHistory] = await db.promise().query(getDropPrice, [parseInt(limit), parseInt(offset)]);
+//       if(getDropPriceHistory.length > 0) {
+//         const getPriceHistoryProduct = await Promise.all(
+//           getDropPriceHistory.map(async (history) => {
+//             const getProductQuery = `
+//               SELECT
+//                 *
+//               FROM product p
+//               JOIN productvariant pv ON pv.product_id = p.product_id
+//               JOIN productimage pi ON pi.image_id = pv.variant_id
+//               WHERE (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT') AND pi.is_primary = "Y" AND pv.variant_id = ?`;
+//             const [getProductResult] = await db.promise().query(getProductQuery, [history.variant_id])
+//             return {
+//               ...history,
+//               Product: getProductResult
+//             } 
+//           })
+//         )
+//         return getPriceHistoryProduct;
+//       } else {
+//         return []
+//       }
+//     } catch (error) {
+//       console.error(error);
+//       return {success: false, status: 500, message: "Database Error"}
+//     }
+// }
 
 module.exports = {
   SearchProduct,
@@ -1643,4 +1701,5 @@ module.exports = {
   getProductvariantByproService,
   getProductByOfferService,
   getProductByUserRecentOrderedService,
+  getReducedAmountProductService
 };
