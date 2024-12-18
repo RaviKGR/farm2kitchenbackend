@@ -1,7 +1,7 @@
 const express = require("express");
 const multer = require('multer');
 const path = require('path');
-const { GetSearchProducts, GetCategoryIdProducts, addNewProductController, getProductByProductIdController, getAllProductController, updateProductController, updateProductStatusController, deleteProductController, getProductBarCodeController, getBestSellerProductController, updateBestSellerProductController, exportProductsToCSVController, getProductByCategoryIdController, updateProductImageController, getProductByProductNameController, updateProductAndCategoryMapController, addNewProductImageController, getProductvariantByproController, SearchProducts, getProductByUserRecentOrdered, getProductByUserRecentOrderedController } = require("../controllers/Product/productControllers");
+const { GetSearchProducts, GetCategoryIdProducts, addNewProductController, getProductByProductIdController, getAllProductController, updateProductController, updateProductStatusController, deleteProductController, getProductBarCodeController, getBestSellerProductController, updateBestSellerProductController, exportProductsToCSVController, getProductByCategoryIdController, updateProductImageController, getProductByProductNameController, updateProductAndCategoryMapController, addNewProductImageController, getProductvariantByproController, SearchProducts, getProductByUserRecentOrdered, getProductByUserRecentOrderedController, getReducedAmountProductController } = require("../controllers/Product/productControllers");
 const { addNewPurchaseController, getPurchaseDetailController, deletePurchaseProductController } = require("../controllers/Product/productPurchaseController");
 const { addNewProductSizeController, getAllProuctSizeConttroler } = require("../controllers/ProductSize/productSizeController");
 
@@ -40,6 +40,7 @@ ProductRoutes.put('/ProductAndCategoryMap', updateProductAndCategoryMapControlle
 ProductRoutes.post('/addNewProductmage', uploadProduct.array('images', 5), addNewProductImageController)
 ProductRoutes.get("/getProductisPrimary", getProductvariantByproController)
 ProductRoutes.get("/getProductbyUserRecentOrdered", getProductByUserRecentOrderedController)
+ProductRoutes.get("/getReducedAmountProduct", getReducedAmountProductController)
 
 //  product Purchase Routes
 

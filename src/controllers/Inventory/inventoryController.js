@@ -9,10 +9,8 @@ const updateInventoryController = async (req, res) => {
       if (!inventoryId || !quantityInStock || !price || !reorderLevel || !discountPercentage) {
         res.status(400).send({ message: "Required All Fields" });
       } else {
-        await updateInventoryService(req.body, (err, data) => {
-          if (err) res.status(400).send(err.error);
-          else res.send(data);
-        });
+        const result = await updateInventoryService(req.body);
+        return res.status(200).json(result);
       }
     } catch (error) {
       throw error;

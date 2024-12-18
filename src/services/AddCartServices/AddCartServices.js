@@ -220,6 +220,7 @@ const getCartService = async (userId, temp_UserId) => {
         c.cart_id,
         c.quantity_count,
         c.variant_id,
+        c.temp_user_id,
         p.product_id,
         p.name AS product_name,
         p.category_id,
@@ -247,6 +248,7 @@ const getCartService = async (userId, temp_UserId) => {
     }
 
     let totalAmount = 0;
+console.log(cartResult);
 
     const itemsWithDiscount = await Promise.all(
       cartResult.map(async (item) => {
@@ -313,6 +315,8 @@ const getCartService = async (userId, temp_UserId) => {
           discountValue: discountValue ? discountValue.toFixed(2) : null,
           discountAmount: discountAmount.toFixed(2),
           finalPrice: finalPrice.toFixed(2),
+          temp_user_id:item.temp_user_id,
+          variant_id : item.variant_id
         };
       })
     );

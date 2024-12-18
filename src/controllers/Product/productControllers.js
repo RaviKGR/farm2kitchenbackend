@@ -22,6 +22,7 @@ const {
   getProductByOfferService,
   getProductSearchName,
   getProductByUserRecentOrderedService,
+  getReducedAmountProductService,
 } = require("../../services/Product/productServices");
 
 const addNewProductController = async (req, res) => {
@@ -456,6 +457,21 @@ const getProductByUserRecentOrderedController = async (req, res) => {
   }
 };
 
+const getReducedAmountProductController = async (req, res) => {
+  const {limit, offset} = req.query;
+  try {
+    if (!limit || !offset) {
+      res.status(400).send({ message: "All fields are required" });
+    } else {
+    const result = await getReducedAmountProductService(req.query);
+    return res.status(200).json(result);
+    }
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   GetSearchProducts,
   SearchProducts,
@@ -477,4 +493,5 @@ module.exports = {
   addNewProductImageController,
   getProductvariantByproController,
   getProductByUserRecentOrderedController,
+  getReducedAmountProductController
 };
