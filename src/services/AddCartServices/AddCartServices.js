@@ -248,7 +248,6 @@ const getCartService = async (userId, temp_UserId) => {
     }
 
     let totalAmount = 0;
-console.log(cartResult);
 
     const itemsWithDiscount = await Promise.all(
       cartResult.map(async (item) => {

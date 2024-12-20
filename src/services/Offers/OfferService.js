@@ -64,7 +64,7 @@ const addNewOfferServer = async (input, output) => {
         return {
           success: true,
           status: 201,
-          message: "Order placed successfully.",
+          message: "Offer Created successfully.",
         };
       }
     } else {

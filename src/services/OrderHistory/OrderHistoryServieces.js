@@ -39,7 +39,6 @@ const getAllOrderHistoryService = async (input) => {
     status,
     location
   } = input;
-  console.log(input);
   
   try {
     let whereClause = "";
@@ -89,7 +88,7 @@ const getAllOrderHistoryService = async (input) => {
         JOIN users u ON u.user_id = o.user_id
         JOIN servicelocation sl ON sl.location_id = o.location_id
         ${hasConditions ? `WHERE ${whereClause}` : ""}
-        ORDER BY o.order_date DESC
+        ORDER BY sl.delivery_date ASC
         LIMIT ? OFFSET ?
       `;
 
