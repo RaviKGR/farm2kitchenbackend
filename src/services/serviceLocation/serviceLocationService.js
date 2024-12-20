@@ -50,7 +50,7 @@ const NewServieLocationService = async (input) => {
 
 const getServiceLocationService = async () => {
   try {
-    const selectQuery = `SELECT * FROM servicelocation`;
+    const selectQuery = `SELECT * FROM servicelocation WHERE delivery_date > CURRENT_DATE`;
     const [result] = await db.promise().query(selectQuery);
     if (result.length > 0) {
       const formatedResult = result.map((item) => ({
@@ -73,7 +73,7 @@ const getDeliveryDateService = async (addressId) => {
     const [addressResult] = await db.promise().query(getAddress, [addressId]);
     if (addressResult.length > 0) {
       const postalCode = addressResult[0].postal_code;
-      const getServiceLocation = `SELECT location_id, city, postal_code, delivery_date FROM servicelocation WHERE postal_code = ?`;
+      const getServiceLocation = `SELECT location_id, city, postal_code, delivery_date FROM servicelocation WHERE postal_code = ? AND delivery_date > CURRENT_DATE`;
       const [locationAddress] = await db
         .promise()
         .query(getServiceLocation, [postalCode]);
