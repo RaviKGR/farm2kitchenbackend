@@ -1,4 +1,6 @@
-const { getCartService } = require("../../services/AddCartServices/AddCartServices");
+const {
+  getCartService,
+} = require("../../services/AddCartServices/AddCartServices");
 const {
   addNewCouponService,
   getCouponOfferService,
@@ -146,15 +148,15 @@ const ApplyCouponOfferController = async (req, res) => {
     const cartData = await getCartService(null, tepm_UserId);
     if (!cartData || cartData.items.length === 0) {
       return res.status(404).send("Cart is empty or not found");
+    } else {
+      const couponResponse = await ApplyCouponOfferService({
+        ...req.body,
+        totalcouponAmount: cartData.total_Amount,
+      });
+      return res
+        .status(couponResponse.status)
+        .send({ ...couponResponse, errorshow: true });
     }
-    if (cartData.total_Amount > 100) {
-      const couponResponse = await ApplyCouponOfferService({ ...req.body, totalcouponAmount: cartData.total_Amount });
-      return res.status(200).send({...couponResponse,errorshow:true});
-    }
-    return res.status(200).send({
-      message: "Coupon cannot be applied. Minimum cart amount should exceed ₹100.",
-      errorshow:false
-    })
   } catch (error) {
     console.error("Error in ApplyCouponOfferController:", error);
     return res.status(500).send("Internal Server Error");
