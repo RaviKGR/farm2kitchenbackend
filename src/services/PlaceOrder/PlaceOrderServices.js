@@ -1,5 +1,6 @@
 const { db } = require("../../confic/db");
-
+const { getCartService } = require("../AddCartServices/AddCartServices");
+const { ApplyCouponOfferService } = require("../Offers/couponOfferService");
 
 // const CreatePlaceOrder = async (input) => {
 //   const { userId, totalAmount, products } = input;
@@ -103,7 +104,7 @@ const CreatePlaceOrder = async (input) => {
     });
 
     const inventoryResults = await Promise.all(checkQuantityPromises);
-    
+
     const outOfStockItems = inventoryResults.filter(
       (result) => result.length === 0
     );
@@ -180,8 +181,11 @@ const CreatePlaceOrder = async (input) => {
 const CreatePlaceOrderForCustomerService = async (input) => {
   const { userId, totalAmount, products } = input;
   const couponId = input.couponId || null;
+  const couponCode = input.couponCode || null;
   const locationId = input.locationId || null;
+  const tepm_UserId = input.tempUserIds;
   const connection = db.promise();
+console.log("input", input);
 
   try {
     await connection.beginTransaction();
@@ -196,7 +200,7 @@ const CreatePlaceOrderForCustomerService = async (input) => {
     });
 
     const inventoryResults = await Promise.all(checkQuantityPromises);
-    
+
     const outOfStockItems = inventoryResults.filter(
       (result) => result.length === 0
     );
@@ -208,22 +212,31 @@ const CreatePlaceOrderForCustomerService = async (input) => {
         message: "Some products are out of stock.",
       };
     }
-    const getCartProductTotalAmount = await Promise.all(
-      products.map(async (list) => {
-          const getCartProduct = `SELECT * FROM cart WHERE variant_id = ?`
-          const [result] = await db.promise().query(getCartProduct, [list.variantId]);
-          return result
-      }
-      
-    ))
-    console.log("getCartProductTotalAmount", getCartProductTotalAmount);
+    let TotalProductAmount;
     
+    if (couponId && couponCode) {
+      const cartData = await getCartService(null, tepm_UserId);
+      if (!cartData || cartData.items.length === 0) {
+        return res.status(404).send("Cart is empty or not found");
+      }
+
+      const couponResponse = await ApplyCouponOfferService({
+        ...input,
+        totalcouponAmount: cartData.total_Amount,
+      });
+      TotalProductAmount = couponResponse.finalAmount;
+      console.log("couponResponse", couponResponse);
+      
+    } else {
+      const cartData = await getCartService(null, tepm_UserId);
+      TotalProductAmount = cartData.total_Amount;
+    }
 
     const insertOrder = `INSERT INTO orders (user_id, coupon_id, order_date, total_amount, order_status, location_id) VALUES (?, ?, CURRENT_DATE(), ?, "PLACED", ?)`;
     const [createOrder] = await connection.query(insertOrder, [
       userId,
       couponId,
-      totalAmount,
+      TotalProductAmount,
       locationId,
     ]);
 

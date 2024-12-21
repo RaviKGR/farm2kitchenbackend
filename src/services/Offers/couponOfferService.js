@@ -45,12 +45,12 @@ const getCouponOfferService = async (input, output) => {
 
   let whereClause = "c.deleted = 'N' ";
   const queryParams = [];
-  const hasConditions = CouponName || startDate || endDate
+  const hasConditions = CouponName || startDate || endDate;
 
   if (hasConditions) {
     if (CouponName) {
       whereClause += "AND c.name LIKE ? ";
-      queryParams.push(`%${CouponName}%`)
+      queryParams.push(`%${CouponName}%`);
     }
 
     if (startDate && endDate) {
@@ -75,23 +75,19 @@ const getCouponOfferService = async (input, output) => {
     JOIN users u ON u.user_id = c.user_id
     WHERE ${whereClause}    
     LIMIT ? OFFSET ?`;
-  queryParams.push(parseInt(limit), parseInt(offset))
-  db.query(
-    getOfferQuery,
-    [...queryParams],
-    (err, result) => {
-      if (err) {
-        output({ error: { description: err.message } }, null);
-      } else {
-        const formatedResult = result.map((item) => ({
-          ...item,
-          start_date: formatDateToEnCA(item.start_date),
-          end_date: formatDateToEnCA(item.end_date)
-        }))
-        output(null, formatedResult);
-      }
+  queryParams.push(parseInt(limit), parseInt(offset));
+  db.query(getOfferQuery, [...queryParams], (err, result) => {
+    if (err) {
+      output({ error: { description: err.message } }, null);
+    } else {
+      const formatedResult = result.map((item) => ({
+        ...item,
+        start_date: formatDateToEnCA(item.start_date),
+        end_date: formatDateToEnCA(item.end_date),
+      }));
+      output(null, formatedResult);
     }
-  );
+  });
 };
 
 const getCouponOfferByIdService = async (couponId, output) => {
@@ -118,8 +114,8 @@ const getCouponOfferByIdService = async (couponId, output) => {
       const formatedResult = result.map((item) => ({
         ...item,
         start_date: formatDateToEnCA(item.start_date),
-        end_date: formatDateToEnCA(item.end_date)
-      }))
+        end_date: formatDateToEnCA(item.end_date),
+      }));
       output(null, formatedResult);
     }
   });
@@ -154,8 +150,8 @@ const getCouponOfferByUserIdService = async (input, output) => {
         const formatedResult = result.map((item) => ({
           ...item,
           start_date: formatDateToEnCA(item.start_date),
-          end_date: formatDateToEnCA(item.end_date)
-        }))
+          end_date: formatDateToEnCA(item.end_date),
+        }));
         output(null, formatedResult);
       }
     }
@@ -191,6 +187,7 @@ const deleteCouponOfferService = async (couponId, output) => {
 
 const ApplyCouponOfferService = async (input) => {
   const { couponCode, totalcouponAmount } = input;
+
   const currentDate = new Date();
   const checkQuery = `
     SELECT * FROM coupon 
@@ -199,59 +196,79 @@ const ApplyCouponOfferService = async (input) => {
       AND end_date >= ? 
       AND deleted = 'N' 
   `;
-
   try {
-    const [result] = await db.promise().query(checkQuery, [couponCode, currentDate, currentDate]);
+    const [result] = await db
+      .promise()
+      .query(checkQuery, [couponCode, currentDate, currentDate]);
 
     if (result.length === 0) {
-      throw new Error("Invalid coupon code or expired offer");
+      return {
+        success: false,
+        status: 400,
+        message: "Invalid coupon code or expired offer",
+      };
     }
 
-    const coupon = result[0];
-    let discountAmount = 0;
-    let discountMessage = '';
-    let finalAmount = totalcouponAmount;
+    if (Number(totalcouponAmount) > Number(result[0].min_amount)) {
+      const coupon = result[0];
+      let discountAmount = 0;
+      const couponValue = coupon.coupon_value;
+      let dividedAmount = 0;
+      let discountMessage = "";
+      let finalAmount = totalcouponAmount;
 
-    if (coupon.coupon_type === 'Flat') {
-      discountAmount = coupon.coupon_value;
+      if (coupon.coupon_type === "Flat") {
+        if (Number(totalcouponAmount) <= Number(coupon.min_amount)) {
+          return {
+            success: false,
+            status: 400,
+            message: `Minimum amount of ${coupon.min_amount} is required`,
+          };
+        }
+        discountMessage = `Flat discount applied: ${couponValue}`;
+        finalAmount = totalcouponAmount - couponValue;
+      } else if (coupon.coupon_type === "Percentage") {
+        dividedAmount = (totalcouponAmount * coupon.coupon_value) / 100;
+        if (dividedAmount >= coupon.max_discount_amt) {
+          discountAmount = coupon.max_discount_amt;
+          finalAmount = totalcouponAmount - discountAmount;
+        } else {
+          finalAmount = totalcouponAmount - couponValue;
+        }
 
-      if (totalcouponAmount < coupon.min_amount) {
-        throw new Error(`Minimum amount of ${coupon.min_amount} is required`);
+        if (Number(totalcouponAmount) <= Number(coupon.min_amount)) {
+          return {
+            success: false,
+            status: 400,
+            message: `Minimum amount of ${coupon.min_amount} is required`,
+          };
+        }
+
+        discountMessage = `Percentage discount applied: ${coupon.coupon_value}% off, Discount Amount: ${discountAmount}`;
+        finalAmount = totalcouponAmount - discountAmount;
+      } else {
+        return { success: false, status: 400, message: "Invalid coupon type" };
       }
 
-      discountMessage = `Flat discount applied: ${discountAmount}`;
-      finalAmount = totalcouponAmount - discountAmount;
-
-    } else if (coupon.coupon_type === 'Percentage') {
-      discountAmount = (totalcouponAmount * coupon.coupon_value) / 100;
-
-      if (discountAmount > coupon.max_discount_amt) {
-        discountAmount = coupon.max_discount_amt;
-      }
-
-      if (totalcouponAmount < coupon.min_amount) {
-        throw new Error(`Minimum amount of ${coupon.min_amount} is required`);
-      }
-
-      discountMessage = `Percentage discount applied: ${coupon.coupon_value}% off, Discount Amount: ${discountAmount}`;
-      finalAmount = totalcouponAmount - discountAmount;
-
+      return {
+        message: discountMessage,
+        couponId: coupon.coupon_id,
+        couponCode: couponCode,
+        discountAmount: discountAmount,
+        finalAmount: finalAmount.toFixed(2),
+        status: 200,
+      };
     } else {
-      throw new Error("Invalid coupon type");
+      return {
+        status: 400,
+        message: `Coupon cannot be applied. Minimum cart amount should exceed ${result[0].min_amount}.`,
+        errorshow: false,
+      };
     }
-
-    return {
-      message: discountMessage,
-      discountAmount: discountAmount,
-      finalAmount: finalAmount.toFixed(2),
-    };
   } catch (error) {
     throw new Error(error.message);
   }
 };
-
-
-
 
 module.exports = {
   ApplyCouponOfferService,

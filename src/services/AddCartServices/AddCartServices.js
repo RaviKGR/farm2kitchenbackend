@@ -228,7 +228,8 @@ const getCartService = async (userId, temp_UserId) => {
         pv.type,
         pv.barcode,
         pi.image_url AS product_image,
-        i.price
+        i.price,
+        i.discount_percentage
       FROM cart c
       JOIN productvariant pv ON pv.variant_id = c.variant_id
       JOIN product p ON p.product_id = pv.product_id
@@ -268,7 +269,9 @@ const getCartService = async (userId, temp_UserId) => {
             o.discountValue, 
             o.start_date, 
             o.end_date, 
-            o.deleted
+            o.deleted,
+            od.offer_tag,
+            od.tag_id
           FROM Offer o
           JOIN Offer_Details od ON od.offer_id = o.offer_id
           WHERE od.tag_id = ?
@@ -278,6 +281,7 @@ const getCartService = async (userId, temp_UserId) => {
         const [offerResults] = await db.promise().query(offerQuery, [item.category_id]);
 
         if (offerResults.length > 0) {
+          
           const offer = offerResults[0];
           offerId = offer.offer_id;
           discountType = offer.discountType;
@@ -308,7 +312,7 @@ const getCartService = async (userId, temp_UserId) => {
           barcode: item.barcode,
           image_url: item.product_image,
           quantity_count: quantityCount,
-          discount_percentage: discountPercentage || null,
+          discount_percentage: discountPercentage,
           offer_id: offerId,
           discountType,
           discountValue: discountValue ? discountValue.toFixed(2) : null,
