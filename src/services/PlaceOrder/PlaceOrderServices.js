@@ -185,7 +185,6 @@ const CreatePlaceOrderForCustomerService = async (input) => {
   const locationId = input.locationId || null;
   const tepm_UserId = input.tempUserIds;
   const connection = db.promise();
-console.log("input", input);
 
   try {
     await connection.beginTransaction();
@@ -213,9 +212,9 @@ console.log("input", input);
       };
     }
     let TotalProductAmount;
-    
+    let cartData ;
     if (couponId && couponCode) {
-      const cartData = await getCartService(null, tepm_UserId);
+      cartData = await getCartService(null, tepm_UserId);
       if (!cartData || cartData.items.length === 0) {
         return res.status(404).send("Cart is empty or not found");
       }
@@ -228,7 +227,7 @@ console.log("input", input);
       console.log("couponResponse", couponResponse);
       
     } else {
-      const cartData = await getCartService(null, tepm_UserId);
+      cartData = await getCartService(null, tepm_UserId);
       TotalProductAmount = cartData.total_Amount;
     }
 
@@ -243,15 +242,25 @@ console.log("input", input);
     if (createOrder.affectedRows > 0) {
       const lastInsertedId = createOrder.insertId;
 
-      const insertOrderItems = products.map(async (list) => {
+      const insertOrderItems = cartData?.items.map(async (list) => {
         const insertOrderItem = `INSERT INTO orderitem (order_id, variant_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)`;
         await connection.query(insertOrderItem, [
           lastInsertedId,
-          list.variantId,
-          list.quantity,
-          list.productPrice,
+          list.variant_id,
+          list.quantity_count,
+          list.finalPrice,
         ]);
       });
+      
+      // const insertOrderItems = products.map(async (list) => {
+      //   const insertOrderItem = `INSERT INTO orderitem (order_id, variant_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)`;
+      //   await connection.query(insertOrderItem, [
+      //     lastInsertedId,
+      //     list.variantId,
+      //     list.quantity,
+      //     list.productPrice,
+      //   ]);
+      // });
 
       await Promise.all(insertOrderItems);
 

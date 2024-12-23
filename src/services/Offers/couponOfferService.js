@@ -226,6 +226,7 @@ const ApplyCouponOfferService = async (input) => {
           };
         }
         discountMessage = `Flat discount applied: ${couponValue}`;
+        discountAmount = coupon.coupon_value
         finalAmount = totalcouponAmount - couponValue;
       } else if (coupon.coupon_type === "Percentage") {
         dividedAmount = (totalcouponAmount * coupon.coupon_value) / 100;
