@@ -304,6 +304,7 @@ const getCartService = async (userId, temp_UserId) => {
         totalAmount += finalPrice * quantityCount;
 
         return {
+          cart_id: item.cart_id,
           product_id: item.product_id,
           name: item.product_name,
           price: basePrice.toFixed(2),
