@@ -23,6 +23,7 @@ const {
   getProductSearchName,
   getProductByUserRecentOrderedService,
   getReducedAmountProductService,
+  getProductByProductIdForCustomerService,
 } = require("../../services/Product/productServices");
 
 const addNewProductController = async (req, res) => {
@@ -155,6 +156,20 @@ const getProductByProductIdController = async (req, res) => {
       res.status(400).send({ message: "All fields are required" });
     } else {
       const result = await getProductByProductIdService(ProductId);
+      return res.status(200).json(result);
+    }
+  } catch (e) {
+    throw e;
+  }
+};
+const getProductByProductIdForCustomerController = async (req, res) => {
+  const { ProductId, temp_UserId } = req.query;
+
+  try {
+    if (!ProductId) {
+      res.status(400).send({ message: "All fields are required" });
+    } else {
+      const result = await getProductByProductIdForCustomerService(ProductId, temp_UserId);
       return res.status(200).json(result);
     }
   } catch (e) {
@@ -493,5 +508,6 @@ module.exports = {
   addNewProductImageController,
   getProductvariantByproController,
   getProductByUserRecentOrderedController,
-  getReducedAmountProductController
+  getReducedAmountProductController,
+  getProductByProductIdForCustomerController
 };

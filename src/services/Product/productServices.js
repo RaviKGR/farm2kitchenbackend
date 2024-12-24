@@ -225,41 +225,6 @@ const getProductByCategoryIdService = async (
   userId,
   tepm_UserId
 ) => {
-  //   const query = `
-  //   SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted
-  //   FROM Offer o
-  //   JOIN Offer_Details od ON od.offer_id = o.offer_id
-  //   WHERE od.tag_id = ?
-  //     AND CURDATE() BETWEEN o.start_date AND o.end_date;
-  // `;
-
-  //   const [results] = await db.promise().query(query, [category_Id]);
-  //   if (results.length > 0) {
-  //     const offer = results[0];  // Assuming you want the first offer from the results
-  //     const discountType = offer.discountType;
-  //     const discountValue = parseFloat(offer.discountValue);  // Parse discountValue to a float
-
-  //     console.log(discountType, discountValue);
-
-  //     // Assuming filteredCartData is already defined somewhere
-  //     filteredCartData = filteredCartData.map(product => {
-  //       const originalPrice = parseFloat(product.price);  // Parse the product price
-  //       const discountedPrice = Math.max(0, originalPrice - discountValue);  // Apply the discount
-
-  //       return {
-  //         ...product,
-  //         discountValue,         // Add the discount value to the product
-  //         originalPrice,         // Keep the original price
-  //         price: discountedPrice.toFixed(2)  // Update the price with the discounted value, rounded to 2 decimal places
-  //       };
-  //     });
-
-  //     return filteredCartData;  // Return the updated filteredCartData array
-  //   } else {
-  //     console.log("No offers found.");
-  //     return [];
-  //   }
-
   const getProductsQuery = `
   SELECT
     p.product_id, 
@@ -292,35 +257,76 @@ const getProductByCategoryIdService = async (
             i.*
           FROM productvariant pv
           JOIN inventory i ON pv.variant_id = i.variant_id
-          WHERE pv.product_id = ?`;
+          WHERE pv.product_id = ? AND i.price IS NOT NULL`;
 
         const [variants] = await db
           .promise()
           .query(getVariantsQuery, [product.product_id]);
 
+        if (!variants.length) return null; // Skip this product if no variants
         const variantsWithDetails = await Promise.all(
           variants.map(async (variant) => {
+            const getProductImagesQuery = `
+            SELECT
+              pi.id,
+              pi.image_url,
+              pi.image_tag,
+              pi.alt_text,
+              pi.is_primary,
+              pi.image_id
+            FROM productimage pi
+            WHERE pi.image_id = ? 
+              AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
+              AND pi.is_primary = 'Y'`;
+
+            const [imageResult] = await db
+              .promise()
+              .query(getProductImagesQuery, [variant.variant_id]);
+
+            if (!imageResult.length) return null; // Skip this variant if no images
+
             // Fetch offer details
             const offerQuery = `
-            SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted
+            SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted, od.offer_tag, od.tag_id
             FROM Offer o
             JOIN Offer_Details od ON od.offer_id = o.offer_id
             WHERE od.tag_id = ?
-              AND CURDATE() BETWEEN o.start_date AND o.end_date;`;
+              AND CURDATE() BETWEEN o.start_date AND o.end_date AND offer_tag = "CATEGORY";`;
 
-            const [offerResults] = await db
+            const [categoryOfferResults] = await db
               .promise()
               .query(offerQuery, [category_Id]);
+
             let discountValue = 0;
             let discountType = null;
 
-            if (offerResults.length > 0) {
-              const offer = offerResults[0];
-              discountValue = parseFloat(offer.discountValue);
-              discountType = offer.discountType;
+            if (categoryOfferResults.length > 0) {
+              console.log("categoryOfferResults", categoryOfferResults);
+
+              const CateogryOffer = categoryOfferResults[0];
+              discountValue = parseFloat(CateogryOffer.discountValue);
+              discountType = CateogryOffer.discountType;
             } else {
-              discountValue = 0;
-              discountType = null;
+              const offerQuery = `
+                SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted, od.offer_tag, od.tag_id
+                FROM Offer o
+                JOIN Offer_Details od ON od.offer_id = o.offer_id
+                WHERE od.tag_id = ?
+                  AND CURDATE() BETWEEN o.start_date AND o.end_date AND offer_tag = "VARIANT";`;
+              const [variantOfferResults] = await db
+                .promise()
+                .query(offerQuery, [variant.variant_id]);
+
+              if (variantOfferResults && variantOfferResults.length > 0) {
+                console.log("variantOfferResults", variantOfferResults[0]);
+                const VariantOffer = variantOfferResults[0];
+                discountValue = parseFloat(VariantOffer.discountValue);
+                discountType = VariantOffer.discountType;
+              } else {
+                console.log("No offers found for variant");
+                discountValue = 0; // Default value if no offer
+                discountType = null; // Default value if no offer
+              }
             }
 
             const originalPrice = parseFloat(variant.price);
@@ -335,33 +341,15 @@ const getProductByCategoryIdService = async (
 
             variant.price = discountedPrice.toFixed(2);
 
-            // Fetch product images
-            const getProductImagesQuery = `
-            SELECT
-              pi.id,
-              pi.image_url,
-              pi.image_tag,
-              pi.alt_text,
-              pi.is_primary,
-              pi.image_id
-            FROM productimage pi
-            WHERE pi.image_id = ? 
-              AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
-              AND pi.is_primary = 'Y';`;
-
-            const [imageResult] = await db
-              .promise()
-              .query(getProductImagesQuery, [variant.variant_id]);
-
             const cartData =
               cartResults.find(
                 (cart) => cart.variant_id === variant.variant_id
               ) || {};
             return {
               ...variant,
-              discountValue, // Include discount details
-              discountType, // Include the type of discount
-              originalPrice, // Keep original price for reference
+              discountValue,
+              discountType,
+              originalPrice,
               images: imageResult || [],
               cart_id: cartData.cart_id || null,
               user_id: cartData.user_id || null,
@@ -370,18 +358,153 @@ const getProductByCategoryIdService = async (
           })
         );
 
+        const filteredVariants = variantsWithDetails.filter(Boolean);
+
+        if (!filteredVariants.length) return null; // Skip product if no valid variants
+
         return {
           ...product,
-          variants: variantsWithDetails || [],
+          variants: filteredVariants || [],
         };
       })
     );
 
-    return variantResult;
+    return variantResult.filter(Boolean); // Filter out null products
   } else {
     return [];
   }
 };
+
+// const getProductByCategoryIdService = async (
+//   category_Id,
+//   userId,
+//   tepm_UserId
+// ) => {
+
+//   const getProductsQuery = `
+//   SELECT
+//     p.product_id,
+//     p.name AS productName,
+//     p.brand AS brandName,
+//     p.category_id
+//   FROM product p
+//   WHERE p.category_id = ?`;
+
+//   const [productResult] = await db
+//     .promise()
+//     .query(getProductsQuery, [category_Id]);
+
+//   if (productResult.length > 0) {
+//     const cartQuery = `
+//     SELECT
+//       c.variant_id,
+//       c.cart_id,
+//       c.user_id,
+//       c.quantity_count
+//     FROM cart c
+//     WHERE c.temp_user_id = ?`;
+//     const [cartResults] = await db.promise().query(cartQuery, [tepm_UserId]);
+
+//     const variantResult = await Promise.all(
+//       productResult.map(async (product) => {
+//         const getVariantsQuery = `
+//           SELECT
+//             pv.*,
+//             i.*
+//           FROM productvariant pv
+//           JOIN inventory i ON pv.variant_id = i.variant_id
+//           WHERE pv.product_id = ? and i.price IS NOT NULL`;
+
+//         const [variants] = await db
+//           .promise()
+//           .query(getVariantsQuery, [product.product_id]);
+
+//         const variantsWithDetails = await Promise.all(
+//           variants.map(async (variant) => {
+//             // Fetch offer details
+//             const offerQuery = `
+//             SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted, od.offer_tag, od.tag_id
+//             FROM Offer o
+//             JOIN Offer_Details od ON od.offer_id = o.offer_id
+//             WHERE od.tag_id = ?
+//               AND CURDATE() BETWEEN o.start_date AND o.end_date AND offer_tag = "CATEGORY";`;
+
+//             const [offerResults] = await db
+//               .promise()
+//               .query(offerQuery, [category_Id]);
+//             let discountValue = 0;
+//             let discountType = null;
+
+//             if (offerResults.length > 0) {
+//               console.log("offerResults", offerResults);
+
+//               const offer = offerResults[0];
+//               discountValue = parseFloat(offer.discountValue);
+//               discountType = offer.discountType;
+//             } else {
+//               discountValue = 0;
+//               discountType = null;
+//             }
+
+//             const originalPrice = parseFloat(variant.price);
+//             let discountedPrice = originalPrice;
+
+//             if (discountType && discountType.toLowerCase() === "flat") {
+//               discountedPrice = Math.max(0, originalPrice - discountValue);
+//             } else if (discountType && discountType === "Percentage") {
+//               const discountAmount = (originalPrice * discountValue) / 100;
+//               discountedPrice = Math.max(0, originalPrice - discountAmount);
+//             }
+
+//             variant.price = discountedPrice.toFixed(2);
+
+//             // Fetch product images
+//             const getProductImagesQuery = `
+//             SELECT
+//               pi.id,
+//               pi.image_url,
+//               pi.image_tag,
+//               pi.alt_text,
+//               pi.is_primary,
+//               pi.image_id
+//             FROM productimage pi
+//             WHERE pi.image_id = ?
+//               AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
+//               AND pi.is_primary = 'Y';`;
+
+//             const [imageResult] = await db
+//               .promise()
+//               .query(getProductImagesQuery, [variant.variant_id]);
+
+//             const cartData =
+//               cartResults.find(
+//                 (cart) => cart.variant_id === variant.variant_id
+//               ) || {};
+//             return {
+//               ...variant,
+//               discountValue, // Include discount details
+//               discountType, // Include the type of discount
+//               originalPrice, // Keep original price for reference
+//               images: imageResult || [],
+//               cart_id: cartData.cart_id || null,
+//               user_id: cartData.user_id || null,
+//               quantity_count: cartData.quantity_count || null,
+//             };
+//           })
+//         );
+
+//         return {
+//           ...product,
+//           variants: variantsWithDetails || [],
+//         };
+//       })
+//     );
+
+//     return variantResult;
+//   } else {
+//     return [];
+//   }
+// };
 
 const getProductByProductIdService = async (ProductId) => {
   try {
@@ -468,6 +591,167 @@ const getProductByProductIdService = async (ProductId) => {
         productImageQuery.length > 0 ? productImageQuery : [];
 
       return [productData];
+    } else {
+      return [];
+    }
+  } catch (e) {
+    console.error(e);
+    return { success: false, message: "Database error" };
+  }
+};
+
+const getProductByProductIdForCustomerService = async (ProductId, temp_UserId) => {
+  try {
+    // Step 1: Get products by ProductId
+    const getProductsQuery = `
+  SELECT
+    p.product_id, 
+    p.name AS productName, 
+    p.brand AS brandName,
+    p.category_id
+  FROM product p
+  WHERE p.product_id = ?`;
+
+    const [productResult] = await db
+      .promise()
+      .query(getProductsQuery, [ProductId]);
+
+    if (productResult.length > 0) {
+      const categoryId = productResult[0].category_id; // Get category_id from the first product
+
+      // Step 2: Get cart data for the temp_user_id
+      const cartQuery = `
+    SELECT
+      c.variant_id,
+      c.cart_id,
+      c.user_id,
+      c.quantity_count
+    FROM cart c
+    WHERE c.temp_user_id = ?`;
+      const [cartResults] = await db.promise().query(cartQuery, [temp_UserId]);
+
+      // Step 3: Get product variants and their images
+      const variantResult = await Promise.all(
+        productResult.map(async (product) => {
+          const getVariantsQuery = `
+        SELECT
+          pv.*,
+          i.*
+        FROM productvariant pv
+        JOIN inventory i ON pv.variant_id = i.variant_id
+        WHERE pv.product_id = ? AND i.price IS NOT NULL`;
+
+          const [variants] = await db
+            .promise()
+            .query(getVariantsQuery, [product.product_id]);
+
+          if (!variants.length) return null; // Skip this product if no variants
+
+          const variantsWithDetails = await Promise.all(
+            variants.map(async (variant) => {
+              // Step 4: Get product images for each variant
+              const getProductImagesQuery = `
+            SELECT
+              pi.id,
+              pi.image_url,
+              pi.image_tag,
+              pi.alt_text,
+              pi.is_primary,
+              pi.image_id
+            FROM productimage pi
+            WHERE pi.image_id = ? 
+              AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
+              AND pi.is_primary = 'Y'`;
+
+              const [imageResult] = await db
+                .promise()
+                .query(getProductImagesQuery, [variant.variant_id]);
+
+              if (!imageResult.length) return null; // Skip this variant if no images
+
+              // Step 5: Check for category-level offer first
+              let discountValue = 0;
+              let discountType = null;
+
+              const offerQuery = `
+            SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted, od.offer_tag, od.tag_id
+            FROM Offer o
+            JOIN Offer_Details od ON od.offer_id = o.offer_id
+            WHERE od.tag_id = ?
+              AND CURDATE() BETWEEN o.start_date AND o.end_date AND offer_tag = "CATEGORY";`;
+
+              const [categoryOfferResults] = await db
+                .promise()
+                .query(offerQuery, [categoryId]);
+
+              if (categoryOfferResults.length > 0) {
+                const CategoryOffer = categoryOfferResults[0];
+                discountValue = parseFloat(CategoryOffer.discountValue);
+                discountType = CategoryOffer.discountType;
+              } else {
+                // Step 6: If no category offer, check for variant-level offer
+                const variantOfferQuery = `
+              SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted, od.offer_tag, od.tag_id
+              FROM Offer o
+              JOIN Offer_Details od ON od.offer_id = o.offer_id
+              WHERE od.tag_id = ?
+                AND CURDATE() BETWEEN o.start_date AND o.end_date AND offer_tag = "VARIANT";`;
+
+                const [variantOfferResults] = await db
+                  .promise()
+                  .query(variantOfferQuery, [variant.variant_id]);
+
+                if (variantOfferResults.length > 0) {
+                  const VariantOffer = variantOfferResults[0];
+                  discountValue = parseFloat(VariantOffer.discountValue);
+                  discountType = VariantOffer.discountType;
+                }
+              }
+
+              // Step 7: Calculate the discounted price
+              const originalPrice = parseFloat(variant.price);
+              let discountedPrice = originalPrice;
+
+              if (discountType && discountType.toLowerCase() === "flat") {
+                discountedPrice = Math.max(0, originalPrice - discountValue);
+              } else if (discountType && discountType === "Percentage") {
+                const discountAmount = (originalPrice * discountValue) / 100;
+                discountedPrice = Math.max(0, originalPrice - discountAmount);
+              }
+
+              variant.price = discountedPrice.toFixed(2);
+
+              // Step 8: Check if variant is in the cart
+              const cartData =
+                cartResults.find(
+                  (cart) => cart.variant_id === variant.variant_id
+                ) || {};
+
+              return {
+                ...variant,
+                discountValue,
+                discountType,
+                originalPrice,
+                images: imageResult || [],
+                cart_id: cartData.cart_id || null,
+                user_id: cartData.user_id || null,
+                quantity_count: cartData.quantity_count || null,
+              };
+            })
+          );
+
+          const filteredVariants = variantsWithDetails.filter(Boolean);
+
+          if (!filteredVariants.length) return null; // Skip product if no valid variants
+
+          return {
+            ...product,
+            variants: filteredVariants || [],
+          };
+        })
+      );
+
+      return variantResult.filter(Boolean); // Filter out null products
     } else {
       return [];
     }
@@ -1576,7 +1860,7 @@ const getProductByUserRecentOrderedService = async (input) => {
                         discountValue,
                         discountType,
                         originalPrice,
-                        images: imageResult || []
+                        images: imageResult || [],
                       };
                     })
                   );
@@ -1594,8 +1878,8 @@ const getProductByUserRecentOrderedService = async (input) => {
             }
           })
         );
-        const finalProductDetails = productDetails.flat()
-        return finalProductDetails
+        const finalProductDetails = productDetails.flat();
+        return finalProductDetails;
       }
       return flattenedResult;
     } else {
@@ -1610,7 +1894,7 @@ const getProductByUserRecentOrderedService = async (input) => {
 const getReducedAmountProductService = async (input) => {
   const { limit, offset } = input;
   try {
-      const getDropPriceQuery = `
+    const getDropPriceQuery = `
           SELECT 
               ph.*,
               p.*,
@@ -1633,11 +1917,13 @@ const getReducedAmountProductService = async (input) => {
               AND pi.is_primary = 'Y'
           LIMIT ? OFFSET ?`;
 
-      const [result] = await db.promise().query(getDropPriceQuery, [parseInt(limit), parseInt(offset)]);
-      return result.length > 0 ? result : [];
+    const [result] = await db
+      .promise()
+      .query(getDropPriceQuery, [parseInt(limit), parseInt(offset)]);
+    return result.length > 0 ? result : [];
   } catch (error) {
-      console.error(error);
-      return { success: false, status: 500, message: "Database Error" };
+    console.error(error);
+    return { success: false, status: 500, message: "Database Error" };
   }
 };
 
@@ -1645,7 +1931,7 @@ const getReducedAmountProductService = async (input) => {
 //     const { limit, offset } = input;
 //     try {
 //       const getDropPrice = `
-//         SELECT 
+//         SELECT
 //         *
 //         FROM price_history
 //         WHERE new_price < old_price
@@ -1665,7 +1951,7 @@ const getReducedAmountProductService = async (input) => {
 //             return {
 //               ...history,
 //               Product: getProductResult
-//             } 
+//             }
 //           })
 //         )
 //         return getPriceHistoryProduct;
@@ -1701,5 +1987,6 @@ module.exports = {
   getProductvariantByproService,
   getProductByOfferService,
   getProductByUserRecentOrderedService,
-  getReducedAmountProductService
+  getReducedAmountProductService,
+  getProductByProductIdForCustomerService,
 };
