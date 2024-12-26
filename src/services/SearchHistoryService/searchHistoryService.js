@@ -30,8 +30,8 @@ const createSearchHistoryService = async (input) => {
 //         searchHistoryResult.map(async (search) => {
 //           const getProductsQuery = `
 //                 SELECT
-//                   p.product_id, 
-//                   p.name AS productName, 
+//                   p.product_id,
+//                   p.name AS productName,
 //                   p.brand AS brandName,
 //                   p.category_id
 //                 FROM product p
@@ -88,7 +88,7 @@ const createSearchHistoryService = async (input) => {
 //                         pi.is_primary,
 //                         pi.image_id
 //                         FROM productimage pi
-//                         WHERE pi.image_id = ? 
+//                         WHERE pi.image_id = ?
 //                         AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
 //                         AND pi.is_primary = 'Y';`;
 
@@ -167,9 +167,9 @@ const getSearchHistoryService = async (input) => {
             WHERE pv.product_id = ?;
           `;
 
-          const [variants] = await db.promise().query(getVariantsQuery, [
-            entry.product_id,
-          ]);
+          const [variants] = await db
+            .promise()
+            .query(getVariantsQuery, [entry.product_id]);
 
           const variantsWithDetails = variants.map((variant) => {
             let discountValue = 0;
@@ -179,10 +179,13 @@ const getSearchHistoryService = async (input) => {
             let discountedPrice = originalPrice;
 
             if (discountType && discountType.toLowerCase() === "flat") {
-              discountedPrice = Math.max(0, originalPrice - discountValue);
+              if (originalPrice > discountValue) {
+                discountedPrice = Math.max(0, originalPrice - discountValue);
+              } else {
+                discountedPrice = originalPrice;
+              }
             } else if (discountType && discountType === "Percentage") {
-              const discountAmount =
-                (originalPrice * discountValue) / 100;
+              const discountAmount = (originalPrice * discountValue) / 100;
               discountedPrice = Math.max(0, originalPrice - discountAmount);
             }
 
@@ -210,6 +213,5 @@ const getSearchHistoryService = async (input) => {
     return { success: false, status: 500, message: "Database error" };
   }
 };
-
 
 module.exports = { createSearchHistoryService, getSearchHistoryService };

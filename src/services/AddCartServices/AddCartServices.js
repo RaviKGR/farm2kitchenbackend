@@ -450,12 +450,18 @@ const getCartService = async (userId, temp_UserId) => {
 
           if (discountType.toLowerCase() === "flat") {
             discountAmount = parseFloat(discountValue) || 0;
+            discountAmount = Math.min(discountAmount, basePrice); // Cap discount
+            if(basePrice > discountAmount) {
+              finalPrice = basePrice - discountAmount;
+            } else {
+              finalPrice = basePrice
+            }
+            // finalPrice = basePrice - discountAmount;
           } else if (discountType.toLowerCase() === "percentage") {
             discountPercentage = parseFloat(discountValue).toFixed(2) || "0.00";
             discountAmount = (basePrice * discountValue) / 100;
           }
-          discountAmount = Math.min(discountAmount, basePrice); // Cap discount
-          finalPrice = basePrice - discountAmount;
+          
         }
 
         totalAmount += finalPrice * quantityCount;

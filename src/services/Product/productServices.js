@@ -206,6 +206,19 @@ const query = (sql, params) => {
   });
 };
 
+const getCartData = async (tepm_UserId) => {
+  const cartQuery = `
+    SELECT
+      c.variant_id,
+      c.cart_id,
+      c.user_id,
+      c.quantity_count
+    FROM cart c
+    WHERE c.temp_user_id = ?`;
+  const [cartResults] = await db.promise().query(cartQuery, [tepm_UserId]);
+  return cartResults;
+};
+
 const GetCategoryIdProduct = async (input, output) => {
   const category_id = input.query.category_Id;
 
@@ -239,15 +252,7 @@ const getProductByCategoryIdService = async (
     .query(getProductsQuery, [category_Id]);
 
   if (productResult.length > 0) {
-    const cartQuery = `
-    SELECT
-      c.variant_id,
-      c.cart_id,
-      c.user_id,
-      c.quantity_count
-    FROM cart c
-    WHERE c.temp_user_id = ?`;
-    const [cartResults] = await db.promise().query(cartQuery, [tepm_UserId]);
+    const cartResults = await getCartData(tepm_UserId);
 
     const variantResult = await Promise.all(
       productResult.map(async (product) => {
@@ -301,7 +306,6 @@ const getProductByCategoryIdService = async (
             let discountType = null;
 
             if (categoryOfferResults.length > 0) {
-
               const CateogryOffer = categoryOfferResults[0];
               discountValue = parseFloat(CateogryOffer.discountValue);
               discountType = CateogryOffer.discountType;
@@ -330,7 +334,11 @@ const getProductByCategoryIdService = async (
             let discountedPrice = originalPrice;
 
             if (discountType && discountType.toLowerCase() === "flat") {
-              discountedPrice = Math.max(0, originalPrice - discountValue);
+              if (originalPrice > discountValue) {
+                discountedPrice = Math.max(0, originalPrice - discountValue);
+              } else {
+                discountedPrice = originalPrice;
+              }
             } else if (discountType && discountType === "Percentage") {
               const discountAmount = (originalPrice * discountValue) / 100;
               discountedPrice = Math.max(0, originalPrice - discountAmount);
@@ -597,17 +605,20 @@ const getProductByProductIdService = async (ProductId) => {
   }
 };
 
-const getProductByProductIdForCustomerService = async (ProductId, temp_UserId) => {
+const getProductByProductIdForCustomerService = async (
+  ProductId,
+  temp_UserId
+) => {
   try {
     // Step 1: Get products by ProductId
     const getProductsQuery = `
-  SELECT
-    p.product_id, 
-    p.name AS productName, 
-    p.brand AS brandName,
-    p.category_id
-  FROM product p
-  WHERE p.product_id = ?`;
+        SELECT
+          p.product_id, 
+          p.name AS productName, 
+          p.brand AS brandName,
+          p.category_id
+        FROM product p
+        WHERE p.product_id = ?`;
 
     const [productResult] = await db
       .promise()
@@ -617,15 +628,7 @@ const getProductByProductIdForCustomerService = async (ProductId, temp_UserId) =
       const categoryId = productResult[0].category_id; // Get category_id from the first product
 
       // Step 2: Get cart data for the temp_user_id
-      const cartQuery = `
-    SELECT
-      c.variant_id,
-      c.cart_id,
-      c.user_id,
-      c.quantity_count
-    FROM cart c
-    WHERE c.temp_user_id = ?`;
-      const [cartResults] = await db.promise().query(cartQuery, [temp_UserId]);
+      const cartResults = await getCartData(temp_UserId);
 
       // Step 3: Get product variants and their images
       const variantResult = await Promise.all(
@@ -710,7 +713,11 @@ const getProductByProductIdForCustomerService = async (ProductId, temp_UserId) =
               let discountedPrice = originalPrice;
 
               if (discountType && discountType.toLowerCase() === "flat") {
-                discountedPrice = Math.max(0, originalPrice - discountValue);
+                if (originalPrice > discountValue) {
+                  discountedPrice = Math.max(0, originalPrice - discountValue);
+                } else {
+                  discountedPrice = originalPrice;
+                }
               } else if (discountType && discountType === "Percentage") {
                 const discountAmount = (originalPrice * discountValue) / 100;
                 discountedPrice = Math.max(0, originalPrice - discountAmount);
@@ -1318,7 +1325,11 @@ const getBestSellerProductService = async (input) => {
             let discountedPrice = originalPrice;
 
             if (discountType && discountType.toLowerCase() === "flat") {
-              discountedPrice = Math.max(0, originalPrice - discountValue);
+              if (originalPrice > discountValue) {
+                discountedPrice = Math.max(0, originalPrice - discountValue);
+              } else {
+                discountedPrice = originalPrice;
+              }
             } else if (discountType && discountType === "Percentage") {
               const discountAmount = (originalPrice * discountValue) / 100;
               discountedPrice = Math.max(0, originalPrice - discountAmount);
@@ -1563,62 +1574,36 @@ const getProductvariantByproService = async (input) => {
     return { success: false, message: "Database error" };
   }
 };
-
-const getCartData = async () => {
-  const cartQuery = `
-    SELECT 
-      c.cart_id, 
-      c.user_id, 
-      c.variant_id, 
-      c.quantity_count
-    FROM cart c
-  `;
-  const [cartResults] = await db.promise().query(cartQuery);
-  return cartResults;
-};
 const getProductSearchName = async (input) => {
-  const SearchName = input.query.SearchName;
+  const { SearchName, temp_UserId } = input.query;
 
-  const cartResults = await getCartData();
-
-  const SearchProductWithCategory = `
-    SELECT 
-      p.product_id, 
-      p.name AS productName,  
-      c.category_id, 
-      c.name AS category_name, 
-      i.quantity_in_stock,
-      CASE 
-          WHEN i.quantity_in_stock = 0 THEN 'Out of Stock' 
-          ELSE 'In Stock' 
-      END AS stock_status
-    FROM 
-      Product p
-    INNER JOIN 
-      Category c ON p.category_id = c.category_id
-    INNER JOIN
-      productVariant pv ON pv.product_id = p.product_id
-    INNER JOIN
-      Inventory i ON i.variant_id = pv.variant_id
-    WHERE 
-      p.name LIKE ? OR c.name LIKE ?
-  `;
-
-  const [products] = await db
-    .promise()
-    .query(SearchProductWithCategory, [`%${SearchName}%`, `%${SearchName}%`]);
-
-  if (products.length > 0) {
-    const offerQuery = `
-      SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted
-      FROM Offer o
-      JOIN Offer_Details od ON od.offer_id = o.offer_id
-      WHERE CURDATE() BETWEEN o.start_date AND o.end_date;
+  try {
+    // Step 1: Fetch products based on search input (product or category name)
+    const SearchProductWithCategory = `
+      SELECT 
+        p.product_id, 
+        p.name AS productName,  
+        p.category_id, 
+        c.name AS category_name
+      FROM 
+        Product p
+      INNER JOIN 
+        Category c ON p.category_id = c.category_id
+      WHERE 
+        p.name LIKE ? OR c.name LIKE ?;
     `;
 
-    const [offers] = await db.promise().query(offerQuery);
+    const [products] = await db
+      .promise()
+      .query(SearchProductWithCategory, [`%${SearchName}%`, `%${SearchName}%`]);
 
-    const productsWithOffers = await Promise.all(
+    if (products.length === 0) return [];
+
+    // Step 2: Fetch cart data for the user
+    const cartResults = await getCartData(temp_UserId);
+
+    // Step 3: Process products with variants, images, and offers
+    const productsWithDetails = await Promise.all(
       products.map(async (product) => {
         const getVariantsQuery = `
           SELECT
@@ -1626,46 +1611,18 @@ const getProductSearchName = async (input) => {
             i.*
           FROM productvariant pv
           JOIN inventory i ON pv.variant_id = i.variant_id
-          WHERE pv.product_id = ?`;
+          WHERE pv.product_id = ? AND i.price IS NOT NULL;
+        `;
 
         const [variants] = await db
           .promise()
           .query(getVariantsQuery, [product.product_id]);
 
-        const variantsWithOffers = await Promise.all(
+        if (variants.length === 0) return null;
+
+        const variantsWithDetails = await Promise.all(
           variants.map(async (variant) => {
-            let discountValue = 0;
-            let discountType = null;
-            offers.forEach((offer) => {
-              if (
-                offer.discountType &&
-                offer.discountType.toLowerCase() === "flat"
-              ) {
-                discountValue = Math.max(
-                  discountValue,
-                  parseFloat(offer.discountValue)
-                );
-                discountType = "flat";
-              } else if (
-                offer.discountType &&
-                offer.discountType === "Percentage"
-              ) {
-                const percentageDiscount =
-                  (variant.price * parseFloat(offer.discountValue)) / 100;
-                discountValue = Math.max(discountValue, percentageDiscount);
-                discountType = "Percentage";
-              }
-            });
-
-            const originalPrice = parseFloat(variant.price);
-            let discountedPrice = originalPrice;
-
-            if (discountType === "flat") {
-              discountedPrice = Math.max(0, originalPrice - discountValue);
-            } else if (discountType === "Percentage") {
-              discountedPrice = Math.max(0, originalPrice - discountValue);
-            }
-
+            // Fetch product images
             const getProductImagesQuery = `
               SELECT
                 pi.id,
@@ -1675,13 +1632,76 @@ const getProductSearchName = async (input) => {
                 pi.is_primary,
                 pi.image_id
               FROM productimage pi
-              WHERE pi.image_id = ?
-                AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT');`;
+              WHERE pi.image_id = ? 
+                AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT')
+                AND pi.is_primary = 'Y';
+            `;
 
             const [imageResult] = await db
               .promise()
               .query(getProductImagesQuery, [variant.variant_id]);
 
+            // Fetch category-level and variant-level offers
+            let discountValue = 0;
+            let discountType = null;
+
+            // Category-level offer
+            const categoryOfferQuery = `
+              SELECT o.discountType, o.discountValue
+              FROM Offer o
+              JOIN Offer_Details od ON od.offer_id = o.offer_id
+              WHERE od.tag_id = ? 
+                AND CURDATE() BETWEEN o.start_date AND o.end_date 
+                AND od.offer_tag = 'CATEGORY';
+            `;
+
+            const [categoryOffers] = await db
+              .promise()
+              .query(categoryOfferQuery, [product.category_id]);
+
+            if (categoryOffers.length > 0) {
+              discountValue = parseFloat(categoryOffers[0].discountValue);
+              discountType = categoryOffers[0].discountType;
+            } else {
+              // Variant-level offer
+              const variantOfferQuery = `
+                SELECT o.discountType, o.discountValue
+                FROM Offer o
+                JOIN Offer_Details od ON od.offer_id = o.offer_id
+                WHERE od.tag_id = ? 
+                  AND CURDATE() BETWEEN o.start_date AND o.end_date 
+                  AND od.offer_tag = 'VARIANT';
+              `;
+
+              const [variantOffers] = await db
+                .promise()
+                .query(variantOfferQuery, [variant.variant_id]);
+
+              if (variantOffers.length > 0) {
+                discountValue = parseFloat(variantOffers[0].discountValue);
+                discountType = variantOffers[0].discountType;
+              }
+            }
+
+            // Calculate discounted price
+            const originalPrice = parseFloat(variant.price);
+            let discountedPrice = originalPrice;
+
+            if (discountType && discountType.toLowerCase() === "flat") {
+              if (originalPrice > discountValue) {
+                discountedPrice = Math.max(0, originalPrice - discountValue);
+              } else {
+                discountedPrice = originalPrice;
+              }
+            } else if (
+              discountType &&
+              discountType.toLowerCase() === "percentage"
+            ) {
+              const discountAmount = (originalPrice * discountValue) / 100;
+              discountedPrice = Math.max(0, originalPrice - discountAmount);
+            }
+
+            // Check if variant is in the cart
             const cartData =
               cartResults.find(
                 (cart) => cart.variant_id === variant.variant_id
@@ -1689,10 +1709,11 @@ const getProductSearchName = async (input) => {
 
             return {
               ...variant,
+              originalPrice,
               discountValue,
               discountType,
-              originalPrice,
-              images: imageResult,
+              price: discountedPrice.toFixed(2),
+              images: imageResult || [],
               cart_id: cartData.cart_id || null,
               user_id: cartData.user_id || null,
               quantity_count: cartData.quantity_count || null,
@@ -1702,16 +1723,146 @@ const getProductSearchName = async (input) => {
 
         return {
           ...product,
-          variants: variantsWithOffers,
+          variants: variantsWithDetails.filter(Boolean),
         };
       })
     );
 
-    return productsWithOffers;
-  } else {
-    return [];
+    // Filter out products with no valid variants
+    return productsWithDetails.filter(Boolean);
+  } catch (error) {
+    console.error(error);
+    return { success: false, message: "Database error" };
   }
 };
+
+// const getProductSearchName = async (input) => {
+//   const {SearchName, temp_UserId} = input.query;
+
+//   const cartResults = await getCartData(temp_UserId);
+
+//   const SearchProductWithCategory = `
+//     SELECT
+//       p.product_id,
+//       p.name AS productName,
+//       c.category_id,
+//       c.name AS category_name
+//     FROM
+//       Product p
+//     INNER JOIN
+//       Category c ON p.category_id = c.category_id
+//     WHERE
+//       p.name LIKE ? OR c.name LIKE ?
+//   `;
+
+//   const [products] = await db
+//     .promise()
+//     .query(SearchProductWithCategory, [`%${SearchName}%`, `%${SearchName}%`]);
+
+//   if (products.length > 0) {
+//     const offerQuery = `
+//       SELECT o.offer_id, o.name, o.description, o.discountType, o.discountValue, o.start_date, o.end_date, o.deleted
+//       FROM Offer o
+//       JOIN Offer_Details od ON od.offer_id = o.offer_id
+//       WHERE CURDATE() BETWEEN o.start_date AND o.end_date;
+//     `;
+
+//     const [offers] = await db.promise().query(offerQuery);
+
+//     const productsWithOffers = await Promise.all(
+//       products.map(async (product) => {
+//         const getVariantsQuery = `
+//           SELECT
+//             pv.*,
+//             i.*
+//           FROM productvariant pv
+//           JOIN inventory i ON pv.variant_id = i.variant_id
+//           WHERE pv.product_id = ? AND price IS NOT NULL`;
+
+//         const [variants] = await db
+//           .promise()
+//           .query(getVariantsQuery, [product.product_id]);
+
+//         const variantsWithOffers = await Promise.all(
+//           variants.map(async (variant) => {
+//             let discountValue = 0;
+//             let discountType = null;
+//             offers.forEach((offer) => {
+//               if (
+//                 offer.discountType &&
+//                 offer.discountType.toLowerCase() === "flat"
+//               ) {
+//                 discountValue = Math.max(
+//                   discountValue,
+//                   parseFloat(offer.discountValue)
+//                 );
+//                 discountType = "flat";
+//               } else if (
+//                 offer.discountType &&
+//                 offer.discountType === "Percentage"
+//               ) {
+//                 const percentageDiscount =
+//                   (variant.price * parseFloat(offer.discountValue)) / 100;
+//                 discountValue = Math.max(discountValue, percentageDiscount);
+//                 discountType = "Percentage";
+//               }
+//             });
+
+//             const originalPrice = parseFloat(variant.price);
+//             let discountedPrice = originalPrice;
+
+//             if (discountType === "flat") {
+//               discountedPrice = Math.max(0, originalPrice - discountValue);
+//             } else if (discountType === "Percentage") {
+//               discountedPrice = Math.max(0, originalPrice - discountValue);
+//             }
+
+//             const getProductImagesQuery = `
+//               SELECT
+//                 pi.id,
+//                 pi.image_url,
+//                 pi.image_tag,
+//                 pi.alt_text,
+//                 pi.is_primary,
+//                 pi.image_id
+//               FROM productimage pi
+//               WHERE pi.image_id = ?
+//                 AND (pi.image_tag = 'variant' OR pi.image_tag = 'VARIANT');`;
+
+//             const [imageResult] = await db
+//               .promise()
+//               .query(getProductImagesQuery, [variant.variant_id]);
+
+//             const cartData =
+//               cartResults.find(
+//                 (cart) => cart.variant_id === variant.variant_id
+//               ) || {};
+
+//             return {
+//               ...variant,
+//               discountValue,
+//               discountType,
+//               originalPrice,
+//               images: imageResult,
+//               cart_id: cartData.cart_id || null,
+//               user_id: cartData.user_id || null,
+//               quantity_count: cartData.quantity_count || null,
+//             };
+//           })
+//         );
+
+//         return {
+//           ...product,
+//           variants: variantsWithOffers,
+//         };
+//       })
+//     );
+
+//     return productsWithOffers;
+//   } else {
+//     return [];
+//   }
+// };
 const getProductByUserRecentOrderedService = async (input) => {
   const { userId } = input;
   try {
@@ -1816,10 +1967,14 @@ const getProductByUserRecentOrderedService = async (input) => {
                         discountType &&
                         discountType.toLowerCase() === "flat"
                       ) {
-                        discountedPrice = Math.max(
-                          0,
-                          originalPrice - discountValue
-                        );
+                        if (originalPrice > discountValue) {
+                          discountedPrice = Math.max(
+                            0,
+                            originalPrice - discountValue
+                          );
+                        } else {
+                          discountedPrice = originalPrice;
+                        }
                       } else if (
                         discountType &&
                         discountType === "Percentage"
