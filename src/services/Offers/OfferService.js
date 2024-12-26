@@ -135,7 +135,9 @@ const getOfferService = async (input, output) => {
                   JOIN category c ON c.category_id = od.tag_id
                   WHERE od.offer_id = ? 
                   AND od.offer_tag IN ('CATEGORY', 'category')`;
-                  const [detailsResult] = await db.promise().query(getOfferDetailsQuery, [items.tag_id]);
+                  const [detailsResult] = await db
+                    .promise()
+                    .query(getOfferDetailsQuery, [items.tag_id]);
                   return detailsResult;
                 } else if (items.offer_tag === "VARIANT") {
                   const getVariantDetails = `
@@ -146,7 +148,9 @@ const getOfferService = async (input, output) => {
                     JOIN product p ON p.product_id = pv.product_id
                     WHERE od.offer_id = ? 
                     AND od.offer_tag IN ('VARIANT', 'variant')`;
-                  const [productVariant] = await db.promise().query(getVariantDetails, [items.tag_id]);
+                  const [productVariant] = await db
+                    .promise()
+                    .query(getVariantDetails, [items.tag_id]);
                   return productVariant;
                 }
               })
@@ -299,7 +303,7 @@ const getAllOffersService = async () => {
   JOIN productimage pi ON pi.image_id = off.offer_id
   JOIN offer_details od
   ON off.offer_id = od.offer_id
-  WHERE off.deleted = "N" AND pi.image_tag IN ('offer' , 'OFFER')`;
+  WHERE off.deleted = "N" AND pi.image_tag IN ('offer' , 'OFFER') AND CURDATE() BETWEEN off.start_date AND off.end_date`;
   const [result] = await db.promise().query(getOfferQuery);
   if (result.length > 0) {
     const formatResult = result.map((item) => ({
@@ -406,10 +410,14 @@ const getCategoryProductByOfferService = async (input) => {
             let discountedPrice = price;
 
             if (offer.discountType.toLowerCase() === "flat") {
-              discountedPrice = Math.max(
-                price - parseFloat(offer.discountValue),
-                0
-              );
+              if (price > offer.discountValue) {
+                discountedPrice = Math.max(
+                  price - parseFloat(offer.discountValue),
+                  0
+                );
+              } else {
+                discountedPrice = price;
+              }
             } else if (offer.discountType.toLowerCase() === "percentage") {
               discountedPrice =
                 price - (price * parseFloat(offer.discountValue)) / 100;
