@@ -11,7 +11,6 @@ const LoginService = async (input) => {
     const checkQuery = `SELECT * FROM admin_user WHERE email = ? `;
     const [get] = await db.promise().query(checkQuery, [email]);
     if (get.length === 0) {
-      console.log("get", get);
       return { status: 400, success: false, message: "User not Found" };
     } else {
       const user = get[0];
@@ -23,8 +22,6 @@ const LoginService = async (input) => {
         };
       } else {
         const Verify = await bcrypt.compare(password, user.password);
-        console.log("Verify", Verify);
-
         if (!Verify) {
           return {
             status: 400,
@@ -89,9 +86,7 @@ const ForgotPasswordService = async (input) => {
     const email = input;
     const checkQuery = `SELECT * FROM admin_user WHERE email = ? `;
     const [get] = await db.promise().query(checkQuery, [email]);
-    console.log("get", get);
     if (get.length === 0) {
-      console.log("get", get);
       return { status: 400, success: false, message: "User not Found" };
     } else {
       const user = get[0];
@@ -102,7 +97,6 @@ const ForgotPasswordService = async (input) => {
       const [insert] = await db
         .promise()
         .query(insertQuery, [newPassword, email]);
-      console.log("insert", insert);
       if (insert.affectedRows !== 0) {
         return {
           status: 200,
@@ -129,14 +123,11 @@ const ResetPasswordService = async (input) => {
     const { currentPassword, password, userId } = input;
     const checkQuery = `SELECT * FROM admin_user WHERE admin_user_id = ? `;
     const [get] = await db.promise().query(checkQuery, [userId]);
-    console.log("get", get);
     if (get.length === 0) {
-      console.log("get", get);
       return { status: 400, success: false, message: "User not Found" };
     } else {
       const user = get[0];
       const Verify = await bcrypt.compare(currentPassword, user.password);
-      console.log("Verify", Verify);
 
       if (!Verify) {
         return {
@@ -151,7 +142,6 @@ const ResetPasswordService = async (input) => {
         const [insert] = await db
           .promise()
           .query(insertQuery, [newPassword, userId]);
-        console.log("insert", insert);
         if (insert.affectedRows !== 0) {
           return {
             status: 200,

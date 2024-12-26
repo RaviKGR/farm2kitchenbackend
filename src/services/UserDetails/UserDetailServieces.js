@@ -98,7 +98,6 @@ const updateUserAddressDefaultService = async (input) => {
       const [result] = await db
         .promise()
         .query(updateResult, [addressId, userId]);
-        console.log(result);
         
         if(result.affectedRows > 0) {          
           const updateAddress = `UPDATE address SET is_default = false WHERE address_id != ? AND user_id = ?`;
@@ -350,7 +349,7 @@ const addAddressByUserIdService = (input) => {
   });
 };
 
-const getCustomerAddressByIdService = async (userId) => {
+const getCustomerAddressByIdService = async (userId) => {   
   try {
     const getQuery = `
        SELECT

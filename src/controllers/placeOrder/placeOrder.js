@@ -20,7 +20,6 @@ const PlaceOrderController = async (req, res) => {
 const PlaceOrderForCustomerController = async (req, res) => {
   const { products } = req.body;
 //   const AllProduct = Array.isArray(products) ? products : [products];
-console.log(products);
 
   try {
     const result = await CreatePlaceOrderForCustomerService(req.body);

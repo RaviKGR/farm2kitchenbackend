@@ -301,7 +301,6 @@ const getProductByCategoryIdService = async (
             let discountType = null;
 
             if (categoryOfferResults.length > 0) {
-              console.log("categoryOfferResults", categoryOfferResults);
 
               const CateogryOffer = categoryOfferResults[0];
               discountValue = parseFloat(CateogryOffer.discountValue);
@@ -318,12 +317,10 @@ const getProductByCategoryIdService = async (
                 .query(offerQuery, [variant.variant_id]);
 
               if (variantOfferResults && variantOfferResults.length > 0) {
-                console.log("variantOfferResults", variantOfferResults[0]);
                 const VariantOffer = variantOfferResults[0];
                 discountValue = parseFloat(VariantOffer.discountValue);
                 discountType = VariantOffer.discountType;
               } else {
-                console.log("No offers found for variant");
                 discountValue = 0; // Default value if no offer
                 discountType = null; // Default value if no offer
               }
@@ -1014,7 +1011,6 @@ const getProductByOfferService = async (input) => {
       const [offerResult] = await db
         .promise()
         .query(getoffer, [offerId, offerTag]);
-      console.log(offerResult);
 
       if (offerResult.length > 0) {
         const result = await Promise.all(

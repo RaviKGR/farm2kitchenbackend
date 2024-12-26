@@ -224,7 +224,6 @@ const CreatePlaceOrderForCustomerService = async (input) => {
         totalcouponAmount: cartData.total_Amount,
       });
       TotalProductAmount = couponResponse.finalAmount;
-      console.log("couponResponse", couponResponse);
       
     } else {
       cartData = await getCartService(null, tepm_UserId);

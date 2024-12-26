@@ -28,7 +28,6 @@ const sendOtpMail = async (to, data) => {
       // html: `<b>Verify your Sign-Up by clicking this link: <a href="${baseUrl}?token=${token}&user_id=${user}">Verify</a></b>`,
     });
 
-    console.log("Mail sent successfully:", result);
 
     // Check if the email was sent successfully
     return !!result.messageId;
@@ -198,7 +197,6 @@ const SENDEMAIL = async (to, template) => {
       html: template,
     });
 
-    console.log("Mail sent successfully:", result);
 
     // Check if the email was sent successfully
     return !!result.messageId;

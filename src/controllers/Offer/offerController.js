@@ -23,7 +23,6 @@ const addNewOfferController = async (req, res) => {
   } = req.body;
 
   const image = req.file ? req.file.filename : null;
-console.log(req.body);
 
 
   try {

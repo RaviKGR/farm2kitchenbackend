@@ -72,7 +72,6 @@ const addNewProductController = async (req, res) => {
       await addNewProductService(
         { ...req.body, images: imageUrls },
         (err, data) => {
-          console.log(err);
 
           if (err) res.status(400).send(err.message);
           else res.status(201).send(data);
@@ -110,7 +109,6 @@ const GetCategoryIdProducts = async (req, res) => {
       }
     });
   } catch (error) {
-    console.log(error);
     res.status(500).send({ error: "Internal Server Error" });
   }
 };

@@ -17,7 +17,6 @@ const addNewAdminUserController = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     } else {
       const result = await addNewAdminUserService(req.body);
-      console.log(result.data);
       if (result.success) {
         const template = loadTemplate(
           {
@@ -29,7 +28,6 @@ const addNewAdminUserController = async (req, res) => {
         );
 
         const send = await SENDEMAIL(result?.data?.email, template);
-        console.log(send);
 
         if (send) {
           return res.status(201).json(result);

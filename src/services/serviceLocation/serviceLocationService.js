@@ -2,8 +2,6 @@ const { formatDateToEnCA } = require("../../confic/dateAndTimeZone");
 const { db } = require("../../confic/db");
 
 const NewServieLocationService = async (input) => {
-  console.log(input);
-
   try {
     const { city, postalCode, devileryDay, Notification } = input;
 
