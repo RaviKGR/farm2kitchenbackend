@@ -119,7 +119,6 @@ const updateCategoryConteroller = async (req, res) => {
 
 const deleteCategoryController = async (req, res) => {
   const CategoryId = req.query.CategoryId;
-  console.log("success");
 
   try {
     if (!CategoryId) {

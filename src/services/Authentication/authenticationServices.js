@@ -17,7 +17,6 @@ const authentiCationService = async (input, output) => {
     async (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
-        console.log(err);
       } else {
         const saltRounds = 10;
         const user = result[3][0].user_id;
@@ -32,8 +31,6 @@ const authentiCationService = async (input, output) => {
           }
           next();
         });
-        console.log(data);
-
         output(null, data);
       }
     }
@@ -50,13 +47,11 @@ const otpVerificationServieces = async (input, output) => {
     (err, result) => {
       if (err) {
         output({ error: { description: err.message } }, null);
-        console.log(err);
       } else {
         if (result.length > 0) {
           output(null, result);
         } else {
           output(null, { result: false });
-          console.log(result);
         }
       }
     }
@@ -181,8 +176,6 @@ const geustSignServices = (input, output) => {
       return;
     }
     if (result.length > 0) {
-      console.log(result);
-
       const saltRounds = 10;
       const userId = result[0].user_id;
       const token = await bcrypt.hash(otp.toString(), saltRounds);
@@ -200,7 +193,6 @@ const geustSignServices = (input, output) => {
       db.query(geustSignQuery, [email, mobilenumber], async (err, result) => {
         if (err) {
           output({ error: { description: err.message } }, null);
-          console.log(err);
         } else {
           const saltRounds = 10;
           const userId = result[2][0].user_id;
@@ -261,7 +253,6 @@ const googleAuthentiCationServices = async (input, output) => {
       db.query(geustSignQuery, [Email], async (err, result) => {
         if (err) {
           output({ error: { description: err.message } }, null);
-          console.log(err);
         } else {
           // const saltRounds = 10;
           const userId = result[2][0].user_id;

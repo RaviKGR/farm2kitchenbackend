@@ -79,7 +79,6 @@ const getAllUserdetailsController = async (req, res) => {
 
 const updateAllUserInfoController = async (req, res) => {
   const { Name, phoneNumber, email, city, userId, addressId } = req.body;
-  console.log("=========", email);
 
   try {
     if (!Name || !phoneNumber || !userId) {
@@ -201,7 +200,7 @@ const addAddressByUserIdController = async (req, res) => {
 };
 
 const getCustomerAddressByIdController = async (req, res) => {
-  const { userId } = req.query;
+  const { userId } = req.query;  
   try {
     if (!userId) {
       return res.status(400).json({ message: "All fields are required" });

@@ -64,7 +64,6 @@ const otpVerifiCationController = async (req, res) => {
       await otpVerificationServieces(input, (err, data) => {
         if (err) res.status(400).send(err.error);
         else res.status(200).send(data);
-        console.log(data);
       });
     }
   } catch (error) {

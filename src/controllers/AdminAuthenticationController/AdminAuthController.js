@@ -46,7 +46,7 @@ const ForgotPasswordController = async (req, res) => {
       });
     } else {
       const result = await ForgotPasswordService(req.body.email);
-      console.log(result.data);
+      (result.data);
       if (result.success) {
         const template = loadTemplate(
           {
@@ -82,7 +82,6 @@ const ResetPasswordController = async (req, res) => {
       });
     } else {
       const result = await ResetPasswordService(req.body);
-      console.log(result.data);
       return res.status(result.status).json(result);
     }
   } catch (error) {
@@ -111,7 +110,6 @@ const LogOutController = async (req, res) => {
 
 const GetUserController = async (req, res) => {
   const user = req.user;
-  console.log("user", req.status);
   if (user !== undefined && user) {
     res.status(200).json({ message: "Access granted", ...user.value });
   }

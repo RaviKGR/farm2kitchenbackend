@@ -213,6 +213,169 @@ const AddCartService = async (input) => {
   }
 };
 
+// const getCartService = async (userId, temp_UserId) => {
+//   try {
+//     const getCartQuery = `
+//       SELECT
+//         c.cart_id,
+//         c.quantity_count,
+//         c.variant_id,
+//         c.temp_user_id,
+//         p.product_id,
+//         p.name AS product_name,
+//         p.category_id,
+//         pv.size,
+//         pv.type,
+//         pv.barcode,
+//         pi.image_url AS product_image,
+//         i.price,
+//         i.discount_percentage
+//       FROM cart c
+//       JOIN productvariant pv ON pv.variant_id = c.variant_id
+//       JOIN product p ON p.product_id = pv.product_id
+//       JOIN productimage pi ON pi.image_id = pv.variant_id
+//       JOIN inventory i ON i.variant_id = pv.variant_id
+//       WHERE pi.is_primary = "Y"
+//         AND pi.image_tag IN ('variant', 'VARIANT')
+//         AND c.temp_user_id = ?`;
+
+//     const [cartResult] = await db.promise().query(getCartQuery, [temp_UserId]);
+
+//     if (cartResult.length === 0) {
+//       return {
+//         items: [],
+//         total_Amount: "0.00",
+//       };
+//     }
+
+//     let totalAmount = 0;
+//     const itemsWithDiscount = await Promise.all(
+//       cartResult.map(async (item) => {
+//         const basePrice = parseFloat(item.price);
+//         const quantityCount = item.quantity_count;
+//         let discountAmount = 0;
+//         let finalPrice = basePrice;
+//         let discountType = null;
+//         let discountValue = null;
+//         let discountPercentage = null;
+//         let offerId = null;
+
+//         // Fetch offer details for the product's category
+//         const offerQuery = `
+//           SELECT
+//             o.offer_id,
+//             o.discountType,
+//             o.discountValue,
+//             o.start_date,
+//             o.end_date,
+//             o.deleted,
+//             od.offer_tag,
+//             od.tag_id
+//           FROM Offer o
+//           JOIN Offer_Details od ON od.offer_id = o.offer_id
+//           WHERE od.tag_id = ?
+//             AND CURDATE() BETWEEN o.start_date AND o.end_date
+//             AND o.deleted = 0 AND od.offer_tag = "CATEGORY"`;
+
+//         const [CategoryOfferResults] = await db
+//           .promise()
+//           .query(offerQuery, [item.category_id]);
+
+//         if (CategoryOfferResults.length > 0) {
+//           const offer = CategoryOfferResults[0];
+//           offerId = offer.offer_id;
+//           discountType = offer.discountType;
+//           discountValue = parseFloat(offer.discountValue);
+
+//           // Apply discount based on type
+//           if (discountType.toLowerCase() === "flat") {
+//             discountAmount = discountValue;
+//           } else if (discountType.toLowerCase() === "percentage") {
+//             discountPercentage = discountValue.toFixed(2);
+//             discountAmount = (basePrice * discountValue) / 100;
+//           }
+
+//           // Ensure discount doesn't exceed the base price
+//           discountAmount = Math.min(discountAmount, basePrice);
+//           finalPrice = basePrice - discountAmount;
+//         } else {
+//           const offerQuery = `
+//           SELECT
+//             o.offer_id,
+//             o.discountType,
+//             o.discountValue,
+//             o.start_date,
+//             o.end_date,
+//             o.deleted,
+//             od.offer_tag,
+//             od.tag_id
+//           FROM Offer o
+//           JOIN Offer_Details od ON od.offer_id = o.offer_id
+//           WHERE od.tag_id = ?
+//             AND CURDATE() BETWEEN o.start_date AND o.end_date
+//             AND o.deleted = 0 AND od.offer_tag = "VARIANT"`;
+
+//           const [variantOfferResults] = await db
+//             .promise()
+//             .query(offerQuery, [item.variant_id]);
+
+//           if (variantOfferResults.length > 0) {
+//             // console.log("variantOfferResults", variantOfferResults);
+//             const offer = variantOfferResults[0];
+//             offerId = offer.offer_id;
+//             discountType = offer.discountType;
+//             discountValue = parseFloat(offer.discountValue);
+
+//             // Apply discount based on type
+//             if (discountType.toLowerCase() === "flat") {
+//               discountAmount = discountValue;
+//             } else if (discountType.toLowerCase() === "percentage") {
+//               discountPercentage = discountValue.toFixed(2);
+//               discountAmount = (basePrice * discountValue) / 100;
+//             }
+
+//             // Ensure discount doesn't exceed the base price
+//             discountAmount = Math.min(discountAmount, basePrice);
+//             finalPrice = basePrice - discountAmount;
+//           }
+//         }
+
+//         // Update total amount (considering quantity)
+//         totalAmount += finalPrice * quantityCount;
+
+//         return {
+//           cart_id: item.cart_id,
+//           product_id: item.product_id,
+//           name: item.product_name,
+//           price: basePrice.toFixed(2),
+//           size: item.size,
+//           type: item.type,
+//           barcode: item.barcode,
+//           image_url: item.product_image,
+//           quantity_count: quantityCount,
+//           discount_percentage: discountPercentage,
+//           offer_id: offerId,
+//           discountType,
+//           discountValue: discountValue ? discountValue.toFixed(2) : null,
+//           discountAmount: discountAmount.toFixed(2),
+//           finalPrice: finalPrice.toFixed(2),
+//           temp_user_id: item.temp_user_id,
+//           variant_id: item.variant_id,
+//           category_id: item.category_id
+//         };
+//       })
+//     );
+
+//     return {
+//       items: itemsWithDiscount,
+//       total_Amount: totalAmount.toFixed(2),
+//     };
+//   } catch (error) {
+//     console.error(error);
+//     return { success: false, status: 500, message: "Database error" };
+//   }
+// };
+
 const getCartService = async (userId, temp_UserId) => {
   try {
     const getCartQuery = `
@@ -242,65 +405,59 @@ const getCartService = async (userId, temp_UserId) => {
     const [cartResult] = await db.promise().query(getCartQuery, [temp_UserId]);
 
     if (cartResult.length === 0) {
-      return {
-        items: [],
-        total_Amount: "0.00",
-      };
+      return { items: [], total_Amount: "0.00" };
     }
 
-    let totalAmount = 0;
+    const fetchOfferDetails = async (tagId, offerTag) => {
+      const offerQuery = `
+        SELECT 
+          o.offer_id, 
+          o.discountType, 
+          o.discountValue
+        FROM Offer o
+        JOIN Offer_Details od ON od.offer_id = o.offer_id
+        WHERE od.tag_id = ?
+          AND CURDATE() BETWEEN o.start_date AND o.end_date
+          AND o.deleted = 0 AND od.offer_tag = ?`;
+      const [offerResults] = await db
+        .promise()
+        .query(offerQuery, [tagId, offerTag]);
+      return offerResults[0] || null;
+    };
 
+    let totalAmount = 0;
     const itemsWithDiscount = await Promise.all(
       cartResult.map(async (item) => {
         const basePrice = parseFloat(item.price);
         const quantityCount = item.quantity_count;
+
+        // Attempt to fetch category and variant offers
+        const categoryOffer = await fetchOfferDetails(
+          item.category_id,
+          "CATEGORY"
+        );
+        const variantOffer = categoryOffer
+          ? null
+          : await fetchOfferDetails(item.variant_id, "VARIANT");
+        const applicableOffer = categoryOffer || variantOffer;
+
         let discountAmount = 0;
         let finalPrice = basePrice;
-        let discountType = null;
-        let discountValue = null;
         let discountPercentage = null;
-        let offerId = null;
 
-        // Fetch offer details for the product's category
-        const offerQuery = `
-          SELECT 
-            o.offer_id, 
-            o.discountType, 
-            o.discountValue, 
-            o.start_date, 
-            o.end_date, 
-            o.deleted,
-            od.offer_tag,
-            od.tag_id
-          FROM Offer o
-          JOIN Offer_Details od ON od.offer_id = o.offer_id
-          WHERE od.tag_id = ?
-            AND CURDATE() BETWEEN o.start_date AND o.end_date
-            AND o.deleted = 0`;
+        if (applicableOffer) {
+          const { discountType, discountValue } = applicableOffer;
 
-        const [offerResults] = await db.promise().query(offerQuery, [item.category_id]);
-
-        if (offerResults.length > 0) {
-          
-          const offer = offerResults[0];
-          offerId = offer.offer_id;
-          discountType = offer.discountType;
-          discountValue = parseFloat(offer.discountValue);
-
-          // Apply discount based on type
           if (discountType.toLowerCase() === "flat") {
-            discountAmount = discountValue;
+            discountAmount = parseFloat(discountValue) || 0;
           } else if (discountType.toLowerCase() === "percentage") {
-            discountPercentage = discountValue.toFixed(2);
+            discountPercentage = parseFloat(discountValue).toFixed(2) || "0.00";
             discountAmount = (basePrice * discountValue) / 100;
           }
-
-          // Ensure discount doesn't exceed the base price
-          discountAmount = Math.min(discountAmount, basePrice);
+          discountAmount = Math.min(discountAmount, basePrice); // Cap discount
           finalPrice = basePrice - discountAmount;
         }
 
-        // Update total amount (considering quantity)
         totalAmount += finalPrice * quantityCount;
 
         return {
@@ -314,30 +471,25 @@ const getCartService = async (userId, temp_UserId) => {
           image_url: item.product_image,
           quantity_count: quantityCount,
           discount_percentage: discountPercentage,
-          offer_id: offerId,
-          discountType,
-          discountValue: discountValue ? discountValue.toFixed(2) : null,
+          offer_id: applicableOffer ? applicableOffer.offer_id : null,
+          discountType: applicableOffer ? applicableOffer.discountType : null,
+          discountValue: applicableOffer
+            ? Number(applicableOffer.discountValue).toFixed(2)
+            : null,
           discountAmount: discountAmount.toFixed(2),
           finalPrice: finalPrice.toFixed(2),
-          temp_user_id:item.temp_user_id,
-          variant_id : item.variant_id
+          temp_user_id: item.temp_user_id,
+          variant_id: item.variant_id,
+          category_id: item.category_id,
         };
       })
     );
 
-    return {
-      items: itemsWithDiscount,
-      total_Amount: totalAmount.toFixed(2),
-    };
+    return { items: itemsWithDiscount, total_Amount: totalAmount.toFixed(2) };
   } catch (error) {
     console.error(error);
     return { success: false, status: 500, message: "Database error" };
   }
 };
-
-
-
-
-
 
 module.exports = { AddCartService, getCartService };

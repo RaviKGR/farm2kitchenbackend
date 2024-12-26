@@ -9,10 +9,8 @@ const GENERATE_TOKEN = async (value, expiresIn) => {
 
 const VERIFY_TOKEN = async (value) => {
   try {
-    console.log("value", value);
 
     const verify = jwt.verify(value, Secret);
-    console.log("verify", verify);
 
     return { success: true, decoded: verify };
   } catch (error) {

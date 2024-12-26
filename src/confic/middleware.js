@@ -3,7 +3,6 @@ const { VerifyToken } = require("./JWT");
 const Middleware = async (req, res, next) => {
     try {
         const header = req.header("Authorization");
-        console.log(req.header)
 
         // Check if the Authorization header is present
         if (!header) {
@@ -12,7 +11,6 @@ const Middleware = async (req, res, next) => {
 
         // Extract the token from the Authorization header (Bearer token)
         const token = header.split(" ")[1];
-        console.log(token)
         // Check if the token is present
         if (!token) {
             return res.status(403).json({ message: "Token missing" });
